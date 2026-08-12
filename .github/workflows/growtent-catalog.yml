@@ -1,0 +1,88 @@
+name: GrowTent Catalog Import
+
+on:
+  workflow_dispatch:
+    inputs:
+      download_images:
+        description: "Download all product images"
+        required: false
+        default: "1"
+      max_products:
+        description: "0 = full catalog"
+        required: false
+        default: "0"
+  push:
+    paths:
+      - "tools/growtent_catalog_importer.py"
+      - "tools/growtent-requirements.txt"
+      - ".github/workflows/growtent-catalog.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  import-catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      GROWTENT_XML_URL: ${{ secrets.GROWTENT_XML_URL }}
+      DOWNLOAD_IMAGES: ${{ github.event.inputs.download_images || '1' }}
+      MAX_PRODUCTS: ${{ github.event.inputs.max_products || '0' }}
+      WORKERS: "8"
+      IMAGE_WORKERS: "10"
+      REQUEST_INTERVAL: "0.22"
+      OUTPUT_DIR: "artifacts/growtent"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: "tools/growtent-requirements.txt"
+
+      - name: Install importer dependencies
+        run: python -m pip install -r tools/growtent-requirements.txt
+
+      - name: Download full GrowTent catalog
+        run: python tools/growtent_catalog_importer.py
+
+      - name: Publish run summary
+        if: always()
+        shell: bash
+        run: |
+          echo "## GrowTent catalog import" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f artifacts/growtent/summary.json ]; then
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat artifacts/growtent/summary.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Importer did not create summary.json." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload catalog metadata
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: growtent-catalog-metadata
+          path: |
+            artifacts/growtent/products.csv
+            artifacts/growtent/products.json
+            artifacts/growtent/product_urls.txt
+            artifacts/growtent/summary.json
+            artifacts/growtent/errors.log
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload full catalog with images
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: growtent-catalog-full
+          path: artifacts/growtent-catalog.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
