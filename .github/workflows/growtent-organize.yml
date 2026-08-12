@@ -1,0 +1,57 @@
+name: GrowTent Organize Products
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/growtent_organize_chunk.py'
+      - '.github/workflows/growtent-organize.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  organize:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        chunk: [0,1,2,3,4,5,6,7]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/growtent-requirements.txt
+      - name: Install scraper dependencies
+        run: python -m pip install -r tools/growtent-requirements.txt
+      - name: Download fast catalog source
+        uses: actions/download-artifact@v4
+        with:
+          name: growtent-fast-list
+          path: source
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: totalnybet-create/Labuco
+          run-id: 31624639902
+      - name: Organize names descriptions and photos
+        env:
+          INPUT_JSON: source/products.json
+          OUTPUT_DIR: artifacts/chunk-${{ matrix.chunk }}
+          CHUNK_INDEX: ${{ matrix.chunk }}
+          CHUNK_COUNT: 8
+          WORKERS: 4
+          REQUEST_INTERVAL: '0.10'
+        run: python tools/growtent_organize_chunk.py
+      - name: Upload organized product bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: growtent-organized-${{ matrix.chunk }}
+          path: artifacts/chunk-${{ matrix.chunk }}
+          if-no-files-found: warn
+          retention-days: 14
+          compression-level: 6
