@@ -1,15 +1,30 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import csv, html, json, os, shutil
+import csv, html, json, os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
 from pathlib import Path
-from growtent_catalog_importer import parse_public_product, download_one_image, safe_filename
+from urllib.parse import urlparse
+from growtent_catalog_importer import parse_public_product, safe_filename, get
 
 SRC=Path(os.getenv('INPUT_JSON','source/products.json'))
 OUT=Path(os.getenv('OUTPUT_DIR','artifacts/growtent-organized'))
 IDX=int(os.getenv('CHUNK_INDEX','0')); CNT=int(os.getenv('CHUNK_COUNT','8'))
 WORKERS=max(1,min(8,int(os.getenv('WORKERS','4'))))
+
+def save_image(url, folder):
+    if not url: return '', 'NO_IMAGE_URL'
+    try:
+        r=get(url,binary=True)
+        ext=Path(urlparse(r.url).path).suffix.lower()
+        ctype=(r.headers.get('content-type') or '').split(';',1)[0].lower()
+        if ext not in {'.jpg','.jpeg','.png','.webp','.gif','.avif'}:
+            ext={'image/jpeg':'.jpg','image/png':'.png','image/webp':'.webp','image/gif':'.gif','image/avif':'.avif'}.get(ctype,'.jpg')
+        dst=folder/('zdjecie'+ext)
+        dst.write_bytes(r.content)
+        return dst.name,''
+    except Exception as e:
+        return '',str(e)
 
 def work(row):
     pid=str(row.get('id') or '')
@@ -17,18 +32,12 @@ def work(row):
     base={'id':pid,'title':title,'price_pln':row.get('price_pln',''),'url':row.get('url',''),'image':row.get('image','')}
     try:
         p=parse_public_product(base['url'])
-        d=asdict(p)
         desc=p.long_description or p.short_description or title
         short=p.short_description or desc[:500]
         image=base['image'] or (p.images[0] if p.images else '')
         folder=OUT/'products'/f"{safe_filename(pid)}_{safe_filename(title)}"
         folder.mkdir(parents=True,exist_ok=True)
-        local=''; image_error=''
-        if image:
-            _,_,ok,info=download_one_image((pid,image,1))
-            if ok:
-                src=Path(info); dst=folder/('zdjecie'+src.suffix.lower()); shutil.copy2(src,dst); local=dst.name
-            else: image_error=info
+        local,image_error=save_image(image,folder)
         result={**base,'description_short':short,'description_long':desc,'producer':p.producer,'sku':p.sku,'ean':p.ean,'availability':p.availability,'categories':p.categories,'attributes':p.attributes,'image':image,'local_image':local,'status':'ok' if desc and image and local else 'needs_review','error':image_error}
         (folder/'opis.txt').write_text(desc,encoding='utf-8')
         (folder/'produkt.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
