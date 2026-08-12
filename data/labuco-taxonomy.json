@@ -1,0 +1,21 @@
+{
+  "taxonomy": "Kategorie Labuco",
+  "version": 1,
+  "categories": [
+    {"name":"Growboxy i namioty","children":["Namioty uprawowe","Kompletne zestawy Growbox","Akcesoria do namiotów","Stelaże, siatki i łączniki"]},
+    {"name":"Oświetlenie","children":["Lampy LED Grow","HPS / MH","CMH","CFL i żarówki","Odbłyśniki","Zasilacze / ballasty","Programatory i sterowanie","Wieszaki i akcesoria montażowe"]},
+    {"name":"Wentylacja i klimat","children":["Wentylatory kanałowe","Wentylatory mieszające","Filtry węglowe","Przewody i złączki","Tłumiki","Zestawy wentylacyjne","Nawilżacze i osuszacze","Sterowanie temperaturą i klimatem"]},
+    {"name":"Nawozy i stymulatory","children":["Nawozy na wzrost","Nawozy na kwitnienie","Stymulatory i boostery","Ukorzeniacze","Enzymy i dodatki","Nawozy organiczne","Nawozy mineralne","Zestawy nawozów","Regulatory pH"]},
+    {"name":"Podłoża i media","children":["Ziemia","Kokos","Keramzyt","Perlit","Wełna mineralna i kostki","Podłoża do sadzonek"]},
+    {"name":"Doniczki, tace i pojemniki","children":["Doniczki plastikowe","Doniczki materiałowe","Air Pots i Root Pots","Doniczki hydroponiczne","Tace","Podstawki","Zbiorniki i pojemniki"]},
+    {"name":"Nawadnianie i hydroponika","children":["Systemy AutoPot","Systemy Blumat i kroplujące","Pompy wodne","Kroplowniki","Przewody i złączki","Zbiorniki","Napowietrzacze","Zestawy hydroponiczne","Akcesoria hydroponiczne"]},
+    {"name":"Pomiary i automatyka","children":["Mierniki pH","Mierniki EC / TDS","Termometry i higrometry","Mierniki kombinowane","Kontrolery i automatyka","Płyny kalibracyjne","Elektrody i akcesoria"]},
+    {"name":"Akcesoria do uprawy","children":["Klonowanie i ukorzenianie","Propagatory","Nożyczki i narzędzia","Miarki, pipety i spryskiwacze","Podpory i siatki","Wieszaki","Neutralizacja zapachów","Pozostałe akcesoria"]}
+  ],
+  "rules": {
+    "brand_is_filter_not_category": true,
+    "allow_multiple_categories": true,
+    "fallback_category": "Akcesoria do uprawy/Pozostałe akcesoria",
+    "manual_review_on_low_confidence": true
+  }
+}
