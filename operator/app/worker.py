@@ -1,5 +1,5 @@
 from __future__ import annotations
-import asyncio, os, threading, time
+import asyncio, os, threading
 from .executors import BrowserSession, github_cancel, http_request, shell_exec
 from .models import Risk, Step, TaskStatus
 from .policy import effective_risk
@@ -39,10 +39,13 @@ class Worker:
                 i=task['current_step']; steps=task['steps']
                 if i>=len(steps): self.store.update(tid,status=TaskStatus.completed.value); self.store.event(tid,'completed','Task completed'); return
                 step=Step.model_validate(steps[i]); risk=effective_risk(step)
+                preapproved={int(x) for x in task.get('metadata',{}).get('approved_steps',[]) if str(x).isdigit()}
                 if risk==Risk.deny:
                     self.store.update(tid,status=TaskStatus.failed.value,last_error=f'Denied by policy at step {i}'); self.store.event(tid,'denied',step.label or step.action); return
-                if risk==Risk.confirm and task['approved_step']!=i:
+                if risk==Risk.confirm and task['approved_step']!=i and i not in preapproved:
                     self.store.update(tid,status=TaskStatus.waiting_approval.value); self.store.event(tid,'approval_required',step.label or step.action,{'step':i}); return
+                if risk==Risk.confirm and i in preapproved:
+                    self.store.event(tid,'preapproved','Risky step pre-approved by task envelope',{'step':i})
                 if step.action=='wait.human':
                     self.store.update(tid,status=TaskStatus.waiting_human.value); self.store.event(tid,'human_required',step.label or 'Human handoff',{'step':i,'instructions':step.args}); return
                 self.store.event(tid,'step_start',step.label or step.action,{'step':i,'action':step.action})
