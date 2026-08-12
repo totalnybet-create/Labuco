@@ -30,6 +30,10 @@ jobs:
       - run: python -m pip install -r requirements.txt
       - run: python -m pytest -q
       - run: python -m compileall -q app
+      - name: MCP import smoke test
+        run: python -c "import app.mcp_server"
+      - name: Compose validation
+        run: docker compose config --quiet
 
   docker-build:
     runs-on: ubuntu-latest
