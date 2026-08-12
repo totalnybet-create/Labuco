@@ -40,3 +40,11 @@ class Store:
         with self._db() as db:
             rows=db.execute('SELECT * FROM events WHERE task_id=? ORDER BY id DESC LIMIT ?',(tid,limit)).fetchall()
             return [{**dict(r),'data':json.loads(r['data_json'])} for r in rows]
+    def mark_stale_running(self,stale_seconds:int)->list[str]:
+        cutoff=time.time()-stale_seconds
+        with self._db() as db:
+            ids=[r['id'] for r in db.execute("SELECT id FROM tasks WHERE status='running' AND updated_at<?",(cutoff,)).fetchall()]
+        for tid in ids:
+            self.update(tid,status=TaskStatus.failed.value,last_error=f'Watchdog: no checkpoint for {stale_seconds}s')
+            self.event(tid,'watchdog','Task marked failed because no checkpoint was recorded in time')
+        return ids
