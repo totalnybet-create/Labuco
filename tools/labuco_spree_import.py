@@ -8,9 +8,10 @@ Designed for the 3316-product Labuco catalog. Safe defaults:
 - optional --limit enables a small smoke import first,
 - deterministic Idempotency-Key per SKU reduces duplicate risk on retries.
 
-Expected input fields after pricing:
-labuco_sku, brand, our_title, our_short_description, our_description,
-category, wholesale_cost_pln, labuco_price_pln.
+Spree Admin API v3 accepts SKU/price/cost fields on a product. The importer
+performs a follow-up PATCH after creation to enforce those commercial fields on
+the product's default variant as well. This makes imports resilient across
+Spree minor versions where create/update parameter handling may differ.
 """
 
 from __future__ import annotations
@@ -53,6 +54,15 @@ def build_description(record: dict[str, Any]) -> str:
     return full
 
 
+def commercial_fields(record: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "sku": str(record["labuco_sku"]),
+        "price": float(record["labuco_price_pln"]),
+        "cost_price": float(record["wholesale_cost_pln"]),
+        "cost_currency": "PLN",
+    }
+
+
 def build_payload(record: dict[str, Any], category_map: dict[str, str], active: bool) -> dict[str, Any]:
     category_id = category_map.get(str(record.get("category") or ""))
     tags = ["Labuco"]
@@ -64,35 +74,76 @@ def build_payload(record: dict[str, Any], category_map: dict[str, str], active: 
         "name": record["our_title"],
         "description": build_description(record),
         "status": "active" if active else "draft",
-        "sku": record["labuco_sku"],
-        "price": float(record["labuco_price_pln"]),
-        "cost_price": float(record["wholesale_cost_pln"]),
-        "cost_currency": "PLN",
         "tags": tags,
+        **commercial_fields(record),
     }
     if category_id:
         payload["category_ids"] = [category_id]
     return payload
 
 
-def request_json(base_url: str, api_key: str, sku: str, payload: dict[str, Any]) -> dict[str, Any]:
-    url = base_url.rstrip("/") + "/api/v3/admin/products"
+def request_json(
+    base_url: str,
+    api_key: str,
+    method: str,
+    path: str,
+    payload: dict[str, Any],
+    idempotency_key: str,
+) -> dict[str, Any]:
+    url = base_url.rstrip("/") + path
     body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     request = urllib.request.Request(
         url,
         data=body,
-        method="POST",
+        method=method,
         headers={
             "Content-Type": "application/json",
             "Accept": "application/json",
             "x-spree-api-key": api_key,
-            "Idempotency-Key": f"labuco-product-{sku}",
-            "User-Agent": "LabucoCatalogImporter/1.0",
+            "Idempotency-Key": idempotency_key,
+            "User-Agent": "LabucoCatalogImporter/1.1",
         },
     )
     with urllib.request.urlopen(request, timeout=30) as response:
         raw = response.read().decode("utf-8")
         return json.loads(raw) if raw else {}
+
+
+def create_and_enforce_product(
+    base_url: str,
+    api_key: str,
+    sku: str,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    created = request_json(
+        base_url,
+        api_key,
+        "POST",
+        "/api/v3/admin/products",
+        payload,
+        f"labuco-product-{sku}",
+    )
+    product_id = created.get("id")
+    if not product_id:
+        raise RuntimeError(f"Spree create response has no product id for {sku}")
+
+    # The v3 Admin API documents sku/price/cost_price/cost_currency as product
+    # update fields. Enforce them after create so the default variant is
+    # populated even on versions where POST silently ignores one of them.
+    enforced = request_json(
+        base_url,
+        api_key,
+        "PATCH",
+        f"/api/v3/admin/products/{product_id}",
+        {
+            "sku": payload["sku"],
+            "price": payload["price"],
+            "cost_price": payload["cost_price"],
+            "cost_currency": payload["cost_currency"],
+        },
+        f"labuco-product-commercial-{sku}",
+    )
+    return enforced or created
 
 
 def main() -> int:
@@ -162,9 +213,17 @@ def main() -> int:
             continue
 
         try:
-            result = request_json(base_url, api_key, sku, payload)
+            result = create_and_enforce_product(base_url, api_key, sku, payload)
             report["created"] += 1
-            report["items"].append({"sku": sku, "result": "created", "id": result.get("id")})
+            report["items"].append(
+                {
+                    "sku": sku,
+                    "result": "created",
+                    "id": result.get("id"),
+                    "price": result.get("price", {}).get("amount") if isinstance(result.get("price"), dict) else result.get("price"),
+                    "cost_price": result.get("cost_price"),
+                }
+            )
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="replace")[:1000]
             report["failed"] += 1

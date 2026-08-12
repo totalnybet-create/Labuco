@@ -1,0 +1,110 @@
+name: Catalog Spree Smoke
+
+on:
+  push:
+    branches: [test/spree-20-product-import]
+    paths:
+      - '.github/workflows/catalog-spree-smoke.yml'
+      - 'tools/labuco_spree_import.py'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  import-20-products:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Boot Spree backend
+        working-directory: apps/storefront
+        run: docker compose -f e2e-backend/docker-compose.yml up -d --wait
+
+      - name: Seed base Spree store
+        working-directory: apps/storefront/e2e-backend
+        run: npx --yes @spree/cli@2.4.4 seed
+
+      - name: Create write-products API key
+        id: key
+        working-directory: apps/storefront/e2e-backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=$(npx --yes @spree/cli@2.4.4 api-key create --name CatalogSmoke --type secret --scopes write_products)
+          key=$(printf '%s\n' "$out" | grep -oE 'sk_[A-Za-z0-9_-]+' | head -n 1)
+          test -n "$key"
+          echo "key=$key" >> "$GITHUB_OUTPUT"
+
+      - name: Build 20-product Labuco fixture
+        run: |
+          python - <<'PY'
+          import json
+          rows=[]
+          for i in range(1,21):
+              rows.append({
+                  'labuco_sku': f'LAB-SMOKE-{i:03d}',
+                  'brand': 'Labuco Test',
+                  'our_title': f'Labuco test produktu {i}',
+                  'our_short_description': 'Kontrolny produkt Labuco do testu importu.',
+                  'our_description': 'Kontrolny rekord sprawdzający tworzenie produktu, ceny, kosztu i SKU w Spree.',
+                  'category': 'Test',
+                  'wholesale_cost_pln': '40.00',
+                  'labuco_price_pln': '50.90',
+                  'labuco_price_class': 'A'
+              })
+          open('/tmp/labuco-smoke.json','w',encoding='utf-8').write(json.dumps(rows,ensure_ascii=False))
+          PY
+
+      - name: Import 20 Labuco products as drafts
+        env:
+          SPREE_API_URL: http://localhost:4000
+          SPREE_API_KEY: ${{ steps.key.outputs.key }}
+        run: python tools/labuco_spree_import.py /tmp/labuco-smoke.json --commit --limit 20 --report /tmp/import-report.json
+
+      - name: Verify 20 products with SKU, PLN price and cost in Spree
+        working-directory: apps/storefront
+        run: |
+          docker compose -f e2e-backend/docker-compose.yml exec -T web bin/rails runner <<'RUBY' | tee /tmp/spree-verification.txt
+          products = Spree::Product.where("name LIKE ?", "Labuco test produktu %")
+          variants = Spree::Variant.where("sku LIKE ?", "LAB-SMOKE-%").includes(:prices)
+          commercial = variants.count do |variant|
+            price_ok = variant.prices.any? { |p| p.currency == "PLN" && p.amount.to_d == BigDecimal("50.90") }
+            cost_ok = variant.cost_currency == "PLN" && variant.cost_price.to_d == BigDecimal("40.00")
+            price_ok && cost_ok
+          end
+          puts "PRODUCTS=#{products.count}"
+          puts "SKUS=#{variants.count}"
+          puts "COMMERCIAL=#{commercial}"
+          exit 1 unless products.count == 20 && variants.count == 20 && commercial == 20
+          RUBY
+
+      - name: Upload import report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: labuco-spree-smoke-report
+          path: |
+            /tmp/import-report.json
+            /tmp/spree-verification.txt
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Dump logs on failure
+        if: failure()
+        working-directory: apps/storefront
+        run: docker compose -f e2e-backend/docker-compose.yml logs --no-color web || true
+
+      - name: Tear down
+        if: always()
+        working-directory: apps/storefront
+        run: docker compose -f e2e-backend/docker-compose.yml down -v
