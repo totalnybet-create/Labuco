@@ -1,0 +1,31 @@
+services:
+  operator:
+    build: .
+    ports: ["8080:8080"]
+    environment:
+      OPERATOR_API_TOKEN: ${OPERATOR_API_TOKEN:-change-me}
+      GITHUB_OPERATOR_TOKEN: ${GITHUB_OPERATOR_TOKEN:-}
+      BROWSER_HEADLESS: ${BROWSER_HEADLESS:-1}
+      BROWSER_CDP_URL: ${BROWSER_CDP_URL:-}
+      OPERATOR_DB: /app/data/operator.db
+    volumes:
+      - operator-data:/app/data
+      - operator-workspace:/app/workspace
+    restart: unless-stopped
+
+  operator-mcp:
+    build: .
+    command: ["python", "-m", "app.mcp_server"]
+    ports: ["127.0.0.1:8001:8001"]
+    environment:
+      OPERATOR_DB: /app/data/operator.db
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: 8001
+    volumes:
+      - operator-data:/app/data
+    depends_on: [operator]
+    restart: unless-stopped
+
+volumes:
+  operator-data:
+  operator-workspace:
