@@ -84,8 +84,8 @@ async def http_request(args,timeout_s):
         return {'status_code':r.status_code,'url':str(r.url),'body':body}
 
 async def github_cancel(args,timeout_s):
-    token=os.getenv('GITHUB_OPERATOR_TOKEN','').strip()
-    if not token: raise RuntimeError('GITHUB_OPERATOR_TOKEN is not configured')
+    token=(os.getenv('GITHUB_OPERATOR_TOKEN') or os.getenv('GITHUB_TOKEN') or '').strip()
+    if not token: raise RuntimeError('GITHUB_OPERATOR_TOKEN/GITHUB_TOKEN is not configured')
     owner=args['owner']; repo=args['repo']; run_id=int(args['run_id'])
     url=f'https://api.github.com/repos/{owner}/{repo}/actions/runs/{run_id}/cancel'
     headers={'Authorization':f'Bearer {token}','Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2026-03-10'}
