@@ -1,6 +1,6 @@
 # Operator
 
-Stały wykonawca automatyzacji: Playwright + shell + GitHub API + trwałe checkpointy + human handoff.
+Stały wykonawca automatyzacji: Playwright + shell + GitHub API + trwałe checkpointy + human handoff + MCP.
 
 ## Zasady
 - Każdy krok jest zapisywany w SQLite; wznowienie zaczyna od następnego niewykonanego kroku.
@@ -12,10 +12,14 @@ Stały wykonawca automatyzacji: Playwright + shell + GitHub API + trwałe checkp
 ## Start
 1. Skopiuj `.env.example` do `.env` i ustaw sekrety.
 2. `docker compose up --build -d`
-3. Otwórz `http://localhost:8080`.
+3. Panel: `http://localhost:8080`.
+4. MCP Streamable HTTP: `http://localhost:8001/mcp` — port jest domyślnie związany wyłącznie z `127.0.0.1`.
 
-## Obsługiwane akcje MVP
+## Narzędzia MCP
+`operator_create_task`, `operator_list_tasks`, `operator_task_status`, `operator_pause`, `operator_resume`, `operator_cancel`, `operator_approve`, `operator_human_resume`.
+
+## Obsługiwane akcje wykonawcze
 `browser.goto`, `browser.click`, `browser.fill`, `browser.press`, `browser.screenshot`, `browser.download`, `shell.exec`, `github.cancel_workflow`, `wait.human`.
 
 ## Następne moduły
-MCP transport, watchdog aktywności, Browser Use fallback, Supabase persistence, live browser view/noVNC, connector registry i audyt sekretów.
+Watchdog aktywności, Browser Use fallback, Supabase persistence, live browser view/noVNC, connector registry i audyt sekretów.
