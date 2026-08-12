@@ -6,7 +6,6 @@ on:
     paths:
       - '.github/workflows/catalog-spree-smoke.yml'
       - 'tools/labuco_spree_import.py'
-      - 'backend/**'
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -17,7 +16,7 @@ permissions:
 jobs:
   import-20-products:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,13 +26,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: Build project backend image
-        run: docker build -t project-spree:catalog-smoke backend
-
       - name: Boot Spree backend
         working-directory: apps/storefront
-        env:
-          SPREE_IMAGE: project-spree:catalog-smoke
         run: docker compose -f e2e-backend/docker-compose.yml up -d --wait
 
       - name: Seed base Spree store
