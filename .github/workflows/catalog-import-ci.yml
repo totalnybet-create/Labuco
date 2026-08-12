@@ -1,0 +1,56 @@
+name: Catalog Import CI
+
+on:
+  push:
+    paths:
+      - "tools/labuco_pricing.py"
+      - "tools/labuco_spree_import.py"
+      - "tests/test_labuco_pricing.py"
+      - ".github/workflows/catalog-import-ci.yml"
+  pull_request:
+    paths:
+      - "tools/labuco_pricing.py"
+      - "tools/labuco_spree_import.py"
+      - "tests/test_labuco_pricing.py"
+      - ".github/workflows/catalog-import-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile import tools
+        run: python -m py_compile tools/labuco_pricing.py tools/labuco_spree_import.py
+      - name: Run pricing tests
+        run: python -m unittest tests/test_labuco_pricing.py -v
+      - name: Smoke dry-run importer
+        run: |
+          cat > /tmp/catalog.json <<'JSON'
+          [
+            {
+              "labuco_sku": "LAB-TEST-001",
+              "brand": "Labuco Test",
+              "our_title": "Produkt testowy Labuco",
+              "our_short_description": "Krótki opis testowy.",
+              "our_description": "Pełny opis testowy.",
+              "category": "Akcesoria do uprawy",
+              "wholesale_cost_pln": "100.00",
+              "labuco_price_pln": "120.90",
+              "labuco_price_class": "A"
+            }
+          ]
+          JSON
+          python tools/labuco_spree_import.py /tmp/catalog.json --limit 1 --report /tmp/report.json
+          python - <<'PY'
+          import json
+          report = json.load(open('/tmp/report.json'))
+          assert report['mode'] == 'dry-run'
+          assert report['created'] == 1
+          assert report['failed'] == 0
+          PY
