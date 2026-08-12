@@ -9,7 +9,7 @@ class TaskStatus(str, Enum):
 class Risk(str, Enum):
     safe='safe'; confirm='confirm'; deny='deny'
 
-ActionType = Literal['browser.goto','browser.click','browser.fill','browser.press','browser.screenshot','browser.download','shell.exec','github.cancel_workflow','wait.human']
+ActionType = Literal['browser.goto','browser.click','browser.fill','browser.press','browser.screenshot','browser.download','http.request','shell.exec','github.cancel_workflow','wait.human']
 
 class Step(BaseModel):
     action: ActionType
@@ -17,6 +17,7 @@ class Step(BaseModel):
     label: str = ''
     risk: Risk = Risk.safe
     timeout_s: int = Field(default=60, ge=1, le=900)
+    retries: int = Field(default=2, ge=0, le=5)
 
 class TaskCreate(BaseModel):
     name: str
