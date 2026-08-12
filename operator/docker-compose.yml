@@ -1,0 +1,16 @@
+services:
+  operator:
+    build: .
+    ports: ["8080:8080"]
+    environment:
+      OPERATOR_API_TOKEN: ${OPERATOR_API_TOKEN:-change-me}
+      GITHUB_OPERATOR_TOKEN: ${GITHUB_OPERATOR_TOKEN:-}
+      BROWSER_HEADLESS: ${BROWSER_HEADLESS:-1}
+      BROWSER_CDP_URL: ${BROWSER_CDP_URL:-}
+    volumes:
+      - operator-data:/app/data
+      - operator-workspace:/app/workspace
+    restart: unless-stopped
+volumes:
+  operator-data:
+  operator-workspace:
