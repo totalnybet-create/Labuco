@@ -1,6 +1,8 @@
 "use client";
 
 import type { Product } from "@spree/sdk";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { ReactElement } from "react";
 import { useCallback, useRef, useState } from "react";
 import type Swiper from "swiper";
@@ -8,8 +10,6 @@ import { Navigation } from "swiper/modules";
 import { Swiper as SwiperComponent, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { ProductCard } from "@/components/products/ProductCard";
 
 interface ProductCarouselProps {
@@ -17,6 +17,7 @@ interface ProductCarouselProps {
   basePath: string;
   /** Optional currency used for analytics in each ProductCard. */
   currency?: string;
+  showQuickAdd?: boolean;
 }
 
 const NAV_BUTTON_BASE =
@@ -26,6 +27,7 @@ export function ProductCarousel({
   products,
   basePath,
   currency,
+  showQuickAdd = false,
 }: ProductCarouselProps): ReactElement {
   const t = useTranslations("products");
   const [isBeginning, setIsBeginning] = useState(true);
@@ -104,6 +106,7 @@ export function ProductCarousel({
               listName="Featured Products"
               currency={currency}
               fetchPriority={index === 0 ? "high" : undefined}
+              showQuickAdd={showQuickAdd}
             />
           </SwiperSlide>
         ))}
