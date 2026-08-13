@@ -53,7 +53,7 @@
     "updatePreferencesFailed": "Die regionalen Einstellungen konnten nicht aktualisiert werden. Bitte versuchen Sie es erneut."
   },
   "footer": {
-    "description": "Open-Source-E-Commerce basierend auf Spree REST API, TypeScript SDK und Next.js. Selbst hosten. Eigene Daten. Keine Plattformgebühren.",
+    "description": "Ausrüstung, Dünger, Beleuchtung, Belüftung, Messgeräte und Zubehör für den Indoor-Anbau.",
     "forkOnGithub": "Diese Storefront auf GitHub forken",
     "quickstartGuide": "Schnellstartanleitung",
     "learnMore": "Mehr über Spree Commerce erfahren",
@@ -66,12 +66,12 @@
     "cart": "Warenkorb",
     "policies": "Richtlinien",
     "poweredBy": "Betrieben von",
-    "copyright": "© {year} {storeName}. Unterstützt durch Spree Commerce.",
+    "copyright": "© {year} {storeName}. Alle Rechte vorbehalten.",
     "wholesale": "Handel & Großhandel"
   },
   "home": {
-    "welcome": "{storeName} Storefront",
-    "heroDescription": "Eine produktionsreife, quelloffene Storefront mit Next.js, React und dem Spree TypeScript SDK. Selbst hosten. Eigener Stack. Kein Vendor Lock-in. Keine Plattformgebühren.",
+    "welcome": "{storeName} — Ausrüstung für den Indoor-Anbau",
+    "heroDescription": "Dünger, Beleuchtung, Belüftung, Messgeräte und Zubehör in einem Fachgeschäft.",
     "shopNow": "Alle Produkte",
     "forkOnGithub": "Auf GitHub forken",
     "quickstartGuide": "Schnellstartanleitung",

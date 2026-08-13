@@ -28,6 +28,20 @@ zachowaniem informacji licencyjnych znajdujących się w obu częściach systemu
 | `apps/storefront/` | Next.js 16 + React 19 + TypeScript | szybki, responsywny interfejs dla klientów |
 | `docker-compose.yml` | Docker Compose | lokalne uruchomienie usług i bazy danych |
 
+## Labuco Pilot — lokalny pomocnik
+
+Projekt zawiera panel automatyzacji dopasowany do Labuco. Potrafi samodzielnie
+sprawdzić cały projekt, zweryfikować próbę 1000 produktów oraz uruchomić i
+monitorować pełną synchronizację 3316 ofert. Każde zadanie zapisuje checkpointy,
+więc po przerwaniu można je wznowić od ostatniego wykonanego kroku.
+
+```bash
+npm run helper
+```
+
+Panel uruchamia się pod adresem `http://localhost:8080`. Szczegóły konfiguracji
+i połączenia MCP znajdują się w [`operator/README.md`](operator/README.md).
+
 Model produktu stanowi gotowy punkt wyjścia dla ogłoszenia. Pola i procesy
 specyficzne dla Labuco — np. sprzedawcy, lokalizacja, publikacja i moderacja —
 można rozszerzać w Rails bez przepisywania katalogu, panelu i całego frontendu.

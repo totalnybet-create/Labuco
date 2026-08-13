@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from .labuco import PLAN_DETAILS, create_plan, overview
 from .models import Approval, HumanResume, TaskCreate, TaskStatus
 from .store import Store
 from .worker import Worker
@@ -24,6 +25,12 @@ def dashboard(): return FileResponse(static/'index.html')
 def health(): return {'ok':True,'time':time.time()}
 @app.get('/api/tasks',dependencies=[Depends(auth)])
 def tasks(): return store.list()
+@app.get('/api/labuco',dependencies=[Depends(auth)])
+def labuco_status(): return overview()
+@app.post('/api/labuco/plans/{plan}',dependencies=[Depends(auth)])
+def labuco_start(plan:str):
+    if plan not in PLAN_DETAILS: raise HTTPException(404,'Unknown Labuco plan')
+    return store.create(create_plan(plan))
 @app.post('/api/tasks',dependencies=[Depends(auth)])
 def create(data:TaskCreate): return store.create(data)
 @app.get('/api/tasks/{tid}',dependencies=[Depends(auth)])

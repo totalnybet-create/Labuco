@@ -14,7 +14,10 @@
     "console": "spree console",
     "api": "spree api",
     "auth": "spree auth",
-    "api-key": "spree api-key"
+    "api-key": "spree api-key",
+    "helper": "docker compose -f operator/docker-compose.yml up --build -d",
+    "helper:logs": "docker compose -f operator/docker-compose.yml logs -f operator",
+    "helper:stop": "docker compose -f operator/docker-compose.yml down"
   },
   "dependencies": {
     "@spree/cli": "^2.4.4",

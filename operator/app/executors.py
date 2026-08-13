@@ -1,5 +1,5 @@
 from __future__ import annotations
-import asyncio, os
+import asyncio, calendar, os, time
 from pathlib import Path
 from typing import Any
 import httpx
@@ -88,8 +88,74 @@ async def github_cancel(args,timeout_s):
     if not token: raise RuntimeError('GITHUB_OPERATOR_TOKEN/GITHUB_TOKEN is not configured')
     owner=args['owner']; repo=args['repo']; run_id=int(args['run_id'])
     url=f'https://api.github.com/repos/{owner}/{repo}/actions/runs/{run_id}/cancel'
-    headers={'Authorization':f'Bearer {token}','Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2026-03-10'}
+    headers={'Authorization':f'Bearer {token}','Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}
     async with httpx.AsyncClient(timeout=timeout_s) as c:
         r=await c.post(url,headers=headers)
         if r.status_code not in (202,409): raise RuntimeError(f'GitHub {r.status_code}: {r.text[:1000]}')
         return {'status_code':r.status_code,'accepted':r.status_code==202}
+
+def _github_headers():
+    token=(os.getenv('GITHUB_OPERATOR_TOKEN') or os.getenv('GITHUB_TOKEN') or '').strip()
+    if not token: raise RuntimeError('GITHUB_OPERATOR_TOKEN/GITHUB_TOKEN is not configured')
+    return {
+        'Authorization':f'Bearer {token}',
+        'Accept':'application/vnd.github+json',
+        'X-GitHub-Api-Version':'2022-11-28',
+        'User-Agent':'LabucoPilot/1.0',
+    }
+
+async def github_dispatch(args,timeout_s):
+    owner=args['owner']; repo=args['repo']; workflow=args['workflow']
+    url=f'https://api.github.com/repos/{owner}/{repo}/actions/workflows/{workflow}/dispatches'
+    payload={'ref':args.get('ref','main'),'inputs':args.get('inputs',{})}
+    dispatched_at=time.time()
+    async with httpx.AsyncClient(timeout=timeout_s) as c:
+        r=await c.post(url,headers=_github_headers(),json=payload)
+        if r.status_code!=204: raise RuntimeError(f'GitHub {r.status_code}: {r.text[:1000]}')
+    return {'accepted':True,'workflow':workflow,'ref':payload['ref'],'dispatched_at':dispatched_at}
+
+async def github_wait(args,timeout_s,heartbeat=None):
+    owner=args['owner']; repo=args['repo']; workflow=args['workflow']
+    branch=args.get('branch','main'); poll_s=max(5,min(int(args.get('poll_s',20)),60))
+    max_age_s=max(60,int(args.get('max_age_s',600)))
+    deadline=time.monotonic()+timeout_s; selected=None; selected_id=None
+    url=f'https://api.github.com/repos/{owner}/{repo}/actions/workflows/{workflow}/runs'
+    async with httpx.AsyncClient(timeout=45) as c:
+        while time.monotonic()<deadline:
+            if selected_id:
+                run_url=f'https://api.github.com/repos/{owner}/{repo}/actions/runs/{selected_id}'
+                r=await c.get(run_url,headers=_github_headers())
+                if r.status_code>=400: raise RuntimeError(f'GitHub {r.status_code}: {r.text[:1000]}')
+                selected=r.json()
+                runs=[selected]
+            else:
+                r=await c.get(url,headers=_github_headers(),params={'branch':branch,'event':'workflow_dispatch','per_page':10})
+                if r.status_code>=400: raise RuntimeError(f'GitHub {r.status_code}: {r.text[:1000]}')
+                runs=r.json().get('workflow_runs',[])
+            recent=list(runs) if selected_id else []
+            if not selected_id:
+                now=time.time()
+                for run in runs:
+                    created=run.get('created_at','')
+                    try:
+                        created_ts=calendar.timegm(time.strptime(created,'%Y-%m-%dT%H:%M:%SZ'))
+                    except (TypeError,ValueError):
+                        created_ts=0
+                    if now-created_ts<=max_age_s: recent.append(run)
+            if recent:
+                selected=max(recent,key=lambda x:x.get('run_number',0))
+                selected_id=selected.get('id')
+                status=selected.get('status'); conclusion=selected.get('conclusion')
+                if heartbeat: heartbeat({'status':status,'conclusion':conclusion,'run_number':selected.get('run_number')})
+                if status=='completed':
+                    result={
+                        'run_id':selected.get('id'),'run_number':selected.get('run_number'),
+                        'status':status,'conclusion':conclusion,'url':selected.get('html_url'),
+                    }
+                    if conclusion!='success': raise RuntimeError(f"Workflow {workflow} finished with {conclusion}: {result['url']}")
+                    return result
+            elif heartbeat:
+                heartbeat({'status':'waiting_for_run','workflow':workflow})
+            await asyncio.sleep(poll_s)
+    run_url=selected.get('html_url') if selected else ''
+    raise TimeoutError(f'Workflow {workflow} did not finish in {timeout_s}s. {run_url}')

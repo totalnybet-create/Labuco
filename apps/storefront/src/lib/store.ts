@@ -37,7 +37,7 @@ export function getStoreUrl(): string | undefined {
  * Get the store name from environment variables.
  */
 export function getStoreName(): string {
-  return process.env.NEXT_PUBLIC_STORE_NAME || "Spree Store";
+  return process.env.NEXT_PUBLIC_STORE_NAME || "Labuco";
 }
 
 /**
@@ -46,7 +46,7 @@ export function getStoreName(): string {
 export function getStoreDescription(): string {
   return (
     process.env.NEXT_PUBLIC_STORE_DESCRIPTION ||
-    "A modern e-commerce storefront powered by Spree Commerce and Next.js."
+    "Sprzęt, nawozy, oświetlenie, wentylacja, pomiary i akcesoria do uprawy indoor."
   );
 }
 
@@ -54,14 +54,14 @@ export function getStoreDescription(): string {
  * Get the default country ISO code (lowercase).
  */
 export function getDefaultCountry(): string {
-  return (process.env.NEXT_PUBLIC_DEFAULT_COUNTRY || "us").toLowerCase();
+  return (process.env.NEXT_PUBLIC_DEFAULT_COUNTRY || "pl").toLowerCase();
 }
 
 /**
  * Get the default locale code.
  */
 export function getDefaultLocale(): string {
-  return process.env.NEXT_PUBLIC_DEFAULT_LOCALE || "en";
+  return process.env.NEXT_PUBLIC_DEFAULT_LOCALE || "pl";
 }
 
 /**

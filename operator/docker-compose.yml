@@ -1,16 +1,19 @@
 services:
   operator:
     build: .
-    ports: ["8080:8080"]
+    ports: ["${OPERATOR_BIND:-127.0.0.1}:8080:8080"]
     environment:
-      OPERATOR_API_TOKEN: ${OPERATOR_API_TOKEN:-change-me}
+      OPERATOR_API_TOKEN: ${OPERATOR_API_TOKEN:-}
       GITHUB_OPERATOR_TOKEN: ${GITHUB_OPERATOR_TOKEN:-}
       BROWSER_HEADLESS: ${BROWSER_HEADLESS:-1}
       BROWSER_CDP_URL: ${BROWSER_CDP_URL:-}
       OPERATOR_DB: /app/data/operator.db
+      LABUCO_REPO: /workspace/labuco
+      LABUCO_GITHUB_OWNER: ${LABUCO_GITHUB_OWNER:-totalnybet-create}
+      LABUCO_GITHUB_REPO: ${LABUCO_GITHUB_REPO:-Labuco}
     volumes:
       - operator-data:/app/data
-      - operator-workspace:/app/workspace
+      - ..:/workspace/labuco
     restart: unless-stopped
 
   operator-mcp:
@@ -21,11 +24,15 @@ services:
       OPERATOR_DB: /app/data/operator.db
       MCP_HOST: 0.0.0.0
       MCP_PORT: 8001
+      LABUCO_REPO: /workspace/labuco
+      LABUCO_GITHUB_OWNER: ${LABUCO_GITHUB_OWNER:-totalnybet-create}
+      LABUCO_GITHUB_REPO: ${LABUCO_GITHUB_REPO:-Labuco}
+      GITHUB_OPERATOR_TOKEN: ${GITHUB_OPERATOR_TOKEN:-}
     volumes:
       - operator-data:/app/data
+      - ..:/workspace/labuco
     depends_on: [operator]
     restart: unless-stopped
 
 volumes:
   operator-data:
-  operator-workspace:

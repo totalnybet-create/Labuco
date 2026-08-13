@@ -53,7 +53,7 @@
     "updatePreferencesFailed": "Nie udało się zaktualizować preferencji regionalnych. Spróbuj ponownie."
   },
   "footer": {
-    "description": "Sklep e-commerce open source oparty na Spree REST API, TypeScript SDK i Next.js. Hostuj samodzielnie. Twoje dane. Zero opłat platformowych.",
+    "description": "Sprzęt, nawozy, oświetlenie, wentylacja, pomiary i akcesoria do uprawy indoor.",
     "forkOnGithub": "Forkuj ten sklep na GitHubie",
     "quickstartGuide": "Przewodnik szybkiego startu",
     "learnMore": "Dowiedz się więcej o Spree Commerce",
@@ -66,12 +66,12 @@
     "cart": "Koszyk",
     "policies": "Regulaminy",
     "poweredBy": "Zasilany przez",
-    "copyright": "© {year} {storeName}. Zasilany przez Spree Commerce.",
+    "copyright": "© {year} {storeName}. Wszystkie prawa zastrzeżone.",
     "wholesale": "Handel i sprzedaż hurtowa"
   },
   "home": {
-    "welcome": "{storeName} Storefront",
-    "heroDescription": "Gotowy do produkcji, otwartoźródłowy storefront zbudowany z Next.js, React i Spree TypeScript SDK. Hostuj samodzielnie. Twój stack. Brak vendor lock-in. Zero opłat platformowych.",
+    "welcome": "{storeName} — sprzęt do uprawy indoor",
+    "heroDescription": "Nawozy, oświetlenie, wentylacja, pomiary i akcesoria w jednym miejscu.",
     "shopNow": "Wszystkie produkty",
     "forkOnGithub": "Forkuj na GitHubie",
     "quickstartGuide": "Przewodnik szybkiego startu",
