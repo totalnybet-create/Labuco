@@ -3,11 +3,10 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { FeaturedProducts } from "@/components/products/FeaturedProducts";
 import { ProductCardSkeleton } from "@/components/products/ProductCardSkeleton";
-import { Button } from "@/components/ui/button";
 
 function CarouselSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 md:gap-5">
       {[...Array(4)].map((_, i) => (
         <ProductCardSkeleton key={i} />
       ))}
@@ -32,16 +31,16 @@ export async function FeaturedProductsSection({
     locale: locale as Locale,
     namespace: "home",
   });
+  const isPolish = locale === "pl";
 
   return (
-    <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 featured-products">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-bold text-gray-900">
-          {t("featuredProducts")}
-        </h2>
-        <Button variant="link" asChild>
-          <Link href={`${basePath}/products`}>{t("viewAll")} &rarr;</Link>
-        </Button>
+    <section className="labuco-section labuco-bestsellers featured-products">
+      <div className="labuco-section-heading">
+        <h2>{isPolish ? "Bestsellery" : t("featuredProducts")}</h2>
+        <Link href={`${basePath}/products`} className="labuco-view-all">
+          {isPolish ? "Zobacz wszystkie" : t("viewAll")}{" "}
+          <span aria-hidden="true">→</span>
+        </Link>
       </div>
       <Suspense fallback={<CarouselSkeleton />}>
         <FeaturedProducts

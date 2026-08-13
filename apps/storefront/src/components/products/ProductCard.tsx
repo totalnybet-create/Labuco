@@ -1,11 +1,13 @@
 "use client";
 
 import type { Product } from "@spree/sdk";
+import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { memo } from "react";
 import { HiddenPricePrompt } from "@/components/products/HiddenPricePrompt";
 import { ProductImage } from "@/components/ui/product-image";
+import { useCart } from "@/contexts/CartContext";
 import { trackSelectItem } from "@/lib/analytics/gtm";
 
 interface ProductCardProps {
@@ -16,8 +18,39 @@ interface ProductCardProps {
   listId?: string;
   listName?: string;
   fetchPriority?: "high" | "low" | "auto";
-  /** Optional currency used for analytics; omit to skip the select_item event. */
   currency?: string;
+  showQuickAdd?: boolean;
+}
+
+interface QuickAddButtonProps {
+  product: Product;
+}
+
+function QuickAddButton({ product }: QuickAddButtonProps) {
+  const { addItem, updating } = useCart();
+  const variantId = product.default_variant_id;
+
+  if (!variantId || !product.purchasable) return null;
+
+  const handleQuickAdd = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (updating) return;
+    await addItem(variantId, 1);
+  };
+
+  return (
+    <button
+      type="button"
+      className="labuco-card-cart relative z-10"
+      disabled={updating}
+      onClick={handleQuickAdd}
+      aria-label={`Dodaj ${product.name} do koszyka`}
+    >
+      <ShoppingCart aria-hidden="true" />
+      <span>{updating ? "Dodaję…" : "Do koszyka"}</span>
+    </button>
+  );
 }
 
 export const ProductCard = memo(function ProductCard({
@@ -29,11 +62,10 @@ export const ProductCard = memo(function ProductCard({
   listName,
   fetchPriority,
   currency,
+  showQuickAdd = false,
 }: ProductCardProps) {
   const t = useTranslations("products");
   const imageUrl = product.thumbnail_url || null;
-
-  // Current display price
   const displayPrice = product.price?.display_amount;
 
   const currentAmountCents = product.price?.amount_in_cents;
@@ -62,7 +94,6 @@ export const ProductCard = memo(function ProductCard({
 
   return (
     <div className="group relative">
-      {/* Image */}
       <div className="relative aspect-square bg-gray-100 rounded-md overflow-hidden">
         <ProductImage
           src={imageUrl}
@@ -80,12 +111,8 @@ export const ProductCard = memo(function ProductCard({
         )}
       </div>
 
-      {/* Content */}
       <div className="p-4">
         <h3 className="text-sm font-medium text-gray-900 group-hover:text-primary transition-colors line-clamp-2">
-          {/* Stretched link: the ::after overlay keeps the whole card clickable
-              without wrapping the content in an <a> — HiddenPricePrompt renders
-              its own link, and anchors can't nest. */}
           <Link
             href={`${basePath}/products/${product.slug}${categoryId ? `?category_id=${categoryId}` : ""}`}
             className="after:absolute after:inset-0"
@@ -101,8 +128,6 @@ export const ProductCard = memo(function ProductCard({
               {displayPrice}
             </span>
           ) : (
-            // Null price: a deliberate hide inside a HiddenPricingProvider
-            // (renders a sign-in prompt), otherwise renders nothing.
             <HiddenPricePrompt />
           )}
           {onSale && strikethroughPrice && (
@@ -115,6 +140,8 @@ export const ProductCard = memo(function ProductCard({
         {!product.purchasable && (
           <span className="mt-2 text-sm text-gray-500">{t("outOfStock")}</span>
         )}
+
+        {showQuickAdd && <QuickAddButton product={product} />}
       </div>
     </div>
   );

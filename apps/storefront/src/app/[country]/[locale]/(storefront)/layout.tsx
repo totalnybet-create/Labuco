@@ -1,9 +1,12 @@
+import "@/app/labuco.css";
+import "@/app/labuco-products.css";
 import type { Category } from "@spree/sdk";
 import Link from "next/link";
 import { connection } from "next/server";
 import { cache, Suspense } from "react";
 import { Footer, FooterCategoryLinks } from "@/components/layout/Footer";
 import { Header, HeaderMobileMenu } from "@/components/layout/Header";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { getCategories } from "@/lib/data/categories";
 
 interface StorefrontLayoutProps {
@@ -20,29 +23,17 @@ interface StorefrontNavigationProps {
 const EMPTY_CATEGORIES: Category[] = [];
 
 function MobileNavigationFallback() {
-  return (
-    <div
-      aria-hidden="true"
-      className="size-10 rounded-md bg-gray-100 animate-pulse motion-reduce:animate-none"
-    />
-  );
+  return <div aria-hidden="true" className="size-10 rounded-md bg-white/5" />;
 }
 
 function FooterCategoryLinksFallback() {
   return (
     <li aria-hidden="true">
-      <span className="block h-4 w-24 rounded bg-white/10 animate-pulse motion-reduce:animate-none" />
+      <span className="block h-4 w-24 rounded bg-white/10" />
     </li>
   );
 }
 
-/**
- * Navigation categories are optional chrome, so defer their first load until
- * there is a real request instead of making every prerendered page contact the
- * Store API. Primitive arguments let React deduplicate category navigation
- * consumers within the request; successful responses keep using the persistent
- * cache in getCategories.
- */
 const getRootCategories = cache(async (country: string, locale: string) => {
   await connection();
 
@@ -89,7 +80,6 @@ async function StorefrontMobileNavigation({
   locale,
 }: StorefrontNavigationProps) {
   const rootCategories = await getRootCategories(country, locale);
-
   return (
     <HeaderMobileMenu rootCategories={rootCategories} basePath={basePath} />
   );
@@ -101,7 +91,6 @@ async function StorefrontCategoryNavigation({
   locale,
 }: StorefrontNavigationProps) {
   const rootCategories = await getRootCategories(country, locale);
-
   if (rootCategories.length === 0) return null;
 
   return (
@@ -117,7 +106,6 @@ async function StorefrontFooterCategoryLinks({
   locale,
 }: StorefrontNavigationProps) {
   const rootCategories = await getRootCategories(country, locale);
-
   return (
     <FooterCategoryLinks rootCategories={rootCategories} basePath={basePath} />
   );
@@ -152,7 +140,7 @@ export default async function StorefrontLayout({
           locale={locale}
         />
       </Suspense>
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 labuco-storefront-main">{children}</main>
       <Footer
         basePath={basePath}
         locale={locale as Locale}
@@ -166,6 +154,7 @@ export default async function StorefrontLayout({
           </Suspense>
         }
       />
+      <MobileBottomNav basePath={basePath} />
     </>
   );
 }

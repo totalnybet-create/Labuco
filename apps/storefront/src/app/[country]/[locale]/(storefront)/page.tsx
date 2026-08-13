@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { FeaturedProductsSection } from "@/components/home/FeaturedProductsSection";
 import { HeroSection } from "@/components/home/HeroSection";
-import { WholesaleSection } from "@/components/home/WholesaleSection";
+import {
+  KnowledgeSection,
+  NewsletterSection,
+  PopularCategoriesSection,
+  TrustStrip,
+} from "@/components/home/LabucoLandingSections";
 import { resolveCurrency } from "@/lib/data/markets";
 import { generateHomeMetadata } from "@/lib/metadata/home";
 
@@ -25,15 +30,18 @@ export default async function HomePage({ params }: HomePageProps) {
   const currency = await resolveCurrency(country);
 
   return (
-    <div>
+    <div className="labuco-home">
       <HeroSection basePath={basePath} locale={locale} />
+      <PopularCategoriesSection basePath={basePath} />
       <FeaturedProductsSection
         basePath={basePath}
         locale={locale}
         country={country}
         currency={currency}
       />
-      <WholesaleSection basePath={basePath} locale={locale} />
+      <TrustStrip />
+      <KnowledgeSection basePath={basePath} />
+      <NewsletterSection />
     </div>
   );
 }

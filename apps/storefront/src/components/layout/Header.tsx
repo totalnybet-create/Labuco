@@ -1,5 +1,5 @@
 import type { Category } from "@spree/sdk";
-import { User } from "lucide-react";
+import { Heart, User } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
@@ -7,7 +7,6 @@ import type { ReactNode } from "react";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { CartButton } from "@/components/layout/CartButton";
 import { SearchToggle } from "@/components/layout/SearchToggle";
-import { Button } from "@/components/ui/button";
 import { isWholesaleEnabled } from "@/lib/spree";
 import { getStoreName } from "@/lib/store";
 
@@ -17,9 +16,7 @@ const LazyMobileMenu = dynamic(
       default: mod.MobileMenu,
     })),
   {
-    loading: () => (
-      <div className="inline-flex items-center justify-center h-10 w-10" />
-    ),
+    loading: () => <div className="size-10" aria-hidden="true" />,
   },
 );
 
@@ -29,7 +26,7 @@ const LazyRegionPreferences = dynamic(
       default: mod.RegionPreferences,
     })),
   {
-    loading: () => <div className="size-11" aria-hidden="true" />,
+    loading: () => <div className="size-10" aria-hidden="true" />,
   },
 );
 
@@ -65,45 +62,43 @@ export async function Header({
   mobileNavigation,
 }: HeaderProps) {
   const t = await getTranslations({ locale, namespace: "header" });
-  const wholesaleEnabled = isWholesaleEnabled();
 
   return (
     <SearchToggle
       basePath={basePath}
       left={mobileNavigation}
       center={
-        <Link href={basePath || "/"} className="flex items-center min-w-0">
-          <BrandLogo name={storeName} />
+        <Link href={basePath || "/"} className="labuco-logo-link">
+          <BrandLogo name={storeName} inverted />
         </Link>
       }
       rightStart={
-        <div className="hidden lg:flex lg:items-center lg:gap-1">
-          {/* Trade portal entry point — understated, secondary to the catalog nav.
-              Only shown when the wholesale addon is enabled. */}
-          {wholesaleEnabled && (
-            <Link
-              href={`${basePath}/wholesale`}
-              className="px-2 py-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors whitespace-nowrap"
-            >
-              {t("wholesale")}
-            </Link>
-          )}
+        <div className="labuco-region-control">
           <LazyRegionPreferences variant="header" />
         </div>
       }
       rightEnd={
         <>
-          {/* Account - desktop only */}
-          <div className="hidden md:block">
-            <Button variant="ghost" size="icon-lg" asChild>
-              <Link href={`${basePath}/account`} aria-label={t("account")}>
-                <User className="size-5" />
-              </Link>
-            </Button>
+          <Link
+            href={`${basePath}/account`}
+            className="labuco-header-action"
+            aria-label={t("account")}
+          >
+            <User aria-hidden="true" />
+            <span>Konto</span>
+          </Link>
+          <Link
+            href={`${basePath}/account`}
+            className="labuco-header-action"
+            aria-label="Ulubione"
+          >
+            <Heart aria-hidden="true" />
+            <span>Ulubione</span>
+          </Link>
+          <div className="labuco-cart-action">
+            <CartButton />
+            <span>Koszyk</span>
           </div>
-
-          {/* Cart */}
-          <CartButton />
         </>
       }
     />
