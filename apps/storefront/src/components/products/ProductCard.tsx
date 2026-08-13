@@ -81,9 +81,9 @@ export const ProductCard = memo(function ProductCard({
 
   const strikethroughPrice = onSale
     ? ((product.original_price?.display_amount &&
-        product.original_price.display_amount !== displayPrice
-          ? product.original_price.display_amount
-          : product.price?.display_compare_at_amount) ?? null)
+      product.original_price.display_amount !== displayPrice
+        ? product.original_price.display_amount
+        : product.price?.display_compare_at_amount) ?? null)
     : null;
 
   const handleClick = () => {
