@@ -12,11 +12,16 @@ on:
         required: false
         default: "0"
   push:
+    branches: [main]
     paths:
       - "tools/growtent_catalog_importer.py"
       - "tools/growtent-requirements.txt"
       - "tools/labuco_supabase_prepare.py"
       - ".github/workflows/growtent-catalog.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write

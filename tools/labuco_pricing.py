@@ -70,7 +70,13 @@ def classify(realized_markup: Decimal, gross_profit: Decimal) -> str:
 
 
 def price_product(record: dict[str, Any]) -> dict[str, Any]:
-    cost = parse_money(record.get("source_price_with_question") or record.get("source_price"))
+    cost = parse_money(
+        record.get("wholesale_cost_pln")
+        or record.get("source_price_with_question")
+        or record.get("source_price")
+        or record.get("price_pln")
+        or record.get("price")
+    )
     markup = target_markup(cost)
     target = round_to_90(cost * (Decimal("1") + markup))
 
@@ -99,7 +105,7 @@ def price_product(record: dict[str, Any]) -> dict[str, Any]:
             "labuco_gross_profit_pln": f"{gross_profit:.2f}",
             "labuco_markup_pct": float((realized_markup * 100).quantize(Decimal("0.01"))),
             "labuco_margin_pct": float((margin_on_sale * 100).quantize(Decimal("0.01"))),
-            "labuco_price_class": tier,
+            "price_class": tier,
             "target_markup_pct": float((markup * 100).quantize(Decimal("0.01"))),
             "market_check_required": market_price is None,
             "market_reference_price_pln": f"{market_price:.2f}" if market_price is not None else None,
@@ -131,7 +137,7 @@ def main() -> int:
 
     classes = {"A": 0, "B": 0, "C": 0}
     for item in priced:
-        classes[item["labuco_price_class"]] += 1
+        classes[item["price_class"]] += 1
     print(json.dumps({"priced": len(priced), "errors": len(errors), "classes": classes}, ensure_ascii=False))
     if errors:
         err_path = args.output.with_suffix(".errors.json")

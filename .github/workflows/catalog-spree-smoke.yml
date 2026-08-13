@@ -24,7 +24,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Boot Spree backend
         working-directory: apps/storefront
@@ -43,6 +43,7 @@ jobs:
           out=$(npx --yes @spree/cli@2.4.4 api-key create --name CatalogSmoke --type secret --scopes write_products)
           key=$(printf '%s\n' "$out" | grep -oE 'sk_[A-Za-z0-9_-]+' | head -n 1)
           test -n "$key"
+          echo "::add-mask::$key"
           echo "key=$key" >> "$GITHUB_OUTPUT"
 
       - name: Build 20-product Labuco fixture
@@ -54,22 +55,33 @@ jobs:
               rows.append({
                   'labuco_sku': f'LAB-SMOKE-{i:03d}',
                   'brand': 'Labuco Test',
-                  'our_title': f'Labuco test produktu {i}',
-                  'our_short_description': 'Kontrolny produkt Labuco do testu importu.',
-                  'our_description': 'Kontrolny rekord sprawdzający tworzenie produktu, ceny, kosztu i SKU w Spree.',
+                  'title': f'Labuco test produktu {i}',
+                  'short_description': 'Kontrolny produkt Labuco do testu importu.',
+                  'description': 'Kontrolny rekord sprawdzający tworzenie produktu, ceny, kosztu i SKU w Spree.',
                   'category': 'Test',
                   'wholesale_cost_pln': '40.00',
                   'labuco_price_pln': '50.90',
-                  'labuco_price_class': 'A'
+                  'price_class': 'A'
               })
           open('/tmp/labuco-smoke.json','w',encoding='utf-8').write(json.dumps(rows,ensure_ascii=False))
           PY
 
-      - name: Import 20 Labuco products as drafts
+      - name: Import 20 Labuco products as drafts twice
         env:
           SPREE_API_URL: http://localhost:4000
           SPREE_API_KEY: ${{ steps.key.outputs.key }}
-        run: python tools/labuco_spree_import.py /tmp/labuco-smoke.json --commit --limit 20 --report /tmp/import-report.json
+        run: |
+          python tools/labuco_spree_import.py /tmp/labuco-smoke.json --commit --limit 20 --report /tmp/import-report-create.json
+          python tools/labuco_spree_import.py /tmp/labuco-smoke.json --commit --limit 20 --report /tmp/import-report-update.json
+          python - <<'PY'
+          import json
+          with open('/tmp/import-report-create.json', encoding='utf-8') as report_file:
+              created = json.load(report_file)
+          with open('/tmp/import-report-update.json', encoding='utf-8') as report_file:
+              updated = json.load(report_file)
+          assert created['created'] == 20 and created['updated'] == 0 and created['failed'] == 0
+          assert updated['created'] == 0 and updated['updated'] == 20 and updated['failed'] == 0
+          PY
 
       - name: Verify 20 products with SKU, PLN price and cost in Spree
         working-directory: apps/storefront
@@ -94,7 +106,8 @@ jobs:
         with:
           name: labuco-spree-smoke-report
           path: |
-            /tmp/import-report.json
+            /tmp/import-report-create.json
+            /tmp/import-report-update.json
             /tmp/spree-verification.txt
           retention-days: 7
           if-no-files-found: warn

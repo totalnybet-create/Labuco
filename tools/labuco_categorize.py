@@ -79,7 +79,7 @@ RULES = [
 COMPILED=[(a,b,re.compile(c,re.I)) for a,b,c in RULES]
 
 def classify(r):
-    text=" ".join(str(r.get(k) or "") for k in ("our_title","our_short_description","our_description","brand","category"))
+    text=" ".join(str(r.get(k) or "") for k in ("title","short_description","description","our_title","our_short_description","our_description","brand","category"))
     for main,sub,rx in COMPILED:
         if rx.search(text): return main,sub,"rule"
     old=str(r.get("category") or "").lower()
@@ -93,7 +93,7 @@ def main():
     rows=json.loads(a.catalog.read_text(encoding="utf-8")); counts={}; review=[]
     for r in rows:
         main,sub,confidence=classify(r); r["category"]=main; r["subcategory"]=sub; r["category_path"]=f"Categories -> {main} -> {sub}"; counts[r["category_path"]]=counts.get(r["category_path"],0)+1
-        if confidence!="rule": review.append({"sku":r.get("labuco_sku"),"title":r.get("our_title"),"category_path":r["category_path"],"reason":confidence})
+        if confidence!="rule": review.append({"sku":r.get("labuco_sku"),"title":r.get("title") or r.get("our_title"),"category_path":r["category_path"],"reason":confidence})
     a.output.write_text(json.dumps(rows,ensure_ascii=False,indent=2),encoding="utf-8")
     a.report.write_text(json.dumps({"products":len(rows),"paths":counts,"needs_review":len(review),"review":review},ensure_ascii=False,indent=2),encoding="utf-8")
     print(json.dumps({"products":len(rows),"category_paths":len(counts),"needs_review":len(review)},ensure_ascii=False))

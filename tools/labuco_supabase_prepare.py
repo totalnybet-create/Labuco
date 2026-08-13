@@ -120,6 +120,52 @@ def sku_for(source_id: str) -> str:
         return f"LAB-{safe}"[:64]
 
 
+def prices_for(row: dict) -> tuple[Decimal, Decimal, str, bool, str]:
+    """Return cost, retail, class, review flag and an auditable price source."""
+    b2b_gross = row.get("price_b2b_gross")
+    b2b_net = row.get("price_b2b_net")
+    retail_reference = row.get("price_retail_gross")
+
+    if b2b_gross not in (None, "") or b2b_net not in (None, ""):
+        if b2b_gross not in (None, ""):
+            cost = parse_money(b2b_gross)
+            source = "b2b_gross"
+        else:
+            cost = parse_money(b2b_net)
+            source = "b2b_net"
+        target = round_to_90(cost * (Decimal("1") + target_markup(cost)))
+        market = parse_money(retail_reference) if retail_reference not in (None, "") else None
+        if market is not None:
+            competitive_cap = round_to_90(market * Decimal("0.985"))
+            retail = max(cost + Decimal("0.01"), min(target, competitive_cap))
+        else:
+            retail = target
+        return cost, retail, classify_price(cost, retail), market is None, source
+
+    public_retail = (
+        retail_reference
+        or row.get("price_pln")
+        or row.get("price")
+        or row.get("source_price_with_question")
+        or row.get("source_price")
+    )
+    cost_proxy = parse_money(public_retail)
+    # A public retail price is not a wholesale cost. Keep the record useful as
+    # a catalog reference but class it C, which the guarded Spree importer skips
+    # unless a human explicitly opts in after validating supplier terms.
+    return cost_proxy, cost_proxy, "C", True, "public_retail_reference"
+
+
+def first_reference_image(row: dict) -> str | None:
+    direct = row.get("reference_image") or row.get("image")
+    if direct:
+        return direct
+    images = row.get("images")
+    if isinstance(images, list):
+        return next((image for image in images if image), None)
+    return None
+
+
 def prepare(row: dict) -> dict:
     source_id = str(row.get("id") or row.get("source_id") or "").strip()
     if not source_id:
@@ -127,11 +173,10 @@ def prepare(row: dict) -> dict:
     title = normalize_title(str(row.get("title") or ""))
     if not title:
         raise ValueError(f"{source_id}: missing title")
-    cost = parse_money(row.get("price_pln") or row.get("price") or row.get("source_price"))
+    cost, retail, price_class, market_check_required, price_source = prices_for(row)
     if cost <= 0:
         raise ValueError(f"{source_id}: non-positive price")
-    retail = round_to_90(cost * (Decimal("1") + target_markup(cost)))
-    brand = guess_brand(title)
+    brand = normalize_title(str(row.get("producer") or row.get("brand") or "")) or guess_brand(title)
     category = categorize(title)
     description = (
         f"{title}. Produkt marki {brand} z kategorii {category}. "
@@ -148,13 +193,28 @@ def prepare(row: dict) -> dict:
         "category": category,
         "wholesale_cost_pln": f"{cost:.2f}",
         "labuco_price_pln": f"{retail:.2f}",
-        "price_class": classify_price(cost, retail),
+        "price_class": price_class,
         "source_url": row.get("url") or row.get("source_url"),
-        "reference_image": row.get("image") or row.get("reference_image"),
+        "reference_image": first_reference_image(row),
         "final_image_status": "REFERENCYJNE_ZRODLO_GROWTENT",
         "external_image_search_query": f"{title} {brand} official product image",
         "image_brief": f"Packshot e-commerce: {title}, marka {brand}. Neutralne tło, bez znaków wodnych.",
-        "market_check_required": True,
+        "market_check_required": market_check_required,
+        "raw": {
+            "source": row.get("source"),
+            "source_sku": row.get("sku"),
+            "ean": row.get("ean"),
+            "availability": row.get("availability"),
+            "quantity_available": row.get("quantity_available"),
+            "currency": row.get("currency"),
+            "price_source": price_source,
+            "price_retail_gross": row.get("price_retail_gross"),
+            "price_b2b_gross": row.get("price_b2b_gross"),
+            "price_b2b_net": row.get("price_b2b_net"),
+            "vat": row.get("vat"),
+            "categories": row.get("categories"),
+            "attributes": row.get("attributes"),
+        },
     }
 
 
