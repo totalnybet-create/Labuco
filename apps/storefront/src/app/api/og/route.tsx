@@ -1,8 +1,6 @@
 import { ImageResponse } from "next/og";
 import { getStoreDescription, getStoreName } from "@/lib/store";
 
-export const runtime = "edge";
-
 export function GET() {
   const storeName = getStoreName();
   const description = getStoreDescription();
