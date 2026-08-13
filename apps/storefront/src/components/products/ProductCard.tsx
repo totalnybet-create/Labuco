@@ -19,6 +19,37 @@ interface ProductCardProps {
   listName?: string;
   fetchPriority?: "high" | "low" | "auto";
   currency?: string;
+  showQuickAdd?: boolean;
+}
+
+interface QuickAddButtonProps {
+  product: Product;
+}
+
+function QuickAddButton({ product }: QuickAddButtonProps) {
+  const { addItem, updating } = useCart();
+
+  if (!product.default_variant_id || !product.purchasable) return null;
+
+  const handleQuickAdd = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (updating) return;
+    await addItem(product.default_variant_id!, 1);
+  };
+
+  return (
+    <button
+      type="button"
+      className="labuco-card-cart relative z-10"
+      disabled={updating}
+      onClick={handleQuickAdd}
+      aria-label={`Dodaj ${product.name} do koszyka`}
+    >
+      <ShoppingCart aria-hidden="true" />
+      <span>{updating ? "Dodaję…" : "Do koszyka"}</span>
+    </button>
+  );
 }
 
 export const ProductCard = memo(function ProductCard({
@@ -30,9 +61,9 @@ export const ProductCard = memo(function ProductCard({
   listName,
   fetchPriority,
   currency,
+  showQuickAdd = false,
 }: ProductCardProps) {
   const t = useTranslations("products");
-  const { addItem, updating } = useCart();
   const imageUrl = product.thumbnail_url || null;
   const displayPrice = product.price?.display_amount;
 
@@ -49,22 +80,15 @@ export const ProductCard = memo(function ProductCard({
 
   const strikethroughPrice = onSale
     ? ((product.original_price?.display_amount &&
-      product.original_price.display_amount !== displayPrice
-        ? product.original_price.display_amount
-        : product.price?.display_compare_at_amount) ?? null)
+        product.original_price.display_amount !== displayPrice
+          ? product.original_price.display_amount
+          : product.price?.display_compare_at_amount) ?? null)
     : null;
 
   const handleClick = () => {
     if (index != null && listId && listName && currency) {
       trackSelectItem(product, listId, listName, index, currency);
     }
-  };
-
-  const handleQuickAdd = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!product.default_variant_id || !product.purchasable || updating) return;
-    await addItem(product.default_variant_id, 1);
   };
 
   return (
@@ -99,12 +123,16 @@ export const ProductCard = memo(function ProductCard({
 
         <div className="mt-2 flex items-center gap-2">
           {displayPrice ? (
-            <span className="text-lg font-semibold text-gray-900">{displayPrice}</span>
+            <span className="text-lg font-semibold text-gray-900">
+              {displayPrice}
+            </span>
           ) : (
             <HiddenPricePrompt />
           )}
           {onSale && strikethroughPrice && (
-            <span className="text-sm text-gray-500 line-through">{strikethroughPrice}</span>
+            <span className="text-sm text-gray-500 line-through">
+              {strikethroughPrice}
+            </span>
           )}
         </div>
 
@@ -112,18 +140,7 @@ export const ProductCard = memo(function ProductCard({
           <span className="mt-2 text-sm text-gray-500">{t("outOfStock")}</span>
         )}
 
-        {product.default_variant_id && product.purchasable && (
-          <button
-            type="button"
-            className="labuco-card-cart relative z-10"
-            disabled={updating}
-            onClick={handleQuickAdd}
-            aria-label={`Dodaj ${product.name} do koszyka`}
-          >
-            <ShoppingCart aria-hidden="true" />
-            <span>{updating ? "Dodaję…" : "Do koszyka"}</span>
-          </button>
-        )}
+        {showQuickAdd && <QuickAddButton product={product} />}
       </div>
     </div>
   );
