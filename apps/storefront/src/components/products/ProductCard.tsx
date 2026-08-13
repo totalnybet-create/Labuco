@@ -28,14 +28,15 @@ interface QuickAddButtonProps {
 
 function QuickAddButton({ product }: QuickAddButtonProps) {
   const { addItem, updating } = useCart();
+  const variantId = product.default_variant_id;
 
-  if (!product.default_variant_id || !product.purchasable) return null;
+  if (!variantId || !product.purchasable) return null;
 
   const handleQuickAdd = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
     if (updating) return;
-    await addItem(product.default_variant_id!, 1);
+    await addItem(variantId, 1);
   };
 
   return (
