@@ -43,7 +43,10 @@ interface HeaderMobileMenuProps {
   basePath: string;
 }
 
-export function HeaderMobileMenu({ rootCategories, basePath }: HeaderMobileMenuProps) {
+export function HeaderMobileMenu({
+  rootCategories,
+  basePath,
+}: HeaderMobileMenuProps) {
   return (
     <LazyMobileMenu
       rootCategories={rootCategories}
@@ -53,7 +56,11 @@ export function HeaderMobileMenu({ rootCategories, basePath }: HeaderMobileMenuP
   );
 }
 
-export async function Header({ basePath, locale, mobileNavigation }: HeaderProps) {
+export async function Header({
+  basePath,
+  locale,
+  mobileNavigation,
+}: HeaderProps) {
   const t = await getTranslations({ locale, namespace: "header" });
 
   return (
@@ -72,11 +79,19 @@ export async function Header({ basePath, locale, mobileNavigation }: HeaderProps
       }
       rightEnd={
         <>
-          <Link href={`${basePath}/account`} className="labuco-header-action" aria-label={t("account")}>
+          <Link
+            href={`${basePath}/account`}
+            className="labuco-header-action"
+            aria-label={t("account")}
+          >
             <User aria-hidden="true" />
             <span>Konto</span>
           </Link>
-          <Link href={`${basePath}/account`} className="labuco-header-action" aria-label="Ulubione">
+          <Link
+            href={`${basePath}/account`}
+            className="labuco-header-action"
+            aria-label="Ulubione"
+          >
             <Heart aria-hidden="true" />
             <span>Ulubione</span>
           </Link>
