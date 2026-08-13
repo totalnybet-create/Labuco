@@ -10,7 +10,9 @@ const SearchBar = dynamic(
       default: mod.SearchBar,
     })),
   {
-    loading: () => <div className="labuco-search-skeleton" aria-hidden="true" />,
+    loading: () => (
+      <div className="labuco-search-skeleton" aria-hidden="true" />
+    ),
   },
 );
 
@@ -32,9 +34,15 @@ export function SearchToggle({
   return (
     <header className="labuco-site-header">
       <div className="labuco-service-bar">
-        <span><ShieldCheck aria-hidden="true" /> Dyskretna wysyłka</span>
-        <span><CreditCard aria-hidden="true" /> Bezpieczne płatności</span>
-        <span><Truck aria-hidden="true" /> Szybka dostawa</span>
+        <span>
+          <ShieldCheck aria-hidden="true" /> Dyskretna wysyłka
+        </span>
+        <span>
+          <CreditCard aria-hidden="true" /> Bezpieczne płatności
+        </span>
+        <span>
+          <Truck aria-hidden="true" /> Szybka dostawa
+        </span>
       </div>
 
       <div className="labuco-header-main">
