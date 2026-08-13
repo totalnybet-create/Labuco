@@ -11,7 +11,6 @@ import {
   Scissors,
   ShieldCheck,
   Sprout,
-  Truck,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -156,7 +155,10 @@ export function NewsletterSection() {
       </div>
       <div className="labuco-newsletter-copy">
         <h2>Bądź zawsze na bieżąco</h2>
-        <p>Zapisz się i otrzymuj informacje o promocjach, poradach oraz nowościach.</p>
+        <p>
+          Zapisz się i otrzymuj informacje o promocjach, poradach oraz
+          nowościach.
+        </p>
         <form className="labuco-newsletter-form" action="#">
           <label className="sr-only" htmlFor="labuco-newsletter-email">
             Twój e-mail
@@ -179,15 +181,5 @@ export function NewsletterSection() {
         <Sprout />
       </div>
     </section>
-  );
-}
-
-export function DeliveryHighlights() {
-  return (
-    <div className="labuco-delivery-highlights" aria-label="Najważniejsze korzyści">
-      <span><ShieldCheck /> Dyskretna wysyłka</span>
-      <span><Truck /> Szybka dostawa</span>
-      <span><ShieldCheck /> Bezpieczne płatności</span>
-    </div>
   );
 }
