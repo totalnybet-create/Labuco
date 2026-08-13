@@ -1,3 +1,4 @@
+import "@/app/labuco.css";
 import type { Category } from "@spree/sdk";
 import Link from "next/link";
 import { connection } from "next/server";
