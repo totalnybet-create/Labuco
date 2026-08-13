@@ -51,12 +51,20 @@ const getRootCategories = cache(async (country: string, locale: string) => {
     });
 });
 
-function CategoryLinks({ categories, basePath }: { categories: Category[]; basePath: string }) {
+function CategoryLinks({
+  categories,
+  basePath,
+}: {
+  categories: Category[];
+  basePath: string;
+}) {
   return (
     <ul>
       {categories.map((category) => (
         <li key={category.id}>
-          <Link href={`${basePath}/c/${category.permalink}`}>{category.name}</Link>
+          <Link href={`${basePath}/c/${category.permalink}`}>
+            {category.name}
+          </Link>
           {category.children && category.children.length > 0 && (
             <CategoryLinks categories={category.children} basePath={basePath} />
           )}
@@ -66,12 +74,22 @@ function CategoryLinks({ categories, basePath }: { categories: Category[]; baseP
   );
 }
 
-async function StorefrontMobileNavigation({ basePath, country, locale }: StorefrontNavigationProps) {
+async function StorefrontMobileNavigation({
+  basePath,
+  country,
+  locale,
+}: StorefrontNavigationProps) {
   const rootCategories = await getRootCategories(country, locale);
-  return <HeaderMobileMenu rootCategories={rootCategories} basePath={basePath} />;
+  return (
+    <HeaderMobileMenu rootCategories={rootCategories} basePath={basePath} />
+  );
 }
 
-async function StorefrontCategoryNavigation({ basePath, country, locale }: StorefrontNavigationProps) {
+async function StorefrontCategoryNavigation({
+  basePath,
+  country,
+  locale,
+}: StorefrontNavigationProps) {
   const rootCategories = await getRootCategories(country, locale);
   if (rootCategories.length === 0) return null;
 
@@ -82,12 +100,21 @@ async function StorefrontCategoryNavigation({ basePath, country, locale }: Store
   );
 }
 
-async function StorefrontFooterCategoryLinks({ basePath, country, locale }: StorefrontNavigationProps) {
+async function StorefrontFooterCategoryLinks({
+  basePath,
+  country,
+  locale,
+}: StorefrontNavigationProps) {
   const rootCategories = await getRootCategories(country, locale);
-  return <FooterCategoryLinks rootCategories={rootCategories} basePath={basePath} />;
+  return (
+    <FooterCategoryLinks rootCategories={rootCategories} basePath={basePath} />
+  );
 }
 
-export default async function StorefrontLayout({ children, params }: StorefrontLayoutProps) {
+export default async function StorefrontLayout({
+  children,
+  params,
+}: StorefrontLayoutProps) {
   const { country, locale } = await params;
   const basePath = `/${country}/${locale}`;
 
@@ -98,12 +125,20 @@ export default async function StorefrontLayout({ children, params }: StorefrontL
         locale={locale as Locale}
         mobileNavigation={
           <Suspense fallback={<MobileNavigationFallback />}>
-            <StorefrontMobileNavigation basePath={basePath} country={country} locale={locale} />
+            <StorefrontMobileNavigation
+              basePath={basePath}
+              country={country}
+              locale={locale}
+            />
           </Suspense>
         }
       />
       <Suspense fallback={null}>
-        <StorefrontCategoryNavigation basePath={basePath} country={country} locale={locale} />
+        <StorefrontCategoryNavigation
+          basePath={basePath}
+          country={country}
+          locale={locale}
+        />
       </Suspense>
       <main className="flex-1 labuco-storefront-main">{children}</main>
       <Footer
@@ -111,7 +146,11 @@ export default async function StorefrontLayout({ children, params }: StorefrontL
         locale={locale as Locale}
         categoryLinks={
           <Suspense fallback={<FooterCategoryLinksFallback />}>
-            <StorefrontFooterCategoryLinks basePath={basePath} country={country} locale={locale} />
+            <StorefrontFooterCategoryLinks
+              basePath={basePath}
+              country={country}
+              locale={locale}
+            />
           </Suspense>
         }
       />
