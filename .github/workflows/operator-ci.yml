@@ -2,7 +2,7 @@ name: Operator CI
 
 on:
   push:
-    branches: ["feat/operator-executor"]
+    branches: ["main", "feat/operator-executor"]
     paths:
       - "operator/**"
       - ".github/workflows/operator-ci.yml"

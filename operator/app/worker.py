@@ -1,6 +1,6 @@
 from __future__ import annotations
 import asyncio, os, threading
-from .executors import BrowserSession, github_cancel, http_request, shell_exec
+from .executors import BrowserSession, github_cancel, github_dispatch, github_wait, http_request, shell_exec
 from .models import Risk, Step, TaskStatus
 from .policy import effective_risk
 from .store import Store
@@ -28,6 +28,14 @@ class Worker:
         if step.action=='shell.exec': return await shell_exec(step.args,step.timeout_s)
         if step.action=='http.request': return await http_request(step.args,step.timeout_s)
         if step.action=='github.cancel_workflow': return await github_cancel(step.args,step.timeout_s)
+        if step.action=='github.dispatch_workflow': return await github_dispatch(step.args,step.timeout_s)
+        if step.action=='github.wait_workflow':
+            def heartbeat(data):
+                task=self.store.touch(tid)
+                if not task or task['status']!=TaskStatus.running.value:
+                    raise RuntimeError('Task was paused or cancelled while waiting for GitHub')
+                self.store.event(tid,'heartbeat','GitHub workflow is still running',{'step':i,**data})
+            return await github_wait(step.args,step.timeout_s,heartbeat)
         raise ValueError(step.action)
     async def execute(self,tid):
         browser=BrowserSession(self.artifacts)

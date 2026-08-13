@@ -1,11 +1,8 @@
 import type { Category, Media, Product } from "@spree/sdk";
 import { ensureProtocol, getStoreName, getStoreUrl } from "@/lib/store";
 
-/**
- * Default social image path (stored in public/).
- * Replace public/social-image.png with your own 1200x630 OG image.
- */
-export const SOCIAL_IMAGE_PATH = "/social-image.webp";
+/** Dynamically rendered 1200x630 Labuco social card. */
+export const SOCIAL_IMAGE_PATH = "/api/og";
 
 /**
  * Build a full canonical URL from a store URL and a relative path.

@@ -15,4 +15,5 @@ def effective_risk(step:Step)->Risk:
         method=str(step.args.get('method','GET')).upper()
         if method not in {'GET','HEAD','OPTIONS'} and step.risk==Risk.safe:return Risk.confirm
     if step.action=='github.cancel_workflow': return Risk.confirm if step.risk==Risk.safe else step.risk
+    if step.action=='github.dispatch_workflow': return Risk.confirm if step.risk==Risk.safe else step.risk
     return step.risk

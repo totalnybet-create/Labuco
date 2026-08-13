@@ -34,6 +34,9 @@ class Store:
         kw['updated_at']=time.time(); keys=list(kw); vals=[kw[k] for k in keys]+[tid]
         with self._db() as db: db.execute('UPDATE tasks SET '+','.join(f'{k}=?' for k in keys)+' WHERE id=?',vals)
         return self.get(tid)
+    def touch(self,tid):
+        with self._db() as db: db.execute("UPDATE tasks SET updated_at=? WHERE id=? AND status='running'",(time.time(),tid))
+        return self.get(tid)
     def event(self,tid,kind,msg,data=None):
         with self._db() as db: db.execute('INSERT INTO events(task_id,ts,kind,message,data_json) VALUES(?,?,?,?,?)',(tid,time.time(),kind,msg,json.dumps(data or {})))
     def events(self,tid,limit=200):

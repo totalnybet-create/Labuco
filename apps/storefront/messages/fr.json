@@ -53,7 +53,7 @@
     "updatePreferencesFailed": "Impossible de mettre à jour vos préférences régionales. Veuillez réessayer."
   },
   "footer": {
-    "description": "E-commerce open source basé sur Spree REST API, TypeScript SDK et Next.js. Auto-hébergé. Vos données. Zéro frais de plateforme.",
+    "description": "Équipement, nutriments, éclairage, ventilation, mesure et accessoires pour la culture indoor.",
     "forkOnGithub": "Forker cette boutique sur GitHub",
     "quickstartGuide": "Guide de démarrage rapide",
     "learnMore": "En savoir plus sur Spree Commerce",
@@ -66,12 +66,12 @@
     "cart": "Panier",
     "policies": "Politiques",
     "poweredBy": "Propulse par",
-    "copyright": "© {year} {storeName}. Propulse par Spree Commerce.",
+    "copyright": "© {year} {storeName}. Tous droits réservés.",
     "wholesale": "Professionnels & vente en gros"
   },
   "home": {
-    "welcome": "{storeName} Storefront",
-    "heroDescription": "Un storefront open source prêt pour la production, construit avec Next.js, React et le SDK TypeScript Spree. Auto-hébergé. Votre stack. Pas de dépendance fournisseur. Zéro frais de plateforme.",
+    "welcome": "{storeName} — équipement de culture indoor",
+    "heroDescription": "Nutriments, éclairage, ventilation, mesure et accessoires dans une boutique spécialisée.",
     "shopNow": "Tout parcourir",
     "forkOnGithub": "Forker sur GitHub",
     "quickstartGuide": "Guide de démarrage rapide",

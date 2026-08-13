@@ -1,6 +1,7 @@
 from __future__ import annotations
 import json, os
 from mcp.server.fastmcp import FastMCP
+from .labuco import PLAN_DETAILS, create_plan, overview
 from .models import Approval, HumanResume, TaskCreate, TaskStatus
 from .store import Store
 
@@ -13,6 +14,17 @@ def operator_create_task(name:str, steps_json:str, metadata_json:str='{}')->dict
     """Create a resumable Operator task. steps_json is a JSON array of step objects."""
     data=TaskCreate(name=name,steps=json.loads(steps_json),metadata=json.loads(metadata_json or '{}'))
     return store.create(data)
+
+@mcp.tool()
+def labuco_start_plan(plan:str)->dict:
+    """Start a trusted Labuco plan: quick-check, catalog-1000, or catalog-full."""
+    if plan not in PLAN_DETAILS:return {'error':'unknown_plan','available':list(PLAN_DETAILS)}
+    return store.create(create_plan(plan))
+
+@mcp.tool()
+def labuco_project_status()->dict:
+    """Return Labuco repository, catalog and GitHub connection readiness."""
+    return overview()
 
 @mcp.tool()
 def operator_list_tasks()->list[dict]:
