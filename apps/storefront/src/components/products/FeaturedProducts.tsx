@@ -46,6 +46,7 @@ export async function FeaturedProducts({
       products={productsResponse.data ?? []}
       basePath={basePath}
       currency={currency}
+      showQuickAdd
     />
   );
 }
