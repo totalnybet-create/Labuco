@@ -28,15 +28,24 @@ export async function HeroSection({ basePath }: HeroSectionProps) {
         <div className="labuco-hero-benefits">
           <div>
             <ShieldCheck aria-hidden="true" />
-            <span><strong>Dyskretna wysyłka</strong><small>Neutralne opakowanie</small></span>
+            <span>
+              <strong>Dyskretna wysyłka</strong>
+              <small>Neutralne opakowanie</small>
+            </span>
           </div>
           <div>
             <Truck aria-hidden="true" />
-            <span><strong>Szybka dostawa</strong><small>1–2 dni robocze</small></span>
+            <span>
+              <strong>Szybka dostawa</strong>
+              <small>1–2 dni robocze</small>
+            </span>
           </div>
           <div>
             <LockKeyhole aria-hidden="true" />
-            <span><strong>Bezpieczne płatności</strong><small>SSL i zaufane metody</small></span>
+            <span>
+              <strong>Bezpieczne płatności</strong>
+              <small>SSL i zaufane metody</small>
+            </span>
           </div>
         </div>
 
@@ -53,13 +62,25 @@ export async function HeroSection({ basePath }: HeroSectionProps) {
       <div className="labuco-hero-art" aria-hidden="true">
         <div className="labuco-grow-tent">
           <div className="labuco-led-bars">
-            <i /><i /><i /><i /><i />
+            <i />
+            <i />
+            <i />
+            <i />
+            <i />
           </div>
-          <div className="labuco-plant plant-one"><Sprout /></div>
-          <div className="labuco-plant plant-two"><Sprout /></div>
-          <div className="labuco-plant plant-three"><Sprout /></div>
+          <div className="labuco-plant plant-one">
+            <Sprout />
+          </div>
+          <div className="labuco-plant plant-two">
+            <Sprout />
+          </div>
+          <div className="labuco-plant plant-three">
+            <Sprout />
+          </div>
           <div className="labuco-fan">
-            <span /><span /><span />
+            <span />
+            <span />
+            <span />
           </div>
         </div>
         <div className="labuco-hero-vignette" />
