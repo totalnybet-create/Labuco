@@ -5,13 +5,21 @@ on:
     paths:
       - "tools/labuco_pricing.py"
       - "tools/labuco_spree_import.py"
+      - "tools/labuco_categorize.py"
+      - "tools/labuco_supabase_prepare.py"
       - "tests/test_labuco_pricing.py"
+      - "tests/test_labuco_spree_import.py"
+      - "tests/test_labuco_supabase_prepare.py"
       - ".github/workflows/catalog-import-ci.yml"
   pull_request:
     paths:
       - "tools/labuco_pricing.py"
       - "tools/labuco_spree_import.py"
+      - "tools/labuco_categorize.py"
+      - "tools/labuco_supabase_prepare.py"
       - "tests/test_labuco_pricing.py"
+      - "tests/test_labuco_spree_import.py"
+      - "tests/test_labuco_supabase_prepare.py"
       - ".github/workflows/catalog-import-ci.yml"
 
 permissions:
@@ -26,31 +34,40 @@ jobs:
         with:
           python-version: "3.12"
       - name: Compile import tools
-        run: python -m py_compile tools/labuco_pricing.py tools/labuco_spree_import.py
-      - name: Run pricing tests
-        run: python -m unittest tests/test_labuco_pricing.py -v
-      - name: Smoke dry-run importer
+        run: python -m py_compile tools/labuco_pricing.py tools/labuco_spree_import.py tools/labuco_categorize.py tools/labuco_supabase_prepare.py
+      - name: Run catalog tests
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Validate 1000-product preparation and guarded import
         run: |
-          cat > /tmp/catalog.json <<'JSON'
-          [
-            {
-              "labuco_sku": "LAB-TEST-001",
-              "brand": "Labuco Test",
-              "our_title": "Produkt testowy Labuco",
-              "our_short_description": "Krótki opis testowy.",
-              "our_description": "Pełny opis testowy.",
-              "category": "Akcesoria do uprawy",
-              "wholesale_cost_pln": "100.00",
-              "labuco_price_pln": "120.90",
-              "labuco_price_class": "A"
-            }
-          ]
-          JSON
-          python tools/labuco_spree_import.py /tmp/catalog.json --limit 1 --report /tmp/report.json
           python - <<'PY'
           import json
-          report = json.load(open('/tmp/report.json'))
-          assert report['mode'] == 'dry-run'
-          assert report['created'] == 1
-          assert report['failed'] == 0
+          rows = []
+          for index in range(1, 1001):
+              rows.append({
+                  "source": "growtent-public",
+                  "id": str(index),
+                  "producer": "Labuco Test",
+                  "title": f"Produkt testowy Labuco {index}",
+                  "sku": f"SOURCE-{index:04d}",
+                  "price_retail_gross": "100.00",
+                  "url": f"https://example.invalid/product-{index}",
+                  "images": [f"https://example.invalid/image-{index}.jpg"],
+              })
+          with open("/tmp/source-catalog.json", "w", encoding="utf-8") as catalog:
+              json.dump(rows, catalog, ensure_ascii=False)
+          PY
+          python tools/labuco_supabase_prepare.py /tmp/source-catalog.json /tmp/prepared-catalog.json --limit 1000
+          python tools/labuco_spree_import.py /tmp/prepared-catalog.json --limit 1000 --report /tmp/safe-report.json
+          python tools/labuco_spree_import.py /tmp/prepared-catalog.json --limit 1000 --include-class-c --report /tmp/reviewed-report.json
+          python - <<'PY'
+          import json
+          with open("/tmp/safe-report.json", encoding="utf-8") as report_file:
+              safe = json.load(report_file)
+          with open("/tmp/reviewed-report.json", encoding="utf-8") as report_file:
+              reviewed = json.load(report_file)
+          assert safe["mode"] == "dry-run"
+          assert safe["requested"] == safe["skipped"] == 1000
+          assert safe["created"] == safe["updated"] == safe["failed"] == 0
+          assert reviewed["requested"] == reviewed["created"] == 1000
+          assert reviewed["updated"] == reviewed["skipped"] == reviewed["failed"] == 0
           PY

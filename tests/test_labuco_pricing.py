@@ -30,7 +30,7 @@ class LabucoPricingTests(unittest.TestCase):
         product = pricing.price_product({"source_price_with_question": "100,00 zł ?"})
         self.assertEqual(product["labuco_price_pln"], "120.90")
         self.assertTrue(product["market_check_required"])
-        self.assertEqual(product["labuco_price_class"], "A")
+        self.assertEqual(product["price_class"], "A")
 
     def test_market_cap_can_lower_price_class(self):
         product = pricing.price_product(
@@ -40,8 +40,13 @@ class LabucoPricingTests(unittest.TestCase):
             }
         )
         self.assertLessEqual(Decimal(product["labuco_price_pln"]), Decimal("108.90"))
-        self.assertIn(product["labuco_price_class"], {"B", "C"})
+        self.assertIn(product["price_class"], {"B", "C"})
         self.assertFalse(product["market_check_required"])
+
+    def test_accepts_current_catalog_cost_field(self):
+        product = pricing.price_product({"wholesale_cost_pln": "100.00"})
+        self.assertEqual(product["labuco_price_pln"], "120.90")
+        self.assertEqual(product["price_class"], "A")
 
 
 if __name__ == "__main__":
