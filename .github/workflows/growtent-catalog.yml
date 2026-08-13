@@ -6,7 +6,7 @@ on:
       download_images:
         description: "Download all product images"
         required: false
-        default: "1"
+        default: "0"
       max_products:
         description: "0 = full catalog"
         required: false
@@ -15,10 +15,11 @@ on:
     paths:
       - "tools/growtent_catalog_importer.py"
       - "tools/growtent-requirements.txt"
+      - "tools/labuco_supabase_prepare.py"
       - ".github/workflows/growtent-catalog.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   import-catalog:
@@ -26,16 +27,21 @@ jobs:
     timeout-minutes: 360
     env:
       GROWTENT_XML_URL: ${{ secrets.GROWTENT_XML_URL }}
-      DOWNLOAD_IMAGES: ${{ github.event.inputs.download_images || '1' }}
+      DOWNLOAD_IMAGES: ${{ github.event.inputs.download_images || '0' }}
       MAX_PRODUCTS: ${{ github.event.inputs.max_products || '0' }}
       WORKERS: "8"
       IMAGE_WORKERS: "10"
       REQUEST_INTERVAL: "0.22"
       OUTPUT_DIR: "artifacts/growtent"
+      LABUCO_TARGET: "3316"
+      LABUCO_IMPORT_URL: "https://wmcgybrgnxeghvryqitt.supabase.co/functions/v1/labuco-catalog-import"
+      SUPABASE_ANON_JWT: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtY2d5YnJnbnhlZ2h2cnlxaXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MzkzODgsImV4cCI6MjEwMTMxNTM4OH0.xAVzO6yGEfW19i9QJiOWuBceAV2OnhN1C-xXePJePk8"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -50,6 +56,41 @@ jobs:
       - name: Download full GrowTent catalog
         run: python tools/growtent_catalog_importer.py
 
+      - name: Prepare validated Labuco catalog
+        run: |
+          python tools/labuco_supabase_prepare.py \
+            artifacts/growtent/products.json \
+            data/labuco_catalog.json \
+            --limit "$LABUCO_TARGET"
+
+      - name: Publish Labuco catalog snapshot
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/labuco_catalog.json data/labuco_catalog.summary.json
+          if git diff --cached --quiet; then
+            echo "Catalog snapshot unchanged."
+          else
+            git commit -m "data: refresh Labuco catalog [skip ci]"
+            git pull --rebase origin "$GITHUB_REF_NAME"
+            git push origin HEAD:"$GITHUB_REF_NAME"
+          fi
+
+      - name: Import catalog into Supabase
+        shell: bash
+        run: |
+          curl --fail-with-body \
+            --retry 5 \
+            --retry-all-errors \
+            --connect-timeout 20 \
+            --max-time 300 \
+            -X POST "$LABUCO_IMPORT_URL" \
+            -H "Authorization: Bearer $SUPABASE_ANON_JWT" \
+            -H "apikey: $SUPABASE_ANON_JWT" \
+            -H "Content-Type: application/json" \
+            -d '{}'
+
       - name: Publish run summary
         if: always()
         shell: bash
@@ -61,6 +102,12 @@ jobs:
             echo '```' >> "$GITHUB_STEP_SUMMARY"
           else
             echo "Importer did not create summary.json." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "## Labuco Supabase catalog" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f data/labuco_catalog.summary.json ]; then
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat data/labuco_catalog.summary.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Upload catalog metadata
@@ -74,11 +121,13 @@ jobs:
             artifacts/growtent/product_urls.txt
             artifacts/growtent/summary.json
             artifacts/growtent/errors.log
+            data/labuco_catalog.json
+            data/labuco_catalog.summary.json
           if-no-files-found: warn
           retention-days: 14
 
       - name: Upload full catalog with images
-        if: success()
+        if: success() && env.DOWNLOAD_IMAGES == '1'
         uses: actions/upload-artifact@v4
         with:
           name: growtent-catalog-full
