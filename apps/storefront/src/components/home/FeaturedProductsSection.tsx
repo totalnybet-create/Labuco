@@ -38,7 +38,8 @@ export async function FeaturedProductsSection({
       <div className="labuco-section-heading">
         <h2>{isPolish ? "Bestsellery" : t("featuredProducts")}</h2>
         <Link href={`${basePath}/products`} className="labuco-view-all">
-          {isPolish ? "Zobacz wszystkie" : t("viewAll")} <span aria-hidden="true">→</span>
+          {isPolish ? "Zobacz wszystkie" : t("viewAll")}{" "}
+          <span aria-hidden="true">→</span>
         </Link>
       </div>
       <Suspense fallback={<CarouselSkeleton />}>
