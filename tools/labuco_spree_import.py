@@ -8,10 +8,10 @@ Designed for the 3316-product Labuco catalog. Safe defaults:
 - optional --limit enables a small smoke import first,
 - deterministic Idempotency-Key per SKU and payload reduces duplicate risk on retries.
 
-Spree Admin API v3 accepts SKU/price/cost fields on a product. The importer
-performs a follow-up PATCH after creation to enforce those commercial fields on
-the product's default variant as well. This makes imports resilient across
-Spree minor versions where create/update parameter handling may differ.
+Spree Admin API v3 keeps purchasable fields on variants. For a simple product,
+an inline variant with an empty ``options`` array addresses the auto-created
+master variant. The importer uses that documented shape and performs a
+follow-up PATCH after creation so SKU, price and cost are enforced reliably.
 """
 
 from __future__ import annotations
@@ -71,12 +71,18 @@ def build_description(record: dict[str, Any]) -> str:
     return full
 
 
-def commercial_fields(record: dict[str, Any]) -> dict[str, Any]:
+def commercial_variant(record: dict[str, Any]) -> dict[str, Any]:
     return {
         "sku": str(record["labuco_sku"]),
-        "price": str(record["labuco_price_pln"]),
         "cost_price": str(record["wholesale_cost_pln"]),
         "cost_currency": "PLN",
+        "options": [],
+        "prices": [
+            {
+                "amount": str(record["labuco_price_pln"]),
+                "currency": "PLN",
+            }
+        ],
     }
 
 
@@ -99,7 +105,7 @@ def build_payload(record: dict[str, Any], category_map: dict[str, str], active: 
         "description": build_description(record),
         "status": "active" if active else "draft",
         "tags": tags,
-        **commercial_fields(record),
+        "variants": [commercial_variant(record)],
     }
     if category_id:
         payload["category_ids"] = [category_id]
@@ -181,15 +187,9 @@ def upsert_and_enforce_product(
     if not product_id:
         raise RuntimeError(f"Spree {action} response has no product id for {sku}")
 
-    # The v3 Admin API documents sku/price/cost_price/cost_currency as product
-    # update fields. Enforce them after create so the default variant is
-    # populated even on versions where POST silently ignores one of them.
-    commercial = {
-        "sku": payload["sku"],
-        "price": payload["price"],
-        "cost_price": payload["cost_price"],
-        "cost_currency": payload["cost_currency"],
-    }
+    # Spree v5.6 keeps purchasable fields on variants. An entry without option
+    # values is an upsert of the simple product's master/default variant.
+    commercial = {"variants": payload["variants"]}
     enforced = request_json(
         base_url,
         api_key,
@@ -261,6 +261,8 @@ def main() -> int:
             continue
 
         payload = build_payload(record, category_map, args.activate)
+        variant_payload = payload["variants"][0]
+        price_payload = variant_payload["prices"][0]
         if not args.commit:
             report["created"] += 1
             report["items"].append(
@@ -268,7 +270,7 @@ def main() -> int:
                     "sku": sku,
                     "result": "dry-run-ok",
                     "status": payload["status"],
-                    "price": payload["price"],
+                    "price": price_payload["amount"],
                     "category_mapped": bool(payload.get("category_ids")),
                 }
             )
@@ -282,8 +284,8 @@ def main() -> int:
                     "sku": sku,
                     "result": action,
                     "id": result.get("id"),
-                    "price": result.get("price", {}).get("amount") if isinstance(result.get("price"), dict) else result.get("price"),
-                    "cost_price": result.get("cost_price"),
+                    "price": price_payload["amount"],
+                    "cost_price": variant_payload["cost_price"],
                 }
             )
         except urllib.error.HTTPError as exc:

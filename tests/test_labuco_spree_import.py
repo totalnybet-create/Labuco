@@ -38,9 +38,18 @@ class LabucoSpreeImportTests(unittest.TestCase):
         self.assertEqual(payload["description"], "Krótki opis.\n\nPełny opis produktu.")
         self.assertEqual(payload["category_ids"], ["category-1"])
         self.assertEqual(payload["status"], "draft")
-        self.assertEqual(payload["sku"], "LAB-TEST-001")
-        self.assertEqual(payload["price"], "120.90")
-        self.assertEqual(payload["cost_price"], "100.00")
+        self.assertEqual(
+            payload["variants"],
+            [
+                {
+                    "sku": "LAB-TEST-001",
+                    "cost_price": "100.00",
+                    "cost_currency": "PLN",
+                    "options": [],
+                    "prices": [{"amount": "120.90", "currency": "PLN"}],
+                }
+            ],
+        )
 
     def test_retains_legacy_schema_compatibility(self):
         record = catalog_record()
@@ -82,6 +91,10 @@ class LabucoSpreeImportTests(unittest.TestCase):
         self.assertEqual(request.call_args_list[0].args[2], "GET")
         self.assertEqual(request.call_args_list[1].args[2], "POST")
         self.assertEqual(request.call_args_list[2].args[2], "PATCH")
+        self.assertEqual(
+            request.call_args_list[2].args[4],
+            {"variants": payload["variants"]},
+        )
 
     def test_updates_product_when_sku_exists(self):
         payload = spree_import.build_payload(catalog_record(), {}, active=False)
