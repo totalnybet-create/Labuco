@@ -4,15 +4,17 @@ namespace :labuco do
   namespace :stripe do
     desc 'Idempotently configure the LABUCO Stripe gateway from environment variables'
     task configure: :environment do
-      enabled = ActiveModel::Type::Boolean.new.cast(ENV.fetch('LABUCO_STRIPE_ENABLED', 'false'))
+      publishable_key = ENV['STRIPE_PUBLISHABLE_KEY'].to_s.strip
+      secret_key = ENV['STRIPE_SECRET_KEY'].to_s.strip
 
-      unless enabled
-        puts 'LABUCO Stripe gateway bootstrap skipped (LABUCO_STRIPE_ENABLED is not true)'
+      if publishable_key.empty? && secret_key.empty?
+        puts 'LABUCO Stripe gateway bootstrap skipped (Stripe credentials are not configured)'
         next
       end
 
-      publishable_key = ENV.fetch('STRIPE_PUBLISHABLE_KEY')
-      secret_key = ENV.fetch('STRIPE_SECRET_KEY')
+      if publishable_key.empty? || secret_key.empty?
+        raise 'Both STRIPE_PUBLISHABLE_KEY and STRIPE_SECRET_KEY must be configured together'
+      end
 
       publishable_mode =
         if publishable_key.start_with?('pk_live_')
