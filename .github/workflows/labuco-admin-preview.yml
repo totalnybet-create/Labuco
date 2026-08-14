@@ -136,9 +136,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          count=$(docker compose -f /tmp/labuco-preview/docker-compose.yml exec -T web ./bin/rails runner 'print Spree::Product.count')
+          raw=$(docker compose -f /tmp/labuco-preview/docker-compose.yml exec -T web \
+            ./bin/rails runner 'puts "LABUCO_PRODUCT_COUNT=#{Spree::Product.count}"' 2>&1)
+          printf '%s\n' "$raw"
+          count=$(printf '%s\n' "$raw" | sed -n 's/^LABUCO_PRODUCT_COUNT=\([0-9][0-9]*\)$/\1/p' | tail -n 1)
+          if [[ -z "$count" ]]; then
+            echo "Unable to parse LABUCO product count from Rails output" >&2
+            exit 1
+          fi
           echo "Spree product count: ${count}"
-          test "$count" -ge 3316
+          if (( count < 3316 )); then
+            echo "Expected at least 3316 LABUCO products, found ${count}" >&2
+            exit 1
+          fi
           echo "LABUCO products verified in Spree: ${count}"
 
       - name: Install Cloudflare tunnel client
