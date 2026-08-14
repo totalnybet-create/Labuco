@@ -20,6 +20,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 355
 
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
       - uses: actions/checkout@v4
 
@@ -31,25 +44,11 @@ jobs:
         with:
           version: 10.33.4
 
-      - name: Start PostgreSQL
-        shell: bash
-        run: |
-          set -euo pipefail
-          docker run -d --name labuco-postgres \
-            -e POSTGRES_HOST_AUTH_METHOD=trust \
-            -p 5432:5432 postgres:18-alpine
-          for attempt in $(seq 1 60); do
-            if docker exec labuco-postgres pg_isready -U postgres >/dev/null 2>&1; then
-              docker exec labuco-postgres createdb -U postgres spree_storefront_preview || true
-              exit 0
-            fi
-            sleep 2
-          done
-          docker logs labuco-postgres
-          exit 1
-
       - name: Build LABUCO backend
         run: docker build -f backend/Dockerfile -t labuco-spree-storefront .
+
+      - name: Prepare preview database
+        run: createdb -h 127.0.0.1 -U postgres spree_storefront_preview || true
 
       - name: Start LABUCO backend
         shell: bash
@@ -70,6 +69,11 @@ jobs:
                 RAILS_SERVE_STATIC_FILES: "true"
           EOF
           docker compose -f /tmp/labuco-storefront-preview/docker-compose.yml up -d
+
+      - name: Wait for backend
+        shell: bash
+        run: |
+          set -euo pipefail
           for attempt in $(seq 1 90); do
             if curl --fail --silent http://127.0.0.1:3000/up >/dev/null; then
               exit 0
@@ -79,13 +83,16 @@ jobs:
           docker compose -f /tmp/labuco-storefront-preview/docker-compose.yml logs --no-color web
           exit 1
 
-      - name: Seed Spree and create keys
+      - name: Seed Spree
+        working-directory: /tmp/labuco-storefront-preview
+        run: npx --yes @spree/cli@2.4.4 seed
+
+      - name: Create catalog and storefront API keys
         id: keys
         working-directory: /tmp/labuco-storefront-preview
         shell: bash
         run: |
           set -euo pipefail
-          npx --yes @spree/cli@2.4.4 seed
           secret_out=$(npx --yes @spree/cli@2.4.4 api-key create --name LabucoStorefrontCatalog --type secret --scopes write_products)
           secret=$(printf '%s\n' "$secret_out" | grep -oE 'sk_[A-Za-z0-9_-]+' | head -n 1)
           public_out=$(npx --yes @spree/cli@2.4.4 api-key create --name LabucoStorefrontPreview --type publishable)
@@ -106,24 +113,69 @@ jobs:
         run: |
           set -euo pipefail
           python tools/labuco_spree_import.py data/labuco_catalog.json \
-            --commit --activate --include-class-c --limit 0 \
+            --commit \
+            --activate \
+            --include-class-c \
+            --limit 0 \
             --report /tmp/labuco-storefront-import-report.json
           python - <<'PY'
           import json
           from pathlib import Path
           report = json.loads(Path('/tmp/labuco-storefront-import-report.json').read_text(encoding='utf-8'))
           imported = report['created'] + report['updated']
-          print(f"LABUCO_IMPORT requested={report['requested']} imported={imported} failed={report['failed']}")
+          print(f"LABUCO_IMPORT requested={report['requested']} imported={imported} skipped={report['skipped']} failed={report['failed']}")
           if report['requested'] != 3316 or imported != 3316 or report['failed'] != 0:
               raise SystemExit('Full LABUCO catalog import verification failed')
           PY
 
-      - name: Build and start storefront
+      - name: Verify LABUCO catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          raw=$(docker compose -f /tmp/labuco-storefront-preview/docker-compose.yml exec -T web \
+            ./bin/rails runner 'puts "LABUCO_PRODUCT_COUNT=#{Spree::Product.count}"' 2>&1)
+          printf '%s\n' "$raw"
+          count=$(printf '%s\n' "$raw" | sed -n 's/^LABUCO_PRODUCT_COUNT=\([0-9][0-9]*\)$/\1/p' | tail -n 1)
+          test -n "$count"
+          if (( count < 3316 )); then
+            echo "Expected at least 3316 LABUCO products, found ${count}" >&2
+            exit 1
+          fi
+
+      - name: Install Cloudflare tunnel client
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -L --fail --retry 3 \
+            https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
+            -o /tmp/cloudflared
+          chmod +x /tmp/cloudflared
+
+      - name: Reserve public storefront URL
+        id: tunnel
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup /tmp/cloudflared tunnel --url http://127.0.0.1:3001 --no-autoupdate \
+            >/tmp/cloudflared-storefront.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            url="$(grep -Eo 'https://[-a-z0-9]+\.trycloudflare\.com' /tmp/cloudflared-storefront.log | tail -n 1 || true)"
+            if [[ -n "$url" ]]; then
+              echo "url=$url" >> "$GITHUB_OUTPUT"
+              echo "Reserved storefront URL: $url"
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/cloudflared-storefront.log
+          exit 1
+
+      - name: Build and start customer storefront
         working-directory: apps/storefront
         env:
           SPREE_API_URL: http://127.0.0.1:3000
           SPREE_PUBLISHABLE_KEY: ${{ steps.keys.outputs.public }}
-          NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3001
+          NEXT_PUBLIC_SITE_URL: ${{ steps.tunnel.outputs.url }}
           NEXT_PUBLIC_DEFAULT_COUNTRY: pl
           NEXT_PUBLIC_DEFAULT_LOCALE: pl
         shell: bash
@@ -141,45 +193,30 @@ jobs:
           cat /tmp/labuco-storefront.log
           exit 1
 
-      - name: Start public storefront tunnel
-        id: tunnel
-        shell: bash
+      - name: Verify and publish storefront URL
         env:
+          PREVIEW_URL: ${{ steps.tunnel.outputs.url }}
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
           set -euo pipefail
-          curl -L --fail --retry 3 \
-            https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
-            -o /tmp/cloudflared
-          chmod +x /tmp/cloudflared
-          nohup /tmp/cloudflared tunnel --url http://127.0.0.1:3001 --no-autoupdate \
-            >/tmp/cloudflared-storefront.log 2>&1 &
-          for attempt in $(seq 1 60); do
-            url="$(grep -Eo 'https://[-a-z0-9]+\.trycloudflare\.com' /tmp/cloudflared-storefront.log | tail -n 1 || true)"
-            if [[ -n "$url" ]]; then
-              echo "url=$url" >> "$GITHUB_OUTPUT"
-              curl --fail --location --retry 10 --retry-delay 2 "$url/" >/dev/null
-              curl --fail-with-body -sS -X POST \
-                -H "Authorization: Bearer ${GH_TOKEN}" \
-                -H "Accept: application/vnd.github+json" \
-                -H "X-GitHub-Api-Version: 2022-11-28" \
-                "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-                -d "{\"state\":\"success\",\"target_url\":\"${url}\",\"description\":\"LABUCO storefront: 3316 products live\",\"context\":\"LABUCO Storefront Preview\"}" \
-                >/dev/null
-              echo "## LABUCO Storefront Preview — 3316 products" >> "$GITHUB_STEP_SUMMARY"
-              echo "Storefront: ${url}" >> "$GITHUB_STEP_SUMMARY"
-              exit 0
-            fi
-            sleep 2
-          done
-          cat /tmp/cloudflared-storefront.log
-          exit 1
+          test -n "$PREVIEW_URL"
+          curl --fail --location --retry 15 --retry-delay 2 "$PREVIEW_URL/" >/dev/null
+          curl --fail-with-body -sS -X POST \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -d "{\"state\":\"success\",\"target_url\":\"${PREVIEW_URL}\",\"description\":\"LABUCO customer storefront: 3316 products live\",\"context\":\"LABUCO Storefront Preview\"}" \
+            >/dev/null
+          echo "## LABUCO Customer Storefront — 3316 products" >> "$GITHUB_STEP_SUMMARY"
+          echo "Storefront: ${PREVIEW_URL}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Keep storefront online
         env:
           PREVIEW_URL: ${{ steps.tunnel.outputs.url }}
         run: |
-          echo "LABUCO storefront live: ${PREVIEW_URL}"
+          echo "LABUCO customer storefront live: ${PREVIEW_URL}"
           sleep 19800
 
       - name: Upload import report
@@ -196,12 +233,9 @@ jobs:
         shell: bash
         run: |
           cat /tmp/labuco-storefront.log || true
+          cat /tmp/cloudflared-storefront.log || true
           docker compose -f /tmp/labuco-storefront-preview/docker-compose.yml logs --no-color web || true
-          docker logs labuco-postgres || true
 
       - name: Stop containers
         if: always()
-        shell: bash
-        run: |
-          docker compose -f /tmp/labuco-storefront-preview/docker-compose.yml down -v || true
-          docker rm -f labuco-postgres || true
+        run: docker compose -f /tmp/labuco-storefront-preview/docker-compose.yml down -v || true
