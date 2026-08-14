@@ -9,26 +9,16 @@
  */
 
 /** Known gateway identifiers for conditional SDK loading */
-export type GatewayId = "stripe" | "adyen" | "paypal" | "razorpay" | "unknown";
+export type GatewayId =
+  | "stripe"
+  | "adyen"
+  | "paypal"
+  | "razorpay"
+  | "hotpay"
+  | "unknown";
 
 /**
  * Map Spree PaymentMethod.type (API shorthand) → frontend gateway ID.
- *
- * The Store API returns `Spree::Gateway.api_type` — for provider gems
- * that ship a top-level `Gateway` class, that's the outer module name
- * stripped of its `Spree` prefix and underscored:
- *
- *   SpreeStripe::Gateway          → "stripe"
- *   SpreeAdyen::Gateway           → "adyen"
- *   SpreePaypalCheckout::Gateway  → "paypal_checkout"
- *   SpreeRazorpayCheckout::Gateway → "razorpay_checkout"
- *
- * For gems whose shorthand already matches the frontend ID (`stripe`,
- * `adyen`), the map mostly normalises the suffixed forms. Legacy Rails
- * STI class names are kept for backwards compatibility with older Spree
- * backends that haven't been upgraded yet.
- *
- * Adding a new gateway integration is a single line here.
  */
 const GATEWAY_TYPE_MAP: Record<string, GatewayId> = {
   // Stripe (spree_stripe gem)
@@ -41,6 +31,7 @@ const GATEWAY_TYPE_MAP: Record<string, GatewayId> = {
   "Spree::Gateway::AdyenGateway": "adyen",
   // PayPal (spree_paypal_checkout gem)
   paypal_checkout: "paypal",
+  spree_paypal_checkout: "paypal",
   paypal: "paypal",
   "SpreePaypalCheckout::Gateway": "paypal",
   "Spree::Gateway::PayPalExpress": "paypal",
@@ -49,6 +40,9 @@ const GATEWAY_TYPE_MAP: Record<string, GatewayId> = {
   razorpay: "razorpay",
   "SpreeRazorpayCheckout::Gateway": "razorpay",
   "Spree::Gateway::RazorpayGateway": "razorpay",
+  // HotPay (LABUCO custom redirect gateway)
+  hotpay: "hotpay",
+  "Spree::PaymentMethod::Hotpay": "hotpay",
 };
 
 /**

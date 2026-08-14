@@ -1,11 +1,12 @@
 #!/bin/bash -e
 
-# If running the Rails server, prepare the database first. Once migrations are
-# complete, configure the LABUCO Stripe gateway from deployment secrets. The
-# rake task is idempotent and safely skips itself when both keys are absent.
+# If running the Rails server, prepare the database and idempotently bootstrap
+# payment methods from deployment secrets. Tasks safely skip providers whose
+# credentials have not been configured yet.
 if [[ "$*" == *"./bin/rails server"* ]]; then
   ./bin/rails db:prepare
   ./bin/rails labuco:stripe:configure
+  ./bin/rails labuco:payments:configure
 fi
 
 exec "${@}"

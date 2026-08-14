@@ -1,8 +1,4 @@
-# Render Blueprint — one Docker web service plus Postgres. The web service
-# builds backend/Dockerfile with the repo root as context: your backend and
-# apps/dashboard ship in one image, with the dashboard served same-origin at
-# /dashboard (the stock dashboard when apps/dashboard is absent). Migrations
-# run from the image entrypoint on boot.
+# Render Blueprint — LABUCO backend + Postgres.
 services:
   - type: web
     name: spree
@@ -20,26 +16,44 @@ services:
         generateValue: true
       - key: RAILS_LOG_LEVEL
         value: info
-      # Stripe credentials are supplied securely in the Render dashboard.
-      # Never commit their values to this Blueprint or to the repository.
+
+      # Stripe — optional. Leave unset while the account is not active.
       - key: STRIPE_PUBLISHABLE_KEY
         sync: false
       - key: STRIPE_SECRET_KEY
         sync: false
-      # /jobs dashboard HTTP Basic auth — password is generated; read it in
-      # the Render dashboard under Environment
+
+      # HotPay — add after the LABUCO service is accepted in HotPay.
+      # The notification URL to configure in HotPay is:
+      # https://<backend-host>/payments/hotpay/webhook
+      - key: HOTPAY_SECRET
+        sync: false
+      - key: HOTPAY_NOTIFICATION_PASSWORD
+        sync: false
+      - key: HOTPAY_ENFORCE_IP_WHITELIST
+        value: "true"
+
+      # PayPal — optional second online method.
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_WEBHOOK_SECRET
+        sync: false
+      - key: PAYPAL_TEST_MODE
+        value: "true"
+
+      # Public receiving account used by the manual bank-transfer method.
+      - key: LABUCO_BANK_ACCOUNT
+        value: "PL88 1050 1748 1000 0098 5745 4228"
+
       - key: MISSION_CONTROL_USER
         value: jobs
       - key: MISSION_CONTROL_PASSWORD
         generateValue: true
-      # uncomment on plans with 2+ vCPUs (pro and up) to run one Puma process per vCPU;
-      # a Spree process needs ~1GB RAM, so this doesn't fit free/starter instances
-      # - key: WEB_CONCURRENCY
-      #   value: "2"
 
   # Scale-out: uncomment to split job processing into a dedicated worker
-  # (same image, no rebuild) — and set SOLID_QUEUE_IN_PUMA=false on the web
-  # service above so it stops running jobs in-process. Requires a paid plan.
+  # when moving to a plan that supports it.
   # - type: worker
   #   name: spree-worker
   #   runtime: docker
@@ -47,20 +61,6 @@ services:
   #   dockerfilePath: ./backend/Dockerfile
   #   dockerContext: .
   #   dockerCommand: bin/jobs
-  #   envVars:
-  #     - key: DATABASE_URL
-  #       fromDatabase:
-  #         name: spree-db
-  #         property: connectionString
-  #     - key: SECRET_KEY_BASE
-  #       fromService:
-  #         name: spree
-  #         type: web
-  #         envVarKey: SECRET_KEY_BASE
-  #     - key: JOB_THREADS
-  #       value: "5"
-  #     - key: MALLOC_ARENA_MAX
-  #       value: "2"
 
 databases:
   - name: spree-db
