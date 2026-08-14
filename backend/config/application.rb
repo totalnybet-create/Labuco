@@ -31,6 +31,12 @@ module SpreeStarter
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.1
 
+    # LABUCO is a Polish-first store. Keep English available as a technical
+    # fallback, while administrators see the localized UI by default.
+    config.i18n.default_locale = :pl
+    config.i18n.available_locales = %i[pl en]
+    config.i18n.fallbacks = [:en]
+
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
