@@ -36,26 +36,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Build LABUCO Spree with Dashboard
         run: docker build -f backend/Dockerfile -t labuco-spree-preview .
 
       - name: Prepare preview database
         run: createdb -h 127.0.0.1 -U postgres spree_preview || true
 
-      - name: Start LABUCO Spree
+      - name: Start LABUCO Spree under Docker Compose
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p /tmp/labuco-preview
           SECRET_KEY_BASE="$(openssl rand -hex 64)"
-          docker run -d \
-            --name labuco-spree \
-            --network host \
-            -e DATABASE_URL='postgres://postgres@127.0.0.1:5432/spree_preview' \
-            -e SECRET_KEY_BASE="$SECRET_KEY_BASE" \
-            -e RAILS_ENV=production \
-            -e RAILS_LOG_TO_STDOUT=true \
-            -e RAILS_SERVE_STATIC_FILES=true \
-            labuco-spree-preview
+          cat >/tmp/labuco-preview/docker-compose.yml <<EOF
+          services:
+            web:
+              image: labuco-spree-preview
+              network_mode: host
+              environment:
+                DATABASE_URL: postgres://postgres@127.0.0.1:5432/spree_preview
+                SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+                RAILS_ENV: production
+                RAILS_LOG_TO_STDOUT: "true"
+                RAILS_SERVE_STATIC_FILES: "true"
+          EOF
+          docker compose -f /tmp/labuco-preview/docker-compose.yml up -d
 
       - name: Wait for backend
         shell: bash
@@ -67,14 +76,18 @@ jobs:
             fi
             sleep 4
           done
-          docker logs labuco-spree
+          docker compose -f /tmp/labuco-preview/docker-compose.yml logs --no-color web
           exit 1
+
+      - name: Seed base Spree store
+        working-directory: /tmp/labuco-preview
+        run: npx --yes @spree/cli@2.4.4 seed
 
       - name: Create isolated preview administrator
         shell: bash
         run: |
           set -euo pipefail
-          docker exec labuco-spree ./bin/rails runner '
+          docker compose -f /tmp/labuco-preview/docker-compose.yml exec -T web ./bin/rails runner '
             admin = Spree::AdminUser.find_or_initialize_by(email: "spree@example.com")
             admin.password = "spree123"
             admin.password_confirmation = "spree123"
@@ -82,6 +95,51 @@ jobs:
             admin.last_name = "Preview"
             admin.save!
           '
+
+      - name: Create catalog import API key
+        id: key
+        working-directory: /tmp/labuco-preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=$(npx --yes @spree/cli@2.4.4 api-key create --name LabucoPreviewCatalog --type secret --scopes write_products)
+          key=$(printf '%s\n' "$out" | grep -oE 'sk_[A-Za-z0-9_-]+' | head -n 1)
+          test -n "$key"
+          echo "::add-mask::$key"
+          echo "key=$key" >> "$GITHUB_OUTPUT"
+
+      - name: Import complete LABUCO catalog into Spree
+        env:
+          SPREE_API_URL: http://127.0.0.1:3000
+          SPREE_API_KEY: ${{ steps.key.outputs.key }}
+          LABUCO_ALLOW_PRODUCTION_IMPORT: YES
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/labuco_spree_import.py data/labuco_catalog.json \
+            --commit \
+            --activate \
+            --include-class-c \
+            --limit 0 \
+            --report /tmp/labuco-preview-import-report.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/labuco-preview-import-report.json').read_text(encoding='utf-8'))
+          imported = report['created'] + report['updated']
+          print(f"LABUCO_IMPORT requested={report['requested']} imported={imported} skipped={report['skipped']} failed={report['failed']}")
+          if report['requested'] != 3316 or imported != 3316 or report['failed'] != 0:
+              raise SystemExit('Full LABUCO catalog import verification failed')
+          PY
+
+      - name: Verify catalog inside Spree database
+        shell: bash
+        run: |
+          set -euo pipefail
+          count=$(docker compose -f /tmp/labuco-preview/docker-compose.yml exec -T web ./bin/rails runner 'print Spree::Product.count')
+          echo "Spree product count: ${count}"
+          test "$count" -ge 3316
+          echo "LABUCO products verified in Spree: ${count}"
 
       - name: Install Cloudflare tunnel client
         shell: bash
@@ -108,7 +166,7 @@ jobs:
               dashboard="${url}/dashboard"
               echo "url=$url" >> "$GITHUB_OUTPUT"
               echo "::notice title=LABUCO Admin Preview::${dashboard}"
-              echo "## LABUCO Admin Preview" >> "$GITHUB_STEP_SUMMARY"
+              echo "## LABUCO Admin Preview — 3316 products" >> "$GITHUB_STEP_SUMMARY"
               echo "" >> "$GITHUB_STEP_SUMMARY"
               echo "Dashboard: ${dashboard}" >> "$GITHUB_STEP_SUMMARY"
               echo "Classic Admin: ${url}/admin" >> "$GITHUB_STEP_SUMMARY"
@@ -119,7 +177,7 @@ jobs:
                 -H "Accept: application/vnd.github+json" \
                 -H "X-GitHub-Api-Version: 2022-11-28" \
                 "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-                -d "{\"state\":\"success\",\"target_url\":\"${dashboard}\",\"description\":\"LABUCO Admin Preview is live\",\"context\":\"LABUCO Admin Preview\"}" \
+                -d "{\"state\":\"success\",\"target_url\":\"${dashboard}\",\"description\":\"LABUCO Admin Preview: 3316 products live\",\"context\":\"LABUCO Admin Preview\"}" \
                 >/dev/null
               exit 0
             fi
@@ -143,5 +201,22 @@ jobs:
           PREVIEW_URL: ${{ steps.tunnel.outputs.url }}
         shell: bash
         run: |
-          echo "LABUCO preview is live at ${PREVIEW_URL}/dashboard"
+          echo "LABUCO preview with full catalog is live at ${PREVIEW_URL}/dashboard"
           sleep 19800
+
+      - name: Upload catalog import report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: labuco-admin-preview-import-report
+          path: /tmp/labuco-preview-import-report.json
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Dump backend logs on failure
+        if: failure()
+        run: docker compose -f /tmp/labuco-preview/docker-compose.yml logs --no-color web || true
+
+      - name: Stop containers
+        if: always()
+        run: docker compose -f /tmp/labuco-preview/docker-compose.yml down -v || true
