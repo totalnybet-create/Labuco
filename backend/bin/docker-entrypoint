@@ -1,15 +1,11 @@
 #!/bin/bash -e
 
 # If running the Rails server, prepare the database first. Once migrations are
-# complete, configure the LABUCO Stripe gateway from deployment secrets when
-# explicitly enabled. The rake task is idempotent, so every deploy can safely
-# re-apply the current credentials without creating duplicate payment methods.
+# complete, configure the LABUCO Stripe gateway from deployment secrets. The
+# rake task is idempotent and safely skips itself when both keys are absent.
 if [[ "$*" == *"./bin/rails server"* ]]; then
   ./bin/rails db:prepare
-
-  if [[ "${LABUCO_STRIPE_ENABLED:-false}" == "true" ]]; then
-    ./bin/rails labuco:stripe:configure
-  fi
+  ./bin/rails labuco:stripe:configure
 fi
 
 exec "${@}"
