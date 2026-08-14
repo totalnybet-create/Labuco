@@ -110,7 +110,7 @@ jobs:
           echo "secret=$secret" >> "$GITHUB_OUTPUT"
           echo "public=$public" >> "$GITHUB_OUTPUT"
 
-      - name: Import complete LABUCO catalog
+      - name: Import starter LABUCO catalog
         env:
           SPREE_API_URL: http://127.0.0.1:3000
           SPREE_API_KEY: ${{ steps.keys.outputs.secret }}
@@ -122,31 +122,8 @@ jobs:
             --commit \
             --activate \
             --include-class-c \
-            --limit 0 \
-            --report /tmp/labuco-storefront-import-report.json
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          report = json.loads(Path('/tmp/labuco-storefront-import-report.json').read_text(encoding='utf-8'))
-          imported = report['created'] + report['updated']
-          print(f"LABUCO_IMPORT requested={report['requested']} imported={imported} skipped={report['skipped']} failed={report['failed']}")
-          if report['requested'] != 3316 or imported != 3316 or report['failed'] != 0:
-              raise SystemExit('Full LABUCO catalog import verification failed')
-          PY
-
-      - name: Verify LABUCO catalog
-        shell: bash
-        run: |
-          set -euo pipefail
-          raw=$(docker compose -f /tmp/labuco-storefront-preview/docker-compose.yml exec -T web \
-            ./bin/rails runner 'puts "LABUCO_PRODUCT_COUNT=#{Spree::Product.count}"' 2>&1)
-          printf '%s\n' "$raw"
-          count=$(printf '%s\n' "$raw" | sed -n 's/^LABUCO_PRODUCT_COUNT=\([0-9][0-9]*\)$/\1/p' | tail -n 1)
-          test -n "$count"
-          if (( count < 3316 )); then
-            echo "Expected at least 3316 LABUCO products, found ${count}" >&2
-            exit 1
-          fi
+            --limit 100 \
+            --report /tmp/labuco-starter-import-report.json
 
       - name: Install Cloudflare tunnel client
         shell: bash
@@ -213,10 +190,48 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-            -d "{\"state\":\"success\",\"target_url\":\"${PREVIEW_URL}\",\"description\":\"LABUCO customer storefront: 3316 products live\",\"context\":\"LABUCO Storefront Preview\"}" \
+            -d "{\"state\":\"success\",\"target_url\":\"${PREVIEW_URL}\",\"description\":\"LABUCO customer storefront is live\",\"context\":\"LABUCO Storefront Preview\"}" \
             >/dev/null
-          echo "## LABUCO Customer Storefront — 3316 products" >> "$GITHUB_STEP_SUMMARY"
+          echo "## LABUCO Customer Storefront" >> "$GITHUB_STEP_SUMMARY"
           echo "Storefront: ${PREVIEW_URL}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Import complete LABUCO catalog
+        env:
+          SPREE_API_URL: http://127.0.0.1:3000
+          SPREE_API_KEY: ${{ steps.keys.outputs.secret }}
+          LABUCO_ALLOW_PRODUCTION_IMPORT: YES
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/labuco_spree_import.py data/labuco_catalog.json \
+            --commit \
+            --activate \
+            --include-class-c \
+            --limit 0 \
+            --report /tmp/labuco-storefront-import-report.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/labuco-storefront-import-report.json').read_text(encoding='utf-8'))
+          imported = report['created'] + report['updated']
+          print(f"LABUCO_IMPORT requested={report['requested']} imported={imported} skipped={report['skipped']} failed={report['failed']}")
+          if report['requested'] != 3316 or imported != 3316 or report['failed'] != 0:
+              raise SystemExit('Full LABUCO catalog import verification failed')
+          PY
+
+      - name: Verify LABUCO catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          raw=$(docker compose -f /tmp/labuco-storefront-preview/docker-compose.yml exec -T web \
+            ./bin/rails runner 'puts "LABUCO_PRODUCT_COUNT=#{Spree::Product.count}"' 2>&1)
+          printf '%s\n' "$raw"
+          count=$(printf '%s\n' "$raw" | sed -n 's/^LABUCO_PRODUCT_COUNT=\([0-9][0-9]*\)$/\1/p' | tail -n 1)
+          test -n "$count"
+          if (( count < 3316 )); then
+            echo "Expected at least 3316 LABUCO products, found ${count}" >&2
+            exit 1
+          fi
 
       - name: Keep storefront online
         env:
