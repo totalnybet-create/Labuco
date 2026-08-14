@@ -20,6 +20,12 @@ services:
         generateValue: true
       - key: RAILS_LOG_LEVEL
         value: info
+      # Stripe credentials are supplied securely in the Render dashboard.
+      # Never commit their values to this Blueprint or to the repository.
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
       # /jobs dashboard HTTP Basic auth — password is generated; read it in
       # the Render dashboard under Environment
       - key: MISSION_CONTROL_USER
