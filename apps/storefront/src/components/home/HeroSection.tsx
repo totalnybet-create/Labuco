@@ -22,7 +22,7 @@ export async function HeroSection({ basePath }: HeroSectionProps) {
           <span> do udanej uprawy.</span>
         </h1>
         <p className="labuco-hero-lead">
-          Profesjonalne produkty dla początkujących i doświadczonych hodowców.
+          Profesjonalne produkty dla początkujących i doświadczonych growerów.
         </p>
 
         <div className="labuco-hero-benefits">
@@ -30,7 +30,7 @@ export async function HeroSection({ basePath }: HeroSectionProps) {
             <ShieldCheck aria-hidden="true" />
             <span>
               <strong>Dyskretna wysyłka</strong>
-              <small>100% anonimowości</small>
+              <small>Neutralne opakowanie</small>
             </span>
           </div>
           <div>
@@ -44,7 +44,7 @@ export async function HeroSection({ basePath }: HeroSectionProps) {
             <LockKeyhole aria-hidden="true" />
             <span>
               <strong>Bezpieczne płatności</strong>
-              <small>SSL &amp; zaufane metody</small>
+              <small>SSL i zaufane metody</small>
             </span>
           </div>
         </div>
