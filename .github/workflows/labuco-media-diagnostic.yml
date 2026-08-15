@@ -1,0 +1,112 @@
+name: LABUCO Media Diagnostic
+
+on:
+  push:
+    branches:
+      - codex/labuco-production-polish-20260815
+    paths:
+      - '.github/workflows/labuco-media-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend
+        run: docker build -f backend/Dockerfile -t labuco-media-backend .
+
+      - name: Start backend with queue enabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          createdb -h 127.0.0.1 -U postgres spree_media_diag || true
+          mkdir -p /tmp/labuco-media/storage
+          SECRET_KEY_BASE="$(openssl rand -hex 64)"
+          cat >/tmp/labuco-media/docker-compose.yml <<EOF
+          services:
+            web:
+              image: labuco-media-backend
+              network_mode: host
+              environment:
+                DATABASE_URL: postgres://postgres@127.0.0.1:5432/spree_media_diag
+                SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+                RAILS_ENV: production
+                RAILS_LOG_TO_STDOUT: "true"
+                RAILS_SERVE_STATIC_FILES: "true"
+                SOLID_QUEUE_IN_PUMA: "true"
+              volumes:
+                - /tmp/labuco-media/storage:/rails/storage
+          EOF
+          docker compose -f /tmp/labuco-media/docker-compose.yml up -d
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:3000/up >/dev/null; then exit 0; fi
+            sleep 3
+          done
+          docker compose -f /tmp/labuco-media/docker-compose.yml logs --no-color web || true
+          exit 1
+
+      - name: Seed store and create admin key
+        id: key
+        working-directory: /tmp/labuco-media
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes @spree/cli@2.4.4 seed
+          secret_out=$(npx --yes @spree/cli@2.4.4 api-key create --name LabucoMediaDiagnostic --type secret --scopes write_products)
+          secret=$(printf '%s\n' "$secret_out" | grep -oE 'sk_[A-Za-z0-9_-]+' | head -n1)
+          test -n "$secret"
+          echo "::add-mask::$secret"
+          echo "secret=$secret" >> "$GITHUB_OUTPUT"
+
+      - name: Import eight products with media
+        env:
+          SPREE_API_URL: http://127.0.0.1:3000
+          SPREE_API_KEY: ${{ steps.key.outputs.secret }}
+          LABUCO_ALLOW_PRODUCTION_IMPORT: YES
+        run: |
+          set -euo pipefail
+          python tools/labuco_spree_import.py data/labuco_catalog.json --commit --activate --include-class-c --limit 8 --report /tmp/labuco-media/import.json
+          cat /tmp/labuco-media/import.json
+
+      - name: Inspect queue, attachments and Store API media
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            echo "--- attempt ${attempt} ---"
+            docker compose -f /tmp/labuco-media/docker-compose.yml exec -T web ./bin/rails runner '
+              require "json"
+              product = Spree::Product.order(:id).first
+              assets = Spree::Asset.count
+              blobs = defined?(ActiveStorage::Blob) ? ActiveStorage::Blob.count : -1
+              attachments = defined?(ActiveStorage::Attachment) ? ActiveStorage::Attachment.count : -1
+              queued = defined?(SolidQueue::Job) ? SolidQueue::Job.count : -1
+              failed = defined?(SolidQueue::FailedExecution) ? SolidQueue::FailedExecution.count : -1
+              media = product ? product.assets.map { |a| {id: a.id, attachment_attached: (a.respond_to?(:attachment) && a.attachment.attached? rescue false)} } : []
+              puts JSON.generate({assets: assets, blobs: blobs, attachments: attachments, queued_jobs: queued, failed_jobs: failed, product_id: product&.id, media: media})
+            ' | tail -n 1
+            if docker compose -f /tmp/labuco-media/docker-compose.yml exec -T web ./bin/rails runner 'exit((defined?(ActiveStorage::Attachment) && ActiveStorage::Attachment.count > 0) ? 0 : 1)'; then
+              break
+            fi
+            sleep 4
+          done
+          echo '--- backend logs ---'
+          docker compose -f /tmp/labuco-media/docker-compose.yml logs --no-color web | tail -300
