@@ -224,6 +224,39 @@ def find_base_price_id(
     return None
 
 
+def ensure_product_image(
+    base_url: str,
+    api_key: str,
+    product_id: str,
+    record: dict[str, Any],
+) -> bool:
+    """Queue the catalog reference image when the product has no media yet."""
+    image_url = str(record.get("reference_image") or "").strip()
+    if not image_url.startswith(("https://", "http://")):
+        return False
+
+    response = request_json(
+        base_url,
+        api_key,
+        "GET",
+        f"/api/v3/admin/products/{product_id}/media?limit=1",
+    )
+    media = response.get("data")
+    if isinstance(media, list) and media:
+        return False
+
+    image_payload = {"url": image_url, "position": 1}
+    request_json(
+        base_url,
+        api_key,
+        "POST",
+        f"/api/v3/admin/products/{product_id}/media",
+        image_payload,
+        idempotency_key("product-image", str(record["labuco_sku"]), image_payload),
+    )
+    return True
+
+
 def upsert_and_enforce_product(
     base_url: str,
     api_key: str,
@@ -395,6 +428,9 @@ def main() -> int:
             result, action = upsert_and_enforce_product(
                 base_url, api_key, sku, payload, pricing_state
             )
+            image_queued = ensure_product_image(
+                base_url, api_key, str(result["id"]), record
+            )
             report[action] += 1
             report["items"].append(
                 {
@@ -403,6 +439,7 @@ def main() -> int:
                     "id": result.get("id"),
                     "price": price_payload["amount"],
                     "cost_price": variant_payload["cost_price"],
+                    "image_queued": image_queued,
                 }
             )
         except urllib.error.HTTPError as exc:

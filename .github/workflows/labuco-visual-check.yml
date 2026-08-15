@@ -132,6 +132,16 @@ jobs:
               publication.save!
             end
           '
+          media_count=0
+          for attempt in $(seq 1 60); do
+            media_count="$(docker compose -f /tmp/labuco-visual/docker-compose.yml exec -T web ./bin/rails runner 'print Spree::Asset.count' | tail -n 1)"
+            if [ "${media_count:-0}" -ge 8 ]; then break; fi
+            sleep 2
+          done
+          if [ "${media_count:-0}" -lt 8 ]; then
+            echo "Expected at least 8 imported product images, got ${media_count:-0}" >&2
+            exit 1
+          fi
 
       - name: Build and start storefront
         working-directory: apps/storefront
@@ -177,6 +187,10 @@ jobs:
             if ((await page.locator('body').innerText()).includes('Nie znaleziono produktów')) {
               throw new Error('Homepage renders an empty product state')
             }
+            const loadedProductImages = await page.locator('a[href*="/products/"] img').evaluateAll(
+              (images) => images.filter((image) => image.complete && image.naturalWidth > 0).length
+            )
+            if (loadedProductImages < 1) throw new Error('Homepage has no loaded product images')
 
             const overflow = await page.evaluate(() =>
               Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth

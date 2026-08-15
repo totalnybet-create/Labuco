@@ -206,6 +206,35 @@ class LabucoSpreeImportTests(unittest.TestCase):
         self.assertEqual(request.call_args_list[3].args[4]["amount"], "50,00")
         self.assertEqual(len(request.call_args_list), 4)
 
+    def test_queues_reference_image_only_when_product_has_no_media(self):
+        record = catalog_record(
+            reference_image="https://cdn.example.test/products/labuco.webp"
+        )
+        responses = [{"data": []}, {}]
+
+        with mock.patch.object(spree_import, "request_json", side_effect=responses) as request:
+            queued = spree_import.ensure_product_image(
+                "https://spree.example", "sk_test", "prod-new", record
+            )
+
+        self.assertTrue(queued)
+        self.assertEqual(request.call_args_list[0].args[2], "GET")
+        self.assertEqual(request.call_args_list[1].args[2], "POST")
+        self.assertEqual(
+            request.call_args_list[1].args[4],
+            {"url": record["reference_image"], "position": 1},
+        )
+
+        with mock.patch.object(
+            spree_import, "request_json", return_value={"data": [{"id": "media-1"}]}
+        ) as request:
+            queued = spree_import.ensure_product_image(
+                "https://spree.example", "sk_test", "prod-new", record
+            )
+
+        self.assertFalse(queued)
+        self.assertEqual(request.call_count, 1)
+
 
 if __name__ == "__main__":
     unittest.main()
