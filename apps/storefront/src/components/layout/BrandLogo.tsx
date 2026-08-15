@@ -5,45 +5,52 @@ interface BrandLogoProps {
   inverted?: boolean;
 }
 
-/** LABUCO wordmark tuned to the approved dark-green mobile reference. */
+/** Labuco wordmark with an abstract sprout mark for storefront chrome. */
 export function BrandLogo({
   name,
   className = "",
   compact = false,
   inverted = false,
 }: BrandLogoProps) {
-  const markSize = compact ? "size-7" : "size-8";
-  const wordmarkSize = compact ? "text-lg" : "text-xl";
-  const markColor = inverted ? "text-lime-500" : "text-emerald-800";
+  const markSize = compact ? "size-8" : "size-9";
+  const wordmarkSize = compact ? "text-xl" : "text-2xl";
+  const markColor = inverted ? "text-emerald-400" : "text-emerald-700";
   const wordmarkColor = inverted ? "text-white" : "text-slate-950";
 
   return (
     <span
-      className={`inline-flex items-center gap-2 whitespace-nowrap ${className}`}
+      className={`inline-flex items-center gap-2.5 whitespace-nowrap ${className}`}
     >
       <svg
-        viewBox="0 0 48 48"
+        viewBox="0 0 40 40"
         className={`${markSize} shrink-0 ${markColor}`}
         aria-hidden="true"
       >
-        <g
+        <rect width="40" height="40" rx="12" fill="currentColor" />
+        <path
+          d="M20 29V17.5"
           fill="none"
-          stroke="currentColor"
+          stroke="white"
+          strokeWidth="2.4"
           strokeLinecap="round"
+        />
+        <path
+          d="M19.8 20.5c-5.6 0-9.2-3.3-9.2-8.4 5.7-.3 9.1 2.5 9.2 8.4Z"
+          fill="none"
+          stroke="white"
+          strokeWidth="2.4"
           strokeLinejoin="round"
-        >
-          <path d="M24 42V13" strokeWidth="2.1" />
-          <path d="M24 14C20 8 19 4 24 1c5 3 4 7 0 13Z" strokeWidth="1.8" />
-          <path d="M22 17C14 13 10 10 9 5c7 0 12 4 13 12Z" strokeWidth="1.8" />
-          <path d="M26 17c8-4 12-7 13-12-7 0-12 4-13 12Z" strokeWidth="1.8" />
-          <path d="M21 22C12 21 7 19 4 14c8-2 14 1 17 8Z" strokeWidth="1.8" />
-          <path d="M27 22c9-1 14-3 17-8-8-2-14 1-17 8Z" strokeWidth="1.8" />
-          <path d="M21 28c-8 1-13 0-17-4 7-3 13-2 17 4Z" strokeWidth="1.8" />
-          <path d="M27 28c8 1 13 0 17-4-7-3-13-2-17 4Z" strokeWidth="1.8" />
-        </g>
+        />
+        <path
+          d="M20.2 17.7c.1-5.6 3.5-8.5 9.2-8.2 0 5.1-3.6 8.3-9.2 8.2Z"
+          fill="none"
+          stroke="white"
+          strokeWidth="2.4"
+          strokeLinejoin="round"
+        />
       </svg>
       <span
-        className={`${wordmarkSize} ${wordmarkColor} font-semibold leading-none tracking-[-0.045em]`}
+        className={`${wordmarkSize} ${wordmarkColor} font-semibold leading-none tracking-[-0.055em]`}
       >
         {name}
       </span>
