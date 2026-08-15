@@ -44,8 +44,9 @@ services:
         value: "true"
 
       # Public receiving account used by the manual bank-transfer method.
+      # Set only in the hosting provider's encrypted environment variables.
       - key: LABUCO_BANK_ACCOUNT
-        value: "PL88 1050 1748 1000 0098 5745 4228"
+        sync: false
 
       - key: MISSION_CONTROL_USER
         value: jobs
