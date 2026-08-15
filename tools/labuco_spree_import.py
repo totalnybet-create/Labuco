@@ -278,8 +278,9 @@ def upsert_and_enforce_product(
     price_id = find_base_price_id(base_url, api_key, product, enforced)
     if not price_id:
         raise RuntimeError(f"Spree response has no base PLN price id for {sku}")
-    divisor = pricing_state.get("price_endpoint_divisor", Decimal("1"))
-    price_payload = {"amount": format(expected_price / divisor, "f")}
+    decimal_separator = str(pricing_state.get("price_decimal_separator", "."))
+    formatted_price = format(expected_price, "f").replace(".", decimal_separator)
+    price_payload = {"amount": formatted_price}
     updated_price = request_json(
         base_url,
         api_key,
@@ -289,21 +290,22 @@ def upsert_and_enforce_product(
         idempotency_key("price-update", sku, price_payload),
     )
     actual_price = response_price_amount({"price": updated_price})
-    if actual_price == expected_price * 100 and divisor == Decimal("1"):
-        # Spree 5.6.1 treats the dedicated endpoint amount as a major-unit
-        # value and then applies another 100x conversion. Current Spree uses
-        # the documented major-unit string. Detect the old behaviour once,
-        # compensate, and reuse the result for the remainder of the import.
-        divisor = Decimal("100")
-        pricing_state["price_endpoint_divisor"] = divisor
-        price_payload = {"amount": format(expected_price / divisor, "f")}
+    if actual_price != expected_price and decimal_separator == ".":
+        # Spree::LocalizedNumber parses strings with the backend's I18n
+        # decimal separator. A Polish backend therefore strips a dot from
+        # "25.90" and stores 2590. Retry with a comma and remember the
+        # separator for the remainder of this import. English/newer backends
+        # keep using the documented dot representation.
+        decimal_separator = ","
+        pricing_state["price_decimal_separator"] = decimal_separator
+        price_payload = {"amount": format(expected_price, "f").replace(".", decimal_separator)}
         updated_price = request_json(
             base_url,
             api_key,
             "PATCH",
             f"/api/v3/admin/prices/{price_id}",
             price_payload,
-            idempotency_key("price-subunit-fix", sku, price_payload),
+            idempotency_key("price-locale-fix", sku, price_payload),
         )
         actual_price = response_price_amount({"price": updated_price})
 
