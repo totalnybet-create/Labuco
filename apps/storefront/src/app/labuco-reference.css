@@ -144,7 +144,7 @@
 /* MOBILE — primary reference viewport */
 @media (max-width: 767px) {
   .labuco-storefront-main {
-    padding-bottom: 35px !important;
+    padding-bottom: 66px !important;
   }
 
   .labuco-home {
@@ -164,7 +164,7 @@
 
   .labuco-service-bar > span {
     gap: 4px !important;
-    font-size: 5.5px !important;
+    font-size: 9px !important;
     font-weight: 600;
   }
 
@@ -218,7 +218,7 @@
   .labuco-cart-action {
     min-width: 26px !important;
     gap: 1px !important;
-    font-size: 6px !important;
+    font-size: 9px !important;
   }
 
   .labuco-header-action > svg,
@@ -258,7 +258,7 @@
     min-height: 27px !important;
     height: 27px !important;
     padding: 0 39px 0 12px !important;
-    font-size: 7px !important;
+    font-size: 12px !important;
   }
 
   .labuco-header-search form > div > div:last-child {
@@ -292,7 +292,7 @@
   .labuco-hero-lead {
     max-width: 150px !important;
     margin-top: 9px !important;
-    font-size: 7.2px !important;
+    font-size: 10px !important;
     line-height: 1.42 !important;
   }
 
@@ -319,13 +319,13 @@
   }
 
   .labuco-hero-benefits strong {
-    font-size: 5.6px !important;
+    font-size: 8px !important;
     line-height: 1.05 !important;
   }
 
   .labuco-hero-benefits small {
     margin-top: 2px !important;
-    font-size: 4.7px !important;
+    font-size: 7px !important;
     line-height: 1.05 !important;
   }
 
@@ -339,7 +339,7 @@
     min-height: 28px !important;
     height: 28px;
     border-radius: 5px !important;
-    font-size: 7px !important;
+    font-size: 10px !important;
     gap: 6px !important;
   }
 
@@ -369,13 +369,13 @@
   }
 
   .labuco-section-heading h2 {
-    font-size: 10.5px !important;
+    font-size: 17px !important;
     line-height: 1.05 !important;
   }
 
   .labuco-view-all {
     gap: 3px !important;
-    font-size: 5.8px !important;
+    font-size: 10px !important;
   }
 
   .labuco-view-all span {
@@ -396,7 +396,7 @@
     border-radius: 6px !important;
     border-color: var(--labuco-reference-line) !important;
     background: linear-gradient(150deg, #10261d, #0a1e17) !important;
-    font-size: 5.8px !important;
+    font-size: 9px !important;
     line-height: 1.08 !important;
   }
 
@@ -449,7 +449,7 @@
   .labuco-home .product-carousel h3,
   .labuco-home .product-carousel h3 a {
     min-height: 16px;
-    font-size: 6px !important;
+    font-size: 10px !important;
     line-height: 1.1 !important;
   }
 
@@ -459,7 +459,7 @@
   }
 
   .labuco-home .product-carousel .group.relative > div:nth-child(2) > div span:first-child {
-    font-size: 8.5px !important;
+    font-size: 13px !important;
     line-height: 1 !important;
   }
 
@@ -469,7 +469,7 @@
     margin-top: 4px !important;
     border-radius: 4px !important;
     gap: 4px !important;
-    font-size: 6px !important;
+    font-size: 9px !important;
   }
 
   .labuco-card-cart svg {
@@ -493,7 +493,8 @@
 
   /* TRUST */
   .labuco-trust-strip {
-    min-height: 49px;
+    min-height: 122px;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     margin: 5px 21px 2px !important;
     padding: 7px 8px !important;
     gap: 7px !important;
@@ -511,18 +512,19 @@
   }
 
   .labuco-trust-item strong {
-    font-size: 4.4px !important;
+    font-size: 9px !important;
     line-height: 1.08 !important;
   }
 
   .labuco-trust-item p {
     margin-top: 2px !important;
-    font-size: 3.7px !important;
+    font-size: 8px !important;
     line-height: 1.17 !important;
   }
 
   /* GUIDES */
   .labuco-guide-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 6px !important;
   }
 
@@ -531,54 +533,60 @@
   }
 
   .labuco-guide-art {
-    height: 31px !important;
+    height: 82px !important;
   }
 
   .labuco-guide-copy {
-    padding: 4px 5px 5px !important;
+    padding: 9px 10px 11px !important;
   }
 
   .labuco-guide-copy > span {
-    font-size: 3.6px !important;
+    font-size: 8px !important;
   }
 
   .labuco-guide-copy h3 {
     margin-top: 2px !important;
-    font-size: 5.4px !important;
+    font-size: 12px !important;
     line-height: 1.12 !important;
   }
 
   /* NEWSLETTER */
   .labuco-newsletter {
-    min-height: 61px !important;
-    height: 61px;
-    margin: 6px 21px 0 !important;
-    padding: 7px 9px !important;
-    grid-template-columns: 31px minmax(0, 1fr) 34% !important;
-    gap: 7px !important;
+    min-height: 148px !important;
+    height: auto;
+    margin: 12px 21px 0 !important;
+    padding: 16px !important;
+    grid-template-columns: 36px minmax(0, 1fr) !important;
+    gap: 10px !important;
     border-radius: 6px !important;
     background: linear-gradient(110deg, #0c2a20, #071b14 65%, #0a2118) !important;
   }
 
   .labuco-newsletter-icon svg {
-    width: 24px !important;
-    height: 24px !important;
+    width: 30px !important;
+    height: 30px !important;
   }
 
   .labuco-newsletter-copy h2 {
-    font-size: 9px !important;
+    font-size: 17px !important;
     line-height: 1 !important;
   }
 
   .labuco-newsletter-copy p {
-    margin: 2px 0 4px !important;
-    font-size: 4.4px !important;
+    margin: 5px 0 10px !important;
+    font-size: 10px !important;
+  }
+
+  .labuco-newsletter-copy .labuco-newsletter-status {
+    min-height: 14px;
+    margin: 5px 0 0 !important;
+    font-size: 9px !important;
   }
 
   .labuco-newsletter-form {
-    width: 150px !important;
+    width: 100% !important;
     max-width: 100%;
-    height: 20px !important;
+    height: 38px !important;
     border-radius: 3px !important;
   }
 
@@ -588,48 +596,44 @@
 
   .labuco-newsletter-form input {
     padding-inline: 8px !important;
-    font-size: 5px !important;
+    font-size: 12px !important;
   }
 
   .labuco-newsletter-form button {
-    width: 23px !important;
-    font-size: 10px !important;
+    width: 42px !important;
+    font-size: 18px !important;
   }
 
   .labuco-newsletter-art {
-    right: -1% !important;
-    bottom: 0 !important;
-    width: 35% !important;
-    height: 100% !important;
-    aspect-ratio: auto !important;
+    display: none !important;
   }
 
   /* FIXED BOTTOM BAR */
   .labuco-bottom-nav {
-    min-height: 31px !important;
-    height: 31px;
-    padding: 2px 4px max(2px, env(safe-area-inset-bottom)) !important;
+    min-height: 58px !important;
+    height: auto;
+    padding: 6px 4px max(5px, env(safe-area-inset-bottom)) !important;
     box-shadow: none !important;
     background: rgba(4,19,13,.985) !important;
   }
 
   .labuco-bottom-nav > a,
   .labuco-bottom-nav > button {
-    gap: 1px !important;
-    font-size: 5px !important;
+    gap: 3px !important;
+    font-size: 9px !important;
   }
 
   .labuco-bottom-nav svg {
-    width: 14px !important;
-    height: 14px !important;
+    width: 20px !important;
+    height: 20px !important;
   }
 
   .labuco-bottom-cart-icon b {
-    min-width: 10px !important;
-    height: 10px !important;
+    min-width: 14px !important;
+    height: 14px !important;
     top: -4px !important;
     right: -7px !important;
-    font-size: 5px !important;
+    font-size: 8px !important;
   }
 
   footer {

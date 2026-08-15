@@ -54,7 +54,7 @@ export function SearchToggle({
         </div>
       </div>
 
-      <div className="labuco-header-search">
+      <div className="labuco-header-search" id="store-search">
         <SearchBar basePath={basePath} />
       </div>
     </header>

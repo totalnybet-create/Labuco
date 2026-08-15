@@ -161,6 +161,7 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
         <InputGroup>
           <InputGroupInput
             ref={inputRef}
+            id="labuco-product-search"
             type="search"
             value={query}
             onChange={(e) => handleQueryChange(e.target.value)}

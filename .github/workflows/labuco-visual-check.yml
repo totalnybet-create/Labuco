@@ -4,6 +4,17 @@ on:
   push:
     paths:
       - '.github/workflows/labuco-visual-check.yml'
+      - 'apps/storefront/**'
+      - 'backend/**'
+      - 'data/labuco_catalog.json'
+      - 'tools/labuco_spree_import.py'
+  pull_request:
+    paths:
+      - '.github/workflows/labuco-visual-check.yml'
+      - 'apps/storefront/**'
+      - 'backend/**'
+      - 'data/labuco_catalog.json'
+      - 'tools/labuco_spree_import.py'
 
 permissions:
   contents: read
@@ -32,12 +43,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Checkout proven LABUCO backend
-        uses: actions/checkout@v4
-        with:
-          ref: ed09bb524f09eb7cd86c772f5792718e4f265947
-          path: proven
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -47,7 +52,7 @@ jobs:
           version: 10.33.4
 
       - name: Build backend
-        run: docker build -f proven/backend/Dockerfile -t labuco-visual-backend proven
+        run: docker build -f backend/Dockerfile -t labuco-visual-backend .
 
       - name: Start backend
         shell: bash
@@ -149,15 +154,54 @@ jobs:
           cat /tmp/labuco-visual/storefront.log
           exit 1
 
-      - name: Capture 390px mobile reference
+      - name: Smoke test and capture mobile + desktop
         working-directory: apps/storefront
         shell: bash
         run: |
           set -euo pipefail
           pnpm exec playwright install --with-deps chromium >/dev/null
-          pnpm exec playwright screenshot --browser chromium --viewport-size "390,910" --wait-for-timeout 2500 --full-page http://127.0.0.1:3001/pl/pl /tmp/labuco-visual/mobile-full.png
-          pnpm exec playwright screenshot --browser chromium --viewport-size "390,910" --wait-for-timeout 2500 http://127.0.0.1:3001/pl/pl /tmp/labuco-visual/mobile-viewport.png
-          file /tmp/labuco-visual/mobile-full.png /tmp/labuco-visual/mobile-viewport.png
+          node <<'NODE'
+          const { chromium } = require('@playwright/test')
+
+          async function verify(viewport, prefix) {
+            const browser = await chromium.launch()
+            const page = await browser.newPage({ viewportSize: viewport })
+            await page.goto('http://127.0.0.1:3001/pl/pl', { waitUntil: 'networkidle' })
+
+            const productLinks = await page.locator('a[href*="/products/"]').count()
+            if (productLinks < 1) throw new Error('Homepage has no product links')
+            if ((await page.locator('body').innerText()).includes('Nie znaleziono produktów')) {
+              throw new Error('Homepage renders an empty product state')
+            }
+
+            const overflow = await page.evaluate(() =>
+              Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth
+            )
+            if (overflow > 1) throw new Error(`Horizontal overflow: ${overflow}px`)
+
+            await page.screenshot({ path: `/tmp/labuco-visual/${prefix}-viewport.png` })
+            await page.screenshot({ path: `/tmp/labuco-visual/${prefix}-full.png`, fullPage: true })
+
+            const guideHref = await page.locator('a[href*="/guides/"]').first().getAttribute('href')
+            if (!guideHref) throw new Error('Homepage has no working guide links')
+            await page.goto(`http://127.0.0.1:3001${guideHref}`, { waitUntil: 'networkidle' })
+            await page.getByRole('heading', { level: 1 }).waitFor()
+            if ((await page.locator('main').innerText()).trim().length < 500) {
+              throw new Error('Guide page does not contain complete content')
+            }
+
+            await browser.close()
+          }
+
+          Promise.all([
+            verify({ width: 390, height: 910 }, 'mobile'),
+            verify({ width: 1440, height: 1000 }, 'desktop'),
+          ]).catch((error) => {
+            console.error(error)
+            process.exit(1)
+          })
+          NODE
+          file /tmp/labuco-visual/mobile-full.png /tmp/labuco-visual/mobile-viewport.png /tmp/labuco-visual/desktop-full.png /tmp/labuco-visual/desktop-viewport.png
 
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
@@ -166,6 +210,8 @@ jobs:
           path: |
             /tmp/labuco-visual/mobile-full.png
             /tmp/labuco-visual/mobile-viewport.png
+            /tmp/labuco-visual/desktop-full.png
+            /tmp/labuco-visual/desktop-viewport.png
           retention-days: 1
           if-no-files-found: error
 
