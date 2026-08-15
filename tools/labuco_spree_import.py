@@ -118,6 +118,14 @@ def response_price_amount(product: dict[str, Any]) -> Decimal | None:
         return None
 
 
+def payload_with_price_divisor(payload: dict[str, Any], divisor: Decimal) -> dict[str, Any]:
+    """Return a payload adjusted for a detected nested-price API regression."""
+    adjusted = copy.deepcopy(payload)
+    amount = Decimal(str(adjusted["variants"][0]["prices"][0]["amount"]))
+    adjusted["variants"][0]["prices"][0]["amount"] = format(amount / divisor, "f")
+    return adjusted
+
+
 def build_payload(record: dict[str, Any], category_map: dict[str, str], active: bool) -> dict[str, Any]:
     record = normalize_record(record)
     category_id = category_map.get(str(record.get("category") or ""))
@@ -163,9 +171,22 @@ def request_json(
         method=method,
         headers=headers,
     )
-    with urllib.request.urlopen(request, timeout=30) as response:
-        raw = response.read().decode("utf-8")
-        return json.loads(raw) if raw else {}
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                raw = response.read().decode("utf-8")
+                return json.loads(raw) if raw else {}
+        except urllib.error.HTTPError as exc:
+            if exc.code not in {429, 502, 503, 504} or attempt == 3:
+                raise
+            retry_after = exc.headers.get("Retry-After")
+            try:
+                delay = float(retry_after) if retry_after else 0.5 * (2**attempt)
+            except ValueError:
+                delay = 0.5 * (2**attempt)
+            time.sleep(min(delay, 8.0))
+
+    raise RuntimeError("unreachable HTTP retry state")
 
 
 def find_product_by_sku(base_url: str, api_key: str, sku: str) -> dict[str, Any] | None:
@@ -185,7 +206,11 @@ def upsert_and_enforce_product(
     api_key: str,
     sku: str,
     payload: dict[str, Any],
+    pricing_state: dict[str, Decimal] | None = None,
 ) -> tuple[dict[str, Any], str]:
+    pricing_state = pricing_state if pricing_state is not None else {}
+    divisor = pricing_state.get("nested_price_divisor", Decimal("1"))
+    api_payload = payload_with_price_divisor(payload, divisor)
     existing = find_product_by_sku(base_url, api_key, sku)
     if existing:
         product_id = existing["id"]
@@ -194,8 +219,8 @@ def upsert_and_enforce_product(
             api_key,
             "PATCH",
             f"/api/v3/admin/products/{product_id}",
-            payload,
-            idempotency_key("product-update", sku, payload),
+            api_payload,
+            idempotency_key("product-update", sku, api_payload),
         )
         action = "updated"
     else:
@@ -204,8 +229,8 @@ def upsert_and_enforce_product(
             api_key,
             "POST",
             "/api/v3/admin/products",
-            payload,
-            idempotency_key("product-create", sku, payload),
+            api_payload,
+            idempotency_key("product-create", sku, api_payload),
         )
         product_id = product.get("id")
         action = "created"
@@ -213,9 +238,19 @@ def upsert_and_enforce_product(
     if not product_id:
         raise RuntimeError(f"Spree {action} response has no product id for {sku}")
 
+    expected_price = Decimal(str(payload["variants"][0]["prices"][0]["amount"]))
+    created_price = response_price_amount(product)
+    if created_price == expected_price * 100:
+        # Remember the behaviour for the rest of a bulk import. This avoids a
+        # third write per product and prevents exhausting the Admin API burst
+        # limit on a 100-product smoke import.
+        divisor = Decimal("100")
+        pricing_state["nested_price_divisor"] = divisor
+        api_payload = payload_with_price_divisor(payload, divisor)
+
     # Spree v5.6 keeps purchasable fields on variants. An entry without option
     # values is an upsert of the simple product's master/default variant.
-    commercial = {"variants": payload["variants"]}
+    commercial = {"variants": api_payload["variants"]}
     enforced = request_json(
         base_url,
         api_key,
@@ -230,7 +265,6 @@ def upsert_and_enforce_product(
     # major-unit strings (for example "29.99"). Detect that exact 100x
     # response and compensate, while retaining normal behaviour for versions
     # where the endpoint already follows the documented contract.
-    expected_price = Decimal(str(payload["variants"][0]["prices"][0]["amount"]))
     actual_price = response_price_amount(enforced)
     # Draft responses on newer Spree images can omit the resolved price. The
     # catalog smoke test verifies those rows directly in the database; active
@@ -238,9 +272,7 @@ def upsert_and_enforce_product(
     if actual_price is None:
         return enforced or product, action
     if actual_price == expected_price * 100:
-        corrected = copy.deepcopy(commercial)
-        corrected_amount = expected_price / 100
-        corrected["variants"][0]["prices"][0]["amount"] = format(corrected_amount, "f")
+        corrected = {"variants": payload_with_price_divisor(payload, Decimal("100"))["variants"]}
         enforced = request_json(
             base_url,
             api_key,
@@ -250,6 +282,7 @@ def upsert_and_enforce_product(
             idempotency_key("product-price-subunit-fix", sku, corrected),
         )
         actual_price = response_price_amount(enforced)
+        pricing_state["nested_price_divisor"] = Decimal("100")
 
     if actual_price != expected_price:
         raise RuntimeError(
@@ -291,6 +324,7 @@ def main() -> int:
         "failed": 0,
         "items": [],
     }
+    pricing_state: dict[str, Decimal] = {}
 
     if args.commit:
         base_url = os.getenv("SPREE_API_URL", "").strip()
@@ -334,7 +368,9 @@ def main() -> int:
             continue
 
         try:
-            result, action = upsert_and_enforce_product(base_url, api_key, sku, payload)
+            result, action = upsert_and_enforce_product(
+                base_url, api_key, sku, payload, pricing_state
+            )
             report[action] += 1
             report["items"].append(
                 {
@@ -356,6 +392,8 @@ def main() -> int:
 
     args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({k: report[k] for k in ("mode", "status", "requested", "created", "updated", "skipped", "failed")}, ensure_ascii=False))
+    for item in [entry for entry in report["items"] if entry.get("result") == "failed"][:10]:
+        print(json.dumps(item, ensure_ascii=False), file=sys.stderr)
     return 1 if report["failed"] else 0
 
 
