@@ -1,0 +1,334 @@
+/* Reference restoration layer — loaded after the core LABUCO skin.
+   Keeps commerce behaviour intact and restores the photographic mobile UI. */
+
+:root {
+  --labuco-reference-lime: #91c522;
+  --labuco-reference-bg: #04140f;
+  --labuco-reference-card: #0c2119;
+}
+
+/* HEADER — tighter proportions from the approved mobile reference */
+.labuco-site-header {
+  background: #03130e;
+  border-bottom-color: rgba(151, 201, 40, 0.12);
+}
+
+.labuco-service-bar {
+  min-height: 36px;
+  background: #020b08;
+}
+
+.labuco-header-main {
+  min-height: 77px;
+  padding-top: 9px;
+  padding-bottom: 7px;
+}
+
+.labuco-header-search {
+  padding-top: 2px;
+  padding-bottom: 12px;
+}
+
+.labuco-header-search form > div,
+.labuco-search-skeleton {
+  min-height: 50px;
+  height: 50px;
+  border-radius: 11px !important;
+}
+
+/* HERO — use the approved photographic scene instead of vector stand-ins */
+.labuco-eyebrow {
+  display: none !important;
+}
+
+.labuco-hero {
+  min-height: clamp(322px, 77vw, 420px);
+  background: #04140f;
+}
+
+.labuco-hero-copy {
+  width: min(65%, 620px);
+  padding: clamp(25px, 5.7vw, 48px) 0 22px clamp(16px, 4.5vw, 44px);
+}
+
+.labuco-hero h1 {
+  max-width: 430px;
+  font-size: clamp(27px, 6.6vw, 50px);
+  line-height: 1.07;
+}
+
+.labuco-hero-lead {
+  max-width: 340px;
+  margin-top: 13px;
+}
+
+.labuco-hero-art {
+  top: 0;
+  right: 0;
+  width: 56%;
+  height: 100%;
+  opacity: 1;
+  background:
+    linear-gradient(90deg, #04140f 0%, rgba(4, 20, 15, .86) 7%, rgba(4, 20, 15, .28) 29%, rgba(4, 20, 15, 0) 56%),
+    linear-gradient(0deg, rgba(4, 20, 15, .42), rgba(4, 20, 15, 0) 42%),
+    url('/labuco/reference-hero.jpg') center center / cover no-repeat;
+}
+
+.labuco-grow-tent,
+.labuco-hero-vignette {
+  display: none !important;
+}
+
+.labuco-hero::after {
+  z-index: 1;
+  height: 38%;
+  background: linear-gradient(0deg, rgba(3, 14, 10, .82), transparent);
+}
+
+.labuco-hero-benefits {
+  width: min(850px, 150%);
+  margin-top: 17px;
+}
+
+.labuco-hero-benefits svg {
+  width: 25px;
+  height: 25px;
+}
+
+.labuco-hero-actions {
+  margin-top: 18px;
+}
+
+.labuco-primary-cta {
+  min-width: 192px;
+  min-height: 46px;
+}
+
+/* CATEGORY TILES — photographic 4x2 sprite cut from the approved reference */
+.labuco-category-card {
+  min-height: clamp(118px, 26.5vw, 184px);
+  justify-content: flex-end;
+  gap: 5px;
+  padding: 5px 5px 11px;
+  background: linear-gradient(145deg, #10251c, #0a1d16);
+  border-color: rgba(188, 215, 195, .13);
+}
+
+.labuco-category-visual {
+  width: 92%;
+  max-width: 150px;
+  aspect-ratio: 160 / 112;
+  border-radius: 5px;
+  background-image: url('/labuco/reference-categories.jpg');
+  background-size: 400% 200%;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 8px 12px rgba(0,0,0,.34));
+}
+
+.labuco-category-visual svg {
+  display: none !important;
+}
+
+.labuco-category-card:nth-child(1) .labuco-category-visual { background-position: 0% 0%; }
+.labuco-category-card:nth-child(2) .labuco-category-visual { background-position: 33.333% 0%; }
+.labuco-category-card:nth-child(3) .labuco-category-visual { background-position: 66.666% 0%; }
+.labuco-category-card:nth-child(4) .labuco-category-visual { background-position: 100% 0%; }
+.labuco-category-card:nth-child(5) .labuco-category-visual { background-position: 0% 100%; }
+.labuco-category-card:nth-child(6) .labuco-category-visual { background-position: 33.333% 100%; }
+.labuco-category-card:nth-child(7) .labuco-category-visual { background-position: 66.666% 100%; }
+.labuco-category-card:nth-child(8) .labuco-category-visual { background-position: 100% 100%; }
+
+/* BESTSELLERS — retain real products/cart behaviour, restore visual proportions */
+.labuco-bestsellers {
+  padding-top: 18px;
+}
+
+.labuco-home .product-carousel .group.relative {
+  border-radius: 9px;
+  border-color: rgba(191, 217, 198, .17);
+  background: linear-gradient(160deg, #11291f, #0a1c15);
+}
+
+.labuco-home .product-carousel .group.relative > div:first-child {
+  min-height: 172px;
+  background: #10241c !important;
+}
+
+.labuco-home .product-carousel .group.relative > div:first-child img {
+  padding: 6%;
+  object-fit: contain !important;
+}
+
+.labuco-card-cart {
+  width: 100%;
+  min-height: 36px;
+  margin-top: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 5px;
+  color: #fafff6;
+  background: linear-gradient(135deg, #78ad16, #9bd126);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.labuco-card-cart svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* TRUST STRIP */
+.labuco-trust-strip {
+  margin-top: 13px;
+  padding: 12px 10px;
+  border-color: rgba(193, 220, 200, .22);
+  background: #071b14;
+}
+
+/* GUIDES — approved photographic cards */
+.labuco-guide-art {
+  height: clamp(62px, 14vw, 105px);
+  background-image: url('/labuco/reference-guides.jpg');
+  background-size: 400% 100%;
+  background-repeat: no-repeat;
+  background-color: #0b2118;
+}
+
+.labuco-guide-art svg {
+  display: none !important;
+}
+
+.labuco-guide-card:nth-child(1) .labuco-guide-art { background-position: 0% 50%; }
+.labuco-guide-card:nth-child(2) .labuco-guide-art { background-position: 33.333% 50%; }
+.labuco-guide-card:nth-child(3) .labuco-guide-art { background-position: 66.666% 50%; }
+.labuco-guide-card:nth-child(4) .labuco-guide-art { background-position: 100% 50%; }
+
+/* NEWSLETTER — photographic plant on the right */
+.labuco-newsletter {
+  min-height: 124px;
+  background: linear-gradient(110deg, #0c2b20, #071b14 62%, #0a2118);
+}
+
+.labuco-newsletter-art {
+  right: -1%;
+  bottom: 0;
+  width: 34%;
+  height: 100%;
+  aspect-ratio: auto;
+  opacity: .96;
+  transform: none;
+  background:
+    linear-gradient(90deg, #071b14 0%, rgba(7, 27, 20, .18) 28%, transparent 55%),
+    url('/labuco/reference-newsletter.jpg') center / cover no-repeat;
+}
+
+.labuco-newsletter-art svg {
+  display: none !important;
+}
+
+/* MOBILE MATCH */
+@media (max-width: 767px) {
+  .labuco-header-main {
+    grid-template-columns: 42px minmax(108px, 1fr) minmax(130px, auto);
+  }
+
+  .labuco-header-right {
+    gap: clamp(5px, 2.1vw, 11px);
+  }
+
+  .labuco-header-action,
+  .labuco-cart-action {
+    min-width: 40px;
+    font-size: 9px;
+  }
+
+  .labuco-hero-copy {
+    width: 67%;
+    padding-left: 16px;
+  }
+
+  .labuco-hero-art {
+    right: -1%;
+    width: 58%;
+  }
+
+  .labuco-hero h1 {
+    font-size: clamp(27px, 6.7vw, 36px);
+  }
+
+  .labuco-hero-lead {
+    max-width: 270px;
+  }
+
+  .labuco-hero-benefits {
+    width: 145%;
+  }
+
+  .labuco-primary-cta {
+    min-width: 0;
+    padding-inline: 18px;
+  }
+
+  .labuco-section {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .labuco-category-grid,
+  .labuco-guide-grid {
+    gap: 7px;
+  }
+
+  .labuco-category-card {
+    min-height: 112px;
+  }
+
+  .labuco-home .product-carousel .swiper-slide {
+    width: calc((100% - 10px) / 2) !important;
+  }
+
+  .labuco-trust-strip,
+  .labuco-newsletter {
+    margin-left: 14px;
+    margin-right: 14px;
+  }
+}
+
+@media (max-width: 430px) {
+  .labuco-service-bar > span {
+    font-size: 7.5px;
+    gap: 4px;
+  }
+
+  .labuco-service-bar svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .labuco-header-action:nth-of-type(2) {
+    display: none;
+  }
+
+  .labuco-hero {
+    min-height: 326px;
+  }
+
+  .labuco-hero-copy {
+    width: 70%;
+  }
+
+  .labuco-hero-art {
+    width: 61%;
+  }
+
+  .labuco-hero-benefits strong {
+    font-size: 7.4px;
+  }
+
+  .labuco-hero-benefits small {
+    font-size: 5.9px;
+  }
+}
