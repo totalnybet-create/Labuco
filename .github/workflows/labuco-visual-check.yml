@@ -165,7 +165,7 @@ jobs:
 
           async function verify(viewport, prefix) {
             const browser = await chromium.launch()
-            const page = await browser.newPage({ viewportSize: viewport })
+            const page = await browser.newPage({ viewport })
             await page.goto('http://127.0.0.1:3001/pl/pl', { waitUntil: 'networkidle' })
 
             const productLinks = await page.locator('a[href*="/products/"]').count()
