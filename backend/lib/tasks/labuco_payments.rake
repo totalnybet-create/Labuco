@@ -12,7 +12,7 @@ namespace :labuco do
       bank.assign_attributes(
         active: true,
         display_on: 'both',
-        capture_method: 'manual',
+        auto_capture: false,
         store: store,
         description: "Wpłać na rachunek #{bank_account}. W tytule przelewu podaj numer zamówienia. Realizacja rozpocznie się po zaksięgowaniu wpłaty."
       )
@@ -33,7 +33,7 @@ namespace :labuco do
         hotpay.assign_attributes(
           active: true,
           display_on: 'both',
-          capture_method: 'checkout',
+          auto_capture: true,
           store: store,
           description: 'BLIK i szybkie przelewy bankowe obsługiwane przez HotPay.',
           preferences: {
@@ -57,7 +57,7 @@ namespace :labuco do
         paypal.assign_attributes(
           active: true,
           display_on: 'both',
-          capture_method: 'checkout',
+          auto_capture: true,
           store: store,
           preferences: {
             client_id: paypal_client_id,

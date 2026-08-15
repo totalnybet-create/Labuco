@@ -53,7 +53,7 @@ export async function HeroSection({ basePath }: HeroSectionProps) {
           <Link href={`${basePath}/products`} className="labuco-primary-cta">
             Zobacz produkty <ArrowRight aria-hidden="true" />
           </Link>
-          <Link href={`${basePath}/products`} className="labuco-text-cta">
+          <Link href={`${basePath}/guides`} className="labuco-text-cta">
             Poradniki uprawy <ArrowRight aria-hidden="true" />
           </Link>
         </div>

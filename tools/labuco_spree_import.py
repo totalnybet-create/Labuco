@@ -25,6 +25,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -71,11 +72,25 @@ def build_description(record: dict[str, Any]) -> str:
     return full
 
 
+def source_is_in_stock(record: dict[str, Any]) -> bool:
+    """Treat only an explicit source availability signal as sellable stock."""
+    raw = record.get("raw")
+    if not isinstance(raw, dict):
+        return False
+    availability = str(raw.get("availability") or "").strip().lower()
+    return availability in {"instock", "in_stock", "in stock", "available"}
+
+
 def commercial_variant(record: dict[str, Any]) -> dict[str, Any]:
     return {
         "sku": str(record["labuco_sku"]),
         "cost_price": str(record["wholesale_cost_pln"]),
         "cost_currency": "PLN",
+        # The source catalog has an explicit InStock/OutOfStock flag but no
+        # numeric inventory. In-stock supplier items are therefore sellable
+        # without local stock tracking; out-of-stock or unknown items keep
+        # tracking enabled and remain unavailable at the default quantity 0.
+        "track_inventory": not source_is_in_stock(record),
         "options": [],
         "prices": [
             {
@@ -90,6 +105,16 @@ def idempotency_key(prefix: str, sku: str, payload: dict[str, Any]) -> str:
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     digest = hashlib.sha256(encoded).hexdigest()[:24]
     return f"labuco-{prefix}-{sku}-{digest}"[:255]
+
+
+def response_price_amount(product: dict[str, Any]) -> Decimal | None:
+    price = product.get("price")
+    if not isinstance(price, dict):
+        return None
+    try:
+        return Decimal(str(price.get("amount")))
+    except (InvalidOperation, TypeError):
+        return None
 
 
 def build_payload(record: dict[str, Any], category_map: dict[str, str], active: bool) -> dict[str, Any]:
@@ -137,9 +162,22 @@ def request_json(
         method=method,
         headers=headers,
     )
-    with urllib.request.urlopen(request, timeout=30) as response:
-        raw = response.read().decode("utf-8")
-        return json.loads(raw) if raw else {}
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                raw = response.read().decode("utf-8")
+                return json.loads(raw) if raw else {}
+        except urllib.error.HTTPError as exc:
+            if exc.code not in {429, 502, 503, 504} or attempt == 3:
+                raise
+            retry_after = exc.headers.get("Retry-After")
+            try:
+                delay = float(retry_after) if retry_after else 0.5 * (2**attempt)
+            except ValueError:
+                delay = 0.5 * (2**attempt)
+            time.sleep(min(delay, 8.0))
+
+    raise RuntimeError("unreachable HTTP retry state")
 
 
 def find_product_by_sku(base_url: str, api_key: str, sku: str) -> dict[str, Any] | None:
@@ -154,12 +192,79 @@ def find_product_by_sku(base_url: str, api_key: str, sku: str) -> dict[str, Any]
     return None
 
 
+def find_base_price_id(
+    base_url: str,
+    api_key: str,
+    product: dict[str, Any],
+    enforced: dict[str, Any],
+) -> str | None:
+    for candidate in (enforced, product):
+        price = candidate.get("price")
+        if isinstance(price, dict) and price.get("id"):
+            return str(price["id"])
+
+    variant_id = enforced.get("default_variant_id") or product.get("default_variant_id")
+    if not variant_id:
+        return None
+    query = urllib.parse.urlencode(
+        {
+            "q[variant_id_eq]": str(variant_id),
+            "q[currency_eq]": "PLN",
+            "q[price_list_id_null]": "true",
+            "limit": 2,
+        }
+    )
+    response = request_json(base_url, api_key, "GET", f"/api/v3/admin/prices?{query}")
+    prices = response.get("data")
+    if not isinstance(prices, list):
+        return None
+    for price in prices:
+        if isinstance(price, dict) and price.get("id"):
+            return str(price["id"])
+    return None
+
+
+def ensure_product_image(
+    base_url: str,
+    api_key: str,
+    product_id: str,
+    record: dict[str, Any],
+) -> bool:
+    """Queue the catalog reference image when the product has no media yet."""
+    image_url = str(record.get("reference_image") or "").strip()
+    if not image_url.startswith(("https://", "http://")):
+        return False
+
+    response = request_json(
+        base_url,
+        api_key,
+        "GET",
+        f"/api/v3/admin/products/{product_id}/media?limit=1",
+    )
+    media = response.get("data")
+    if isinstance(media, list) and media:
+        return False
+
+    image_payload = {"url": image_url, "position": 1}
+    request_json(
+        base_url,
+        api_key,
+        "POST",
+        f"/api/v3/admin/products/{product_id}/media",
+        image_payload,
+        idempotency_key("product-image", str(record["labuco_sku"]), image_payload),
+    )
+    return True
+
+
 def upsert_and_enforce_product(
     base_url: str,
     api_key: str,
     sku: str,
     payload: dict[str, Any],
+    pricing_state: dict[str, Decimal] | None = None,
 ) -> tuple[dict[str, Any], str]:
+    pricing_state = pricing_state if pricing_state is not None else {}
     existing = find_product_by_sku(base_url, api_key, sku)
     if existing:
         product_id = existing["id"]
@@ -188,8 +293,11 @@ def upsert_and_enforce_product(
         raise RuntimeError(f"Spree {action} response has no product id for {sku}")
 
     # Spree v5.6 keeps purchasable fields on variants. An entry without option
-    # values is an upsert of the simple product's master/default variant.
-    commercial = {"variants": payload["variants"]}
+    # values is an upsert of the simple product's master/default variant. Price
+    # is deliberately handled by the dedicated prices endpoint below because
+    # Spree 5.6.1 corrupts decimal amounts in nested product price updates.
+    variant = {key: value for key, value in payload["variants"][0].items() if key != "prices"}
+    commercial = {"variants": [variant]}
     enforced = request_json(
         base_url,
         api_key,
@@ -198,6 +306,46 @@ def upsert_and_enforce_product(
         commercial,
         idempotency_key("product-commercial", sku, commercial),
     )
+
+    expected_price = Decimal(str(payload["variants"][0]["prices"][0]["amount"]))
+    price_id = find_base_price_id(base_url, api_key, product, enforced)
+    if not price_id:
+        raise RuntimeError(f"Spree response has no base PLN price id for {sku}")
+    decimal_separator = str(pricing_state.get("price_decimal_separator", "."))
+    formatted_price = format(expected_price, "f").replace(".", decimal_separator)
+    price_payload = {"amount": formatted_price}
+    updated_price = request_json(
+        base_url,
+        api_key,
+        "PATCH",
+        f"/api/v3/admin/prices/{price_id}",
+        price_payload,
+        idempotency_key("price-update", sku, price_payload),
+    )
+    actual_price = response_price_amount({"price": updated_price})
+    if actual_price != expected_price and decimal_separator == ".":
+        # Spree::LocalizedNumber parses strings with the backend's I18n
+        # decimal separator. A Polish backend therefore strips a dot from
+        # "25.90" and stores 2590. Retry with a comma and remember the
+        # separator for the remainder of this import. English/newer backends
+        # keep using the documented dot representation.
+        decimal_separator = ","
+        pricing_state["price_decimal_separator"] = decimal_separator
+        price_payload = {"amount": format(expected_price, "f").replace(".", decimal_separator)}
+        updated_price = request_json(
+            base_url,
+            api_key,
+            "PATCH",
+            f"/api/v3/admin/prices/{price_id}",
+            price_payload,
+            idempotency_key("price-locale-fix", sku, price_payload),
+        )
+        actual_price = response_price_amount({"price": updated_price})
+
+    if actual_price != expected_price:
+        raise RuntimeError(
+            f"Spree price verification failed for {sku}: expected {expected_price}, got {actual_price}"
+        )
     return enforced or product, action
 
 
@@ -234,7 +382,7 @@ def main() -> int:
         "failed": 0,
         "items": [],
     }
-
+    pricing_state: dict[str, Decimal] = {}
     if args.commit:
         base_url = os.getenv("SPREE_API_URL", "").strip()
         api_key = os.getenv("SPREE_API_KEY", "").strip()
@@ -277,7 +425,12 @@ def main() -> int:
             continue
 
         try:
-            result, action = upsert_and_enforce_product(base_url, api_key, sku, payload)
+            result, action = upsert_and_enforce_product(
+                base_url, api_key, sku, payload, pricing_state
+            )
+            image_queued = ensure_product_image(
+                base_url, api_key, str(result["id"]), record
+            )
             report[action] += 1
             report["items"].append(
                 {
@@ -286,6 +439,7 @@ def main() -> int:
                     "id": result.get("id"),
                     "price": price_payload["amount"],
                     "cost_price": variant_payload["cost_price"],
+                    "image_queued": image_queued,
                 }
             )
         except urllib.error.HTTPError as exc:
@@ -299,6 +453,8 @@ def main() -> int:
 
     args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({k: report[k] for k in ("mode", "status", "requested", "created", "updated", "skipped", "failed")}, ensure_ascii=False))
+    for item in [entry for entry in report["items"] if entry.get("result") == "failed"][:10]:
+        print(json.dumps(item, ensure_ascii=False), file=sys.stderr)
     return 1 if report["failed"] else 0
 
 

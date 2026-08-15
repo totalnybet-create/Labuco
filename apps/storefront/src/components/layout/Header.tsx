@@ -1,5 +1,5 @@
 import type { Category } from "@spree/sdk";
-import { Heart, User } from "lucide-react";
+import { BookOpen, User } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
@@ -88,12 +88,12 @@ export async function Header({
             <span>Konto</span>
           </Link>
           <Link
-            href={`${basePath}/account`}
+            href={`${basePath}/guides`}
             className="labuco-header-action"
-            aria-label="Ulubione"
+            aria-label="Poradniki"
           >
-            <Heart aria-hidden="true" />
-            <span>Ulubione</span>
+            <BookOpen aria-hidden="true" />
+            <span>Poradniki</span>
           </Link>
           <div className="labuco-cart-action">
             <CartButton />

@@ -22,6 +22,7 @@ def catalog_record(**overrides):
         "wholesale_cost_pln": "100.00",
         "labuco_price_pln": "120.90",
         "price_class": "A",
+        "raw": {"availability": "InStock"},
     }
     record.update(overrides)
     return record
@@ -45,11 +46,21 @@ class LabucoSpreeImportTests(unittest.TestCase):
                     "sku": "LAB-TEST-001",
                     "cost_price": "100.00",
                     "cost_currency": "PLN",
+                    "track_inventory": False,
                     "options": [],
                     "prices": [{"amount": "120.90", "currency": "PLN"}],
                 }
             ],
         )
+
+    def test_out_of_stock_and_unknown_products_remain_unavailable(self):
+        out_of_stock = spree_import.commercial_variant(
+            catalog_record(raw={"availability": "OutOfStock"})
+        )
+        unknown = spree_import.commercial_variant(catalog_record(raw={}))
+
+        self.assertTrue(out_of_stock["track_inventory"])
+        self.assertTrue(unknown["track_inventory"])
 
     def test_retains_legacy_schema_compatibility(self):
         record = catalog_record()
@@ -78,8 +89,9 @@ class LabucoSpreeImportTests(unittest.TestCase):
         payload = spree_import.build_payload(catalog_record(), {}, active=False)
         responses = [
             {"data": []},
-            {"id": "prod-new"},
-            {"id": "prod-new", "price": {"amount": "120.90"}},
+            {"id": "prod-new", "price": {"id": "price-new", "amount": "12090.0"}},
+            {"id": "prod-new", "price": {"id": "price-new", "amount": "12090.0"}},
+            {"id": "price-new", "amount": "120.90"},
         ]
         with mock.patch.object(spree_import, "request_json", side_effect=responses) as request:
             product, action = spree_import.upsert_and_enforce_product(
@@ -93,15 +105,26 @@ class LabucoSpreeImportTests(unittest.TestCase):
         self.assertEqual(request.call_args_list[2].args[2], "PATCH")
         self.assertEqual(
             request.call_args_list[2].args[4],
-            {"variants": payload["variants"]},
+            {
+                "variants": [
+                    {
+                        key: value
+                        for key, value in payload["variants"][0].items()
+                        if key != "prices"
+                    }
+                ]
+            },
         )
+        self.assertEqual(request.call_args_list[3].args[3], "/api/v3/admin/prices/price-new")
+        self.assertEqual(request.call_args_list[3].args[4], {"amount": "120.90"})
 
     def test_updates_product_when_sku_exists(self):
         payload = spree_import.build_payload(catalog_record(), {}, active=False)
         responses = [
             {"data": [{"id": "prod-existing"}]},
-            {"id": "prod-existing"},
-            {"id": "prod-existing", "price": {"amount": "120.90"}},
+            {"id": "prod-existing", "price": {"id": "price-existing", "amount": "12090.0"}},
+            {"id": "prod-existing", "price": {"id": "price-existing", "amount": "12090.0"}},
+            {"id": "price-existing", "amount": "120.90"},
         ]
         with mock.patch.object(spree_import, "request_json", side_effect=responses) as request:
             product, action = spree_import.upsert_and_enforce_product(
@@ -113,6 +136,104 @@ class LabucoSpreeImportTests(unittest.TestCase):
         self.assertEqual(request.call_args_list[0].args[2], "GET")
         self.assertEqual(request.call_args_list[1].args[2], "PATCH")
         self.assertEqual(request.call_args_list[2].args[2], "PATCH")
+        self.assertEqual(request.call_args_list[3].args[3], "/api/v3/admin/prices/price-existing")
+
+    def test_corrects_decimal_price_through_dedicated_endpoint(self):
+        payload = spree_import.build_payload(catalog_record(), {}, active=False)
+        pricing_state = {}
+        responses = [
+            {"data": []},
+            {"id": "prod-new", "price": {"id": "price-new", "amount": "12090.0"}},
+            {"id": "prod-new", "price": {"id": "price-new", "amount": "12090.0"}},
+            {"id": "price-new", "amount": "12090.0"},
+            {"id": "price-new", "amount": "120.90"},
+        ]
+        with mock.patch.object(spree_import, "request_json", side_effect=responses) as request:
+            product, action = spree_import.upsert_and_enforce_product(
+                "https://spree.example",
+                "sk_test",
+                "LAB-TEST-001",
+                payload,
+                pricing_state,
+            )
+
+        self.assertEqual(action, "created")
+        self.assertEqual(product["price"]["amount"], "12090.0")
+        self.assertEqual(request.call_args_list[3].args[3], "/api/v3/admin/prices/price-new")
+        self.assertEqual(request.call_args_list[3].args[4]["amount"], "120.90")
+        self.assertEqual(request.call_args_list[4].args[4]["amount"], "120,90")
+        self.assertEqual(pricing_state["price_decimal_separator"], ",")
+
+    def test_accepts_draft_response_that_omits_resolved_price(self):
+        payload = spree_import.build_payload(catalog_record(), {}, active=False)
+        responses = [
+            {"data": []},
+            {"id": "prod-new", "default_variant_id": "variant-new"},
+            {"id": "prod-new", "default_variant_id": "variant-new"},
+            {"data": [{"id": "price-new"}]},
+            {"id": "price-new", "amount": "120.90"},
+        ]
+        with mock.patch.object(spree_import, "request_json", side_effect=responses) as request:
+            product, action = spree_import.upsert_and_enforce_product(
+                "https://spree.example", "sk_test", "LAB-TEST-001", payload
+            )
+
+        self.assertEqual(action, "created")
+        self.assertEqual(product["id"], "prod-new")
+        self.assertIn("q%5Bvariant_id_eq%5D=variant-new", request.call_args_list[3].args[3])
+
+    def test_reuses_detected_price_decimal_separator(self):
+        payload = spree_import.build_payload(
+            catalog_record(labuco_price_pln="50.00"), {}, active=True
+        )
+        pricing_state = {"price_decimal_separator": ","}
+        responses = [
+            {"data": []},
+            {"id": "prod-new", "price": {"id": "price-new", "amount": "5000.0"}},
+            {"id": "prod-new", "price": {"id": "price-new", "amount": "5000.0"}},
+            {"id": "price-new", "amount": "50.00"},
+        ]
+
+        with mock.patch.object(spree_import, "request_json", side_effect=responses) as request:
+            spree_import.upsert_and_enforce_product(
+                "https://spree.example",
+                "sk_test",
+                "LAB-TEST-001",
+                payload,
+                pricing_state,
+            )
+
+        self.assertEqual(request.call_args_list[3].args[4]["amount"], "50,00")
+        self.assertEqual(len(request.call_args_list), 4)
+
+    def test_queues_reference_image_only_when_product_has_no_media(self):
+        record = catalog_record(
+            reference_image="https://cdn.example.test/products/labuco.webp"
+        )
+        responses = [{"data": []}, {}]
+
+        with mock.patch.object(spree_import, "request_json", side_effect=responses) as request:
+            queued = spree_import.ensure_product_image(
+                "https://spree.example", "sk_test", "prod-new", record
+            )
+
+        self.assertTrue(queued)
+        self.assertEqual(request.call_args_list[0].args[2], "GET")
+        self.assertEqual(request.call_args_list[1].args[2], "POST")
+        self.assertEqual(
+            request.call_args_list[1].args[4],
+            {"url": record["reference_image"], "position": 1},
+        )
+
+        with mock.patch.object(
+            spree_import, "request_json", return_value={"data": [{"id": "media-1"}]}
+        ) as request:
+            queued = spree_import.ensure_product_image(
+                "https://spree.example", "sk_test", "prod-new", record
+            )
+
+        self.assertFalse(queued)
+        self.assertEqual(request.call_count, 1)
 
 
 if __name__ == "__main__":
