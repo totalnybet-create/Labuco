@@ -122,8 +122,11 @@ jobs:
           set -euo pipefail
           python tools/labuco_spree_import.py data/labuco_catalog.json --commit --activate --include-class-c --limit 100 --report /tmp/labuco-visual/starter.json
           docker compose -f /tmp/labuco-visual/docker-compose.yml exec -T web ./bin/rails runner '
+            require "json"
             store = Spree::Store.default
-            channel = store.channels.find_by(active: true) || store.channels.first
+            channel = store.channels.find_by(default: true) || store.channels.first
+            raise "No storefront channel exists" unless channel
+            channel.update!(active: true) unless channel.active?
             products = Spree::Product.where(store_id: [nil, store.id])
             products.where(store_id: nil).update_all(store_id: store.id)
             products.find_each do |product|
@@ -132,6 +135,14 @@ jobs:
               publication.unpublished_at = nil
               publication.save!
             end
+            File.write("/tmp/labuco-visual/channel.json", JSON.pretty_generate({
+              channel_id: channel.id,
+              channel_code: channel.code,
+              default: channel.default,
+              active: channel.active,
+              imported_products: products.count,
+              published_products: Spree::ProductPublication.where(channel: channel, product: products).count
+            }))
           '
           media_count=0
           for attempt in $(seq 1 60); do
@@ -156,6 +167,43 @@ jobs:
         run: |
           set -euo pipefail
           pnpm install --frozen-lockfile
+          node --input-type=module <<'NODE'
+          import { writeFileSync } from 'node:fs'
+          import { createClient } from '@spree/sdk'
+
+          const client = createClient({
+            baseUrl: process.env.SPREE_API_URL,
+            publishableKey: process.env.SPREE_PUBLISHABLE_KEY,
+          })
+
+          let payload = null
+          let lastError = null
+          for (let attempt = 1; attempt <= 30; attempt += 1) {
+            try {
+              payload = await client.products.list(
+                { limit: 8 },
+                { locale: 'pl', country: 'pl' },
+              )
+              writeFileSync(
+                '/tmp/labuco-visual/store-api-products.json',
+                JSON.stringify(payload, null, 2),
+              )
+              if ((payload?.data?.length ?? 0) > 0) break
+            } catch (error) {
+              lastError = error
+              writeFileSync(
+                '/tmp/labuco-visual/store-api-products.json',
+                JSON.stringify({ error: String(error), stack: error?.stack ?? null }, null, 2),
+              )
+            }
+            await new Promise((resolve) => setTimeout(resolve, 2000))
+          }
+
+          if ((payload?.data?.length ?? 0) < 1) {
+            console.error('Store API returned no products', lastError ?? payload)
+            process.exit(1)
+          }
+          NODE
           pnpm run build
           nohup pnpm start >/tmp/labuco-visual/storefront.log 2>&1 &
           for attempt in $(seq 1 90); do
@@ -174,6 +222,7 @@ jobs:
           set -euo pipefail
           pnpm exec playwright install --with-deps chromium
           node <<'NODE'
+          const fs = require('node:fs')
           const { chromium } = require('@playwright/test')
 
           async function verify(viewport, prefix) {
@@ -237,6 +286,10 @@ jobs:
               }
             } catch (error) {
               console.error(`[${prefix}] visual check failed:`, error)
+              fs.appendFileSync(
+                '/tmp/labuco-visual/visual-errors.txt',
+                `[${prefix}] ${error?.stack ?? error}\n`,
+              )
               try {
                 await page.screenshot({ path: `/tmp/labuco-visual/${prefix}-error.png`, fullPage: true })
               } catch (_) {}
@@ -246,10 +299,10 @@ jobs:
             }
           }
 
-          Promise.all([
-            verify({ width: 390, height: 910 }, 'mobile'),
-            verify({ width: 1440, height: 1000 }, 'desktop'),
-          ]).catch((error) => {
+          ;(async () => {
+            await verify({ width: 390, height: 910 }, 'mobile')
+            await verify({ width: 1440, height: 1000 }, 'desktop')
+          })().catch((error) => {
             console.error(error)
             process.exit(1)
           })
@@ -262,8 +315,9 @@ jobs:
           name: labuco-reference-check-${{ github.run_id }}
           path: |
             /tmp/labuco-visual/*.png
-            /tmp/labuco-visual/storefront.log
-            /tmp/labuco-visual/starter.json
+            /tmp/labuco-visual/*.json
+            /tmp/labuco-visual/*.log
+            /tmp/labuco-visual/*.txt
           retention-days: 7
           if-no-files-found: warn
 
@@ -272,6 +326,12 @@ jobs:
         run: |
           echo '--- storefront ---'
           cat /tmp/labuco-visual/storefront.log || true
+          echo '--- visual errors ---'
+          cat /tmp/labuco-visual/visual-errors.txt || true
+          echo '--- store api products ---'
+          cat /tmp/labuco-visual/store-api-products.json || true
+          echo '--- channel ---'
+          cat /tmp/labuco-visual/channel.json || true
           echo '--- backend ---'
           docker compose -f /tmp/labuco-visual/docker-compose.yml logs --no-color web || true
 
