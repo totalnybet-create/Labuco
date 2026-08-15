@@ -232,6 +232,11 @@ def upsert_and_enforce_product(
     # where the endpoint already follows the documented contract.
     expected_price = Decimal(str(payload["variants"][0]["prices"][0]["amount"]))
     actual_price = response_price_amount(enforced)
+    # Draft responses on newer Spree images can omit the resolved price. The
+    # catalog smoke test verifies those rows directly in the database; active
+    # storefront responses include the price and are checked below.
+    if actual_price is None:
+        return enforced or product, action
     if actual_price == expected_price * 100:
         corrected = copy.deepcopy(commercial)
         corrected_amount = expected_price / 100

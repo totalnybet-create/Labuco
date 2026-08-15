@@ -145,6 +145,17 @@ class LabucoSpreeImportTests(unittest.TestCase):
             "1.209",
         )
 
+    def test_accepts_draft_response_that_omits_resolved_price(self):
+        payload = spree_import.build_payload(catalog_record(), {}, active=False)
+        responses = [{"data": []}, {"id": "prod-new"}, {"id": "prod-new"}]
+        with mock.patch.object(spree_import, "request_json", side_effect=responses):
+            product, action = spree_import.upsert_and_enforce_product(
+                "https://spree.example", "sk_test", "LAB-TEST-001", payload
+            )
+
+        self.assertEqual(action, "created")
+        self.assertEqual(product["id"], "prod-new")
+
 
 if __name__ == "__main__":
     unittest.main()
