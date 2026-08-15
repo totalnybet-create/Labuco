@@ -1,4 +1,5 @@
 name: LABUCO Visual Check
+# QA retrigger after removing the late labuco-reference.css regression layer.
 
 on:
   push:
