@@ -7,6 +7,10 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/labuco-storefront-preview.yml'
+      - 'apps/storefront/**'
+      - 'backend/**'
+      - 'data/labuco_catalog.json'
+      - 'tools/labuco_spree_import.py'
 
 permissions:
   contents: read
@@ -93,6 +97,37 @@ jobs:
       - name: Seed Spree
         working-directory: /tmp/labuco-storefront-preview
         run: npx --yes @spree/cli@2.4.4 seed
+
+      - name: Configure the Polish LABUCO market
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose -f /tmp/labuco-storefront-preview/docker-compose.yml exec -T web \
+            ./bin/rails runner '
+              store = Spree::Store.default
+              poland = Spree::Country.find_by!(iso: "PL")
+              store.update!(
+                name: "Labuco",
+                default_country: poland,
+                default_currency: "PLN",
+                supported_currencies: ["PLN"],
+                default_locale: "pl",
+                supported_locales: ["pl"]
+              )
+
+              market = store.markets.find_by(default: true) || store.markets.first
+              raise "Seed did not create a market" unless market
+              store.markets.where.not(id: market.id).update_all(default: false)
+              market.update!(
+                name: "Polska",
+                currency: "PLN",
+                default_locale: "pl",
+                supported_locales: ["pl"],
+                default: true
+              )
+              market.countries = [poland]
+              puts "LABUCO_MARKET=#{market.name}:#{market.currency}:#{market.default_locale}:#{market.countries.pluck(:iso).join(",")}"
+            '
 
       - name: Create catalog and storefront API keys
         id: keys
@@ -231,6 +266,21 @@ jobs:
           test -n "$count"
           if (( count < 3316 )); then
             echo "Expected at least 3316 LABUCO products, found ${count}" >&2
+            exit 1
+          fi
+
+      - name: Verify products through the customer Store API
+        env:
+          SPREE_PUBLISHABLE_KEY: ${{ steps.keys.outputs.public }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          response=$(curl --fail-with-body --silent --show-error \
+            -H "x-spree-api-key: ${SPREE_PUBLISHABLE_KEY}" \
+            'http://127.0.0.1:3000/api/v3/store/products?country=PL&locale=pl&limit=1')
+          visible=$(printf '%s' "$response" | python -c 'import json,sys; print(len(json.load(sys.stdin).get("data", [])))')
+          if (( visible < 1 )); then
+            echo "Catalog exists in the database but is not visible in the customer Store API" >&2
             exit 1
           fi
 
