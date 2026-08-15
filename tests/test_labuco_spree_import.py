@@ -145,6 +145,46 @@ class LabucoSpreeImportTests(unittest.TestCase):
             "1.209",
         )
 
+    def test_reuses_detected_price_divisor_during_bulk_import(self):
+        first = spree_import.build_payload(catalog_record(), {}, active=True)
+        second = spree_import.build_payload(
+            catalog_record(labuco_sku="LAB-TEST-002", labuco_price_pln="50.00"),
+            {},
+            active=True,
+        )
+        pricing_state = {}
+        responses = [
+            {"data": []},
+            {"id": "prod-first", "price": {"amount": "12090.0"}},
+            {"id": "prod-first", "price": {"amount": "120.90"}},
+            {"data": []},
+            {"id": "prod-second", "price": {"amount": "50.00"}},
+            {"id": "prod-second", "price": {"amount": "50.00"}},
+        ]
+
+        with mock.patch.object(spree_import, "request_json", side_effect=responses) as request:
+            spree_import.upsert_and_enforce_product(
+                "https://spree.example",
+                "sk_test",
+                "LAB-TEST-001",
+                first,
+                pricing_state,
+            )
+            spree_import.upsert_and_enforce_product(
+                "https://spree.example",
+                "sk_test",
+                "LAB-TEST-002",
+                second,
+                pricing_state,
+            )
+
+        self.assertEqual(pricing_state["nested_price_divisor"], spree_import.Decimal("100"))
+        self.assertEqual(
+            request.call_args_list[4].args[4]["variants"][0]["prices"][0]["amount"],
+            "0.50",
+        )
+        self.assertEqual(len(request.call_args_list), 6)
+
     def test_accepts_draft_response_that_omits_resolved_price(self):
         payload = spree_import.build_payload(catalog_record(), {}, active=False)
         responses = [{"data": []}, {"id": "prod-new"}, {"id": "prod-new"}]
