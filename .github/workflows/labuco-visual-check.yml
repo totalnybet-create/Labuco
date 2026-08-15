@@ -121,29 +121,32 @@ jobs:
         run: |
           set -euo pipefail
           python tools/labuco_spree_import.py data/labuco_catalog.json --commit --activate --include-class-c --limit 100 --report /tmp/labuco-visual/starter.json
-          docker compose -f /tmp/labuco-visual/docker-compose.yml exec -T web ./bin/rails runner '
-            require "json"
-            store = Spree::Store.default
-            channel = store.channels.find_by(default: true) || store.channels.first
-            raise "No storefront channel exists" unless channel
-            channel.update!(active: true) unless channel.active?
-            products = Spree::Product.where(store_id: [nil, store.id])
-            products.where(store_id: nil).update_all(store_id: store.id)
-            products.find_each do |product|
-              publication = Spree::ProductPublication.find_or_initialize_by(product: product, channel: channel)
-              publication.published_at ||= Time.current
-              publication.unpublished_at = nil
-              publication.save!
-            end
-            File.write("/tmp/labuco-visual/channel.json", JSON.pretty_generate({
-              channel_id: channel.id,
-              channel_code: channel.code,
-              default: channel.default,
-              active: channel.active,
-              imported_products: products.count,
-              published_products: Spree::ProductPublication.where(channel: channel, product: products).count
-            }))
-          '
+          channel_json="$(
+            docker compose -f /tmp/labuco-visual/docker-compose.yml exec -T web ./bin/rails runner '
+              require "json"
+              store = Spree::Store.default
+              channel = store.channels.find_by(default: true) || store.channels.first
+              raise "No storefront channel exists" unless channel
+              channel.update!(active: true) unless channel[:active]
+              products = Spree::Product.where(store_id: [nil, store.id])
+              products.where(store_id: nil).update_all(store_id: store.id)
+              products.find_each do |product|
+                publication = Spree::ProductPublication.find_or_initialize_by(product: product, channel: channel)
+                publication.published_at ||= Time.current
+                publication.unpublished_at = nil
+                publication.save!
+              end
+              puts JSON.generate({
+                channel_id: channel.id,
+                channel_code: channel[:code],
+                default: channel[:default],
+                active: channel[:active],
+                imported_products: products.count,
+                published_products: Spree::ProductPublication.where(channel_id: channel.id).count
+              })
+            ' | tail -n 1
+          )"
+          printf '%s\n' "$channel_json" > /tmp/labuco-visual/channel.json
           media_count=0
           for attempt in $(seq 1 60); do
             media_count="$(docker compose -f /tmp/labuco-visual/docker-compose.yml exec -T web ./bin/rails runner 'print Spree::Asset.count' | tail -n 1)"
