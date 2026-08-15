@@ -211,7 +211,7 @@ jobs:
               throw new Error('Added product is missing from the cart drawer')
             }
 
-            await page.goto(`http://127.0.0.1:3001${guideHref}`, { waitUntil: 'networkidle' })
+            await page.goto(`http://127.0.0.1:3001${guideHref}`, { waitUntil: 'domcontentloaded' })
             await page.getByRole('heading', { level: 1 }).waitFor()
             if ((await page.locator('main').innerText()).trim().length < 500) {
               throw new Error('Guide page does not contain complete content')
