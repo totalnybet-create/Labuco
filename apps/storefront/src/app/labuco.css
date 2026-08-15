@@ -955,7 +955,7 @@
   }
 
   .labuco-hero-benefits {
-    width: 134%;
+    display: none;
   }
 
   footer {
