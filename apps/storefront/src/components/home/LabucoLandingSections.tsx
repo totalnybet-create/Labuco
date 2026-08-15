@@ -43,7 +43,7 @@ const guides = [
   },
   {
     kicker: "NAWOŻENIE",
-    title: "Nawożenie marihuany – poradnik",
+    title: "Nawożenie roślin — poradnik",
     icon: FlaskConical,
   },
   {
@@ -85,22 +85,22 @@ export function TrustStrip() {
   const items = [
     {
       title: "Dyskrecja przede wszystkim",
-      copy: "Neutralne opakowania i bez logotypów sklepu.",
+      copy: "Neutralne opakowania i bez zbędnych oznaczeń.",
       icon: ShieldCheck,
     },
     {
       title: "Wiedza i doświadczenie",
-      copy: "Pomagamy w doborze sprzętu i w uprawie.",
+      copy: "Pomagamy w doborze sprzętu i akcesoriów.",
       icon: Award,
     },
     {
       title: "Jakość premium",
-      copy: "Tylko sprawdzone produkty od renomowanych marek.",
+      copy: "Sprawdzone produkty od renomowanych marek.",
       icon: Sprout,
     },
     {
       title: "Społeczność growerów",
-      copy: "Dołącz do naszej społeczności i dziel się doświadczeniem.",
+      copy: "Poradniki, wiedza i praktyczne wskazówki.",
       icon: Users,
     },
   ] as const;
@@ -155,7 +155,10 @@ export function NewsletterSection() {
       </div>
       <div className="labuco-newsletter-copy">
         <h2>Bądź zawsze na bieżąco</h2>
-        <p>Zapisz się i otrzymuj promocje, porady oraz nowości.</p>
+        <p>
+          Zapisz się i otrzymuj informacje o promocjach, poradach oraz
+          nowościach.
+        </p>
         <form className="labuco-newsletter-form" action="#">
           <label className="sr-only" htmlFor="labuco-newsletter-email">
             Twój e-mail
