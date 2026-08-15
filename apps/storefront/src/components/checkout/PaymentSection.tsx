@@ -110,7 +110,8 @@ export function PaymentSection({
     () => paymentMethods[0]?.id ?? "",
   );
   const selectedMethod: PaymentMethod | undefined =
-    paymentMethods.find((pm) => pm.id === selectedMethodId) ?? paymentMethods[0];
+    paymentMethods.find((pm) => pm.id === selectedMethodId) ??
+    paymentMethods[0];
   const effectiveSelectedMethodId = selectedMethod?.id ?? "";
 
   const rawAmountDue = cart.amount_due ?? cart.total;
@@ -566,9 +567,14 @@ export function PaymentSection({
   if (isZeroAmount) {
     return (
       <div>
-        <h2 className="text-lg font-bold text-gray-900">{t("paymentMethod")}</h2>
+        <h2 className="text-lg font-bold text-gray-900">
+          {t("paymentMethod")}
+        </h2>
         <div className="mt-2 rounded-sm border bg-gray-50 px-4 py-6 text-center">
-          <Info className="w-8 h-8 text-gray-300 mx-auto mb-2" strokeWidth={1.5} />
+          <Info
+            className="w-8 h-8 text-gray-300 mx-auto mb-2"
+            strokeWidth={1.5}
+          />
           <p className="text-sm text-gray-600">{t("noPaymentRequired")}</p>
         </div>
         <div className="mt-4">
@@ -601,9 +607,14 @@ export function PaymentSection({
   if (paymentMethods.length === 0) {
     return (
       <div>
-        <h2 className="text-lg font-bold text-gray-900">{t("paymentMethod")}</h2>
+        <h2 className="text-lg font-bold text-gray-900">
+          {t("paymentMethod")}
+        </h2>
         <div className="mt-2 rounded-sm border bg-gray-50 px-4 py-8 text-center">
-          <CreditCard className="w-10 h-10 text-gray-300 mx-auto mb-3" strokeWidth={1.5} />
+          <CreditCard
+            className="w-10 h-10 text-gray-300 mx-auto mb-3"
+            strokeWidth={1.5}
+          />
           <p className="text-sm text-gray-500">{t("noPaymentMethods")}</p>
         </div>
       </div>
@@ -618,7 +629,9 @@ export function PaymentSection({
       {errors && errors.length > 0 && (
         <div className="rounded-sm border border-red-300 bg-red-50 px-4 py-3 mb-3 mt-2">
           {errors.map((err, i) => (
-            <p key={i} className="text-sm text-red-700">{err}</p>
+            <p key={i} className="text-sm text-red-700">
+              {err}
+            </p>
           ))}
         </div>
       )}
@@ -643,7 +656,9 @@ export function PaymentSection({
                   } ${index > 0 ? "border-t" : ""}`}
                 >
                   <RadioGroupItem value={pm.id} />
-                  <span className="text-sm font-medium text-gray-900">{pm.name}</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {pm.name}
+                  </span>
                 </label>
               )}
 
@@ -651,7 +666,9 @@ export function PaymentSection({
                 <div className="flex items-center justify-between px-4 py-3.5 bg-blue-50">
                   <div className="flex items-center gap-3">
                     <RadioGroupItem value={pm.id} />
-                    <span className="text-sm font-medium text-gray-900">{pm.name}</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {pm.name}
+                    </span>
                   </div>
                 </div>
               )}
@@ -663,14 +680,18 @@ export function PaymentSection({
                       {pmGatewayId === "stripe" && (
                         <>
                           <p className="text-xs text-gray-400 px-4 pt-3">
-                            {t("testCardNote", { testCard: "4242 4242 4242 4242" })}
+                            {t("testCardNote", {
+                              testCard: "4242 4242 4242 4242",
+                            })}
                           </p>
                           {savedCards.length > 0 && (
                             <div className="px-4 pt-3">
                               <RadioGroup
                                 value={selectedCardId ?? "__new__"}
                                 onValueChange={(val) =>
-                                  handleCardSelect(val === "__new__" ? null : val)
+                                  handleCardSelect(
+                                    val === "__new__" ? null : val,
+                                  )
                                 }
                                 className="gap-0 rounded-sm border overflow-hidden"
                               >
@@ -682,7 +703,10 @@ export function PaymentSection({
                                     }`}
                                   >
                                     <RadioGroupItem
-                                      value={card.gateway_payment_profile_id ?? card.id}
+                                      value={
+                                        card.gateway_payment_profile_id ??
+                                        card.id
+                                      }
                                     />
                                     <PaymentIcon
                                       type={getCardIconType(card.brand)}
@@ -697,7 +721,10 @@ export function PaymentSection({
                                     </span>
                                     <span className="text-xs text-gray-500">
                                       {t("cardExpiry", {
-                                        month: String(card.month).padStart(2, "0"),
+                                        month: String(card.month).padStart(
+                                          2,
+                                          "0",
+                                        ),
                                         year: String(card.year),
                                       })}
                                     </span>
@@ -710,7 +737,10 @@ export function PaymentSection({
                                 ))}
                                 <label className="flex items-center gap-3 px-4 py-3 cursor-pointer border-t bg-white">
                                   <RadioGroupItem value="__new__" />
-                                  <CreditCard className="w-5 h-5 text-gray-400" strokeWidth={1.5} />
+                                  <CreditCard
+                                    className="w-5 h-5 text-gray-400"
+                                    strokeWidth={1.5}
+                                  />
                                   <span className="text-sm text-gray-900">
                                     {t("addNewPaymentMethod")}
                                   </span>
@@ -747,7 +777,9 @@ export function PaymentSection({
                           const ext = sessionExternalData;
                           switch (pmGatewayId) {
                             case "stripe": {
-                              const secret = ext.client_secret as string | undefined;
+                              const secret = ext.client_secret as
+                                | string
+                                | undefined;
                               return secret && isAddingNew ? (
                                 <div className="p-4">
                                   <StripePaymentForm
@@ -759,8 +791,12 @@ export function PaymentSection({
                               ) : null;
                             }
                             case "adyen": {
-                              const sid = ext._external_id as string | undefined;
-                              const sdata = ext.session_data as string | undefined;
+                              const sid = ext._external_id as
+                                | string
+                                | undefined;
+                              const sdata = ext.session_data as
+                                | string
+                                | undefined;
                               return sid && sdata ? (
                                 <div className="p-4">
                                   <AdyenPaymentForm
@@ -788,7 +824,9 @@ export function PaymentSection({
                               ) : null;
                             }
                             case "hotpay": {
-                              const paymentUrl = ext.payment_url as string | undefined;
+                              const paymentUrl = ext.payment_url as
+                                | string
+                                | undefined;
                               return paymentUrl ? (
                                 <div className="p-4">
                                   <HotPayPaymentForm
@@ -802,7 +840,10 @@ export function PaymentSection({
                             default:
                               return (
                                 <div className="px-4 py-6 text-center">
-                                  <Info className="w-8 h-8 text-gray-300 mx-auto mb-2" strokeWidth={1.5} />
+                                  <Info
+                                    className="w-8 h-8 text-gray-300 mx-auto mb-2"
+                                    strokeWidth={1.5}
+                                  />
                                   <p className="text-sm text-gray-500">
                                     {t("unsupportedGateway")}
                                   </p>
@@ -814,9 +855,13 @@ export function PaymentSection({
                   ) : (
                     <div className="px-4 py-4">
                       {pm.description && (
-                        <p className="text-sm text-gray-600 mb-2">{pm.description}</p>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {pm.description}
+                        </p>
                       )}
-                      <p className="text-sm text-gray-500">{t("manualPaymentInfo")}</p>
+                      <p className="text-sm text-gray-500">
+                        {t("manualPaymentInfo")}
+                      </p>
                     </div>
                   )}
                 </div>
