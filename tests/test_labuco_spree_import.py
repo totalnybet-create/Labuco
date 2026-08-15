@@ -22,6 +22,7 @@ def catalog_record(**overrides):
         "wholesale_cost_pln": "100.00",
         "labuco_price_pln": "120.90",
         "price_class": "A",
+        "raw": {"availability": "InStock"},
     }
     record.update(overrides)
     return record
@@ -45,11 +46,21 @@ class LabucoSpreeImportTests(unittest.TestCase):
                     "sku": "LAB-TEST-001",
                     "cost_price": "100.00",
                     "cost_currency": "PLN",
+                    "track_inventory": False,
                     "options": [],
                     "prices": [{"amount": "120.90", "currency": "PLN"}],
                 }
             ],
         )
+
+    def test_out_of_stock_and_unknown_products_remain_unavailable(self):
+        out_of_stock = spree_import.commercial_variant(
+            catalog_record(raw={"availability": "OutOfStock"})
+        )
+        unknown = spree_import.commercial_variant(catalog_record(raw={}))
+
+        self.assertTrue(out_of_stock["track_inventory"])
+        self.assertTrue(unknown["track_inventory"])
 
     def test_retains_legacy_schema_compatibility(self):
         record = catalog_record()

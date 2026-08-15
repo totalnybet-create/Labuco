@@ -168,8 +168,13 @@ jobs:
             const page = await browser.newPage({ viewport })
             await page.goto('http://127.0.0.1:3001/pl/pl', { waitUntil: 'networkidle' })
 
+            const productLocator = page.locator('a[href*="/products/"]').first()
             const productLinks = await page.locator('a[href*="/products/"]').count()
             if (productLinks < 1) throw new Error('Homepage has no product links')
+            const productHref = await productLocator.getAttribute('href')
+            if (!productHref) throw new Error('Homepage product link has no destination')
+            const guideHref = await page.locator('a[href*="/guides/"]').first().getAttribute('href')
+            if (!guideHref) throw new Error('Homepage has no working guide links')
             if ((await page.locator('body').innerText()).includes('Nie znaleziono produktów')) {
               throw new Error('Homepage renders an empty product state')
             }
@@ -182,8 +187,18 @@ jobs:
             await page.screenshot({ path: `/tmp/labuco-visual/${prefix}-viewport.png` })
             await page.screenshot({ path: `/tmp/labuco-visual/${prefix}-full.png`, fullPage: true })
 
-            const guideHref = await page.locator('a[href*="/guides/"]').first().getAttribute('href')
-            if (!guideHref) throw new Error('Homepage has no working guide links')
+            await page.goto(`http://127.0.0.1:3001${productHref}`, { waitUntil: 'networkidle' })
+            const productName = (await page.getByRole('heading', { level: 1 }).innerText()).trim()
+            const addToCart = page.getByRole('button', { name: 'Dodaj do koszyka' })
+            await addToCart.waitFor()
+            if (await addToCart.isDisabled()) throw new Error('Product is not purchasable')
+            await addToCart.click()
+            const cartDrawer = page.getByRole('dialog')
+            await cartDrawer.waitFor()
+            if (!(await cartDrawer.innerText()).includes(productName)) {
+              throw new Error('Added product is missing from the cart drawer')
+            }
+
             await page.goto(`http://127.0.0.1:3001${guideHref}`, { waitUntil: 'networkidle' })
             await page.getByRole('heading', { level: 1 }).waitFor()
             if ((await page.locator('main').innerText()).trim().length < 500) {

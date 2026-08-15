@@ -71,11 +71,25 @@ def build_description(record: dict[str, Any]) -> str:
     return full
 
 
+def source_is_in_stock(record: dict[str, Any]) -> bool:
+    """Treat only an explicit source availability signal as sellable stock."""
+    raw = record.get("raw")
+    if not isinstance(raw, dict):
+        return False
+    availability = str(raw.get("availability") or "").strip().lower()
+    return availability in {"instock", "in_stock", "in stock", "available"}
+
+
 def commercial_variant(record: dict[str, Any]) -> dict[str, Any]:
     return {
         "sku": str(record["labuco_sku"]),
         "cost_price": str(record["wholesale_cost_pln"]),
         "cost_currency": "PLN",
+        # The source catalog has an explicit InStock/OutOfStock flag but no
+        # numeric inventory. In-stock supplier items are therefore sellable
+        # without local stock tracking; out-of-stock or unknown items keep
+        # tracking enabled and remain unavailable at the default quantity 0.
+        "track_inventory": not source_is_in_stock(record),
         "options": [],
         "prices": [
             {
