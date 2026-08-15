@@ -1,0 +1,48 @@
+name: Format PaymentSection temporary
+
+on:
+  push:
+    branches:
+      - fix/format-payment-section
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: apps/storefront/pnpm-lock.yaml
+
+      - name: Install storefront dependencies
+        working-directory: apps/storefront
+        run: pnpm install --frozen-lockfile
+
+      - name: Format PaymentSection
+        working-directory: apps/storefront
+        run: pnpm exec biome format --write src/components/checkout/PaymentSection.tsx
+
+      - name: Commit formatting only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add apps/storefront/src/components/checkout/PaymentSection.tsx
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "style: format PaymentSection with Biome"
+          git push
