@@ -1,4 +1,5 @@
 name: LABUCO Storefront Preview
+# Refresh approved visual storefront preview after reference-driven UI restoration.
 
 on:
   workflow_dispatch:
