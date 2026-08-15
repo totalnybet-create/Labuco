@@ -1,10 +1,11 @@
 name: LABUCO Visual Check
-# QA retrigger after removing the late labuco-reference.css regression layer.
+# Visual regression gate for the approved LABUCO storefront baseline.
 
 on:
   push:
     paths:
       - '.github/workflows/labuco-visual-check.yml'
+      - 'apps/storefront/**'
 
 permissions:
   contents: read
@@ -150,7 +151,7 @@ jobs:
           cat /tmp/labuco-visual/storefront.log
           exit 1
 
-      - name: Capture 390px mobile reference
+      - name: Capture mobile and desktop references
         working-directory: apps/storefront
         shell: bash
         run: |
@@ -158,7 +159,9 @@ jobs:
           pnpm exec playwright install --with-deps chromium >/dev/null
           pnpm exec playwright screenshot --browser chromium --viewport-size "390,910" --wait-for-timeout 2500 --full-page http://127.0.0.1:3001/pl/pl /tmp/labuco-visual/mobile-full.png
           pnpm exec playwright screenshot --browser chromium --viewport-size "390,910" --wait-for-timeout 2500 http://127.0.0.1:3001/pl/pl /tmp/labuco-visual/mobile-viewport.png
-          file /tmp/labuco-visual/mobile-full.png /tmp/labuco-visual/mobile-viewport.png
+          pnpm exec playwright screenshot --browser chromium --viewport-size "1440,1000" --wait-for-timeout 2500 --full-page http://127.0.0.1:3001/pl/pl /tmp/labuco-visual/desktop-full.png
+          pnpm exec playwright screenshot --browser chromium --viewport-size "1440,1000" --wait-for-timeout 2500 http://127.0.0.1:3001/pl/pl /tmp/labuco-visual/desktop-viewport.png
+          file /tmp/labuco-visual/mobile-full.png /tmp/labuco-visual/mobile-viewport.png /tmp/labuco-visual/desktop-full.png /tmp/labuco-visual/desktop-viewport.png
 
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
@@ -167,6 +170,8 @@ jobs:
           path: |
             /tmp/labuco-visual/mobile-full.png
             /tmp/labuco-visual/mobile-viewport.png
+            /tmp/labuco-visual/desktop-full.png
+            /tmp/labuco-visual/desktop-viewport.png
           retention-days: 1
           if-no-files-found: error
 
