@@ -161,6 +161,26 @@ jobs:
             --limit 100 \
             --report /tmp/labuco-starter-import-report.json
 
+      - name: Publish starter products to the customer channel
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose -f /tmp/labuco-storefront-preview/docker-compose.yml exec -T web \
+            ./bin/rails runner '
+              store = Spree::Store.default
+              channel = store.channels.find_by(active: true) || store.channels.first
+              raise "Seed did not create an active customer channel" unless channel
+              products = Spree::Product.where(store_id: [nil, store.id])
+              products.where(store_id: nil).update_all(store_id: store.id)
+              products.find_each do |product|
+                publication = Spree::ProductPublication.find_or_initialize_by(product: product, channel: channel)
+                publication.published_at ||= Time.current
+                publication.unpublished_at = nil
+                publication.save!
+              end
+              puts "LABUCO_PUBLISHED=#{Spree::ProductPublication.where(channel: channel).count}"
+            '
+
       - name: Install Cloudflare tunnel client
         shell: bash
         run: |
@@ -212,25 +232,6 @@ jobs:
           cat /tmp/labuco-storefront.log
           exit 1
 
-      - name: Verify and publish storefront URL
-        env:
-          PREVIEW_URL: ${{ steps.tunnel.outputs.url }}
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -n "$PREVIEW_URL"
-          curl --fail --location --retry 15 --retry-delay 2 "$PREVIEW_URL/" >/dev/null
-          curl --fail-with-body -sS -X POST \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-            -d "{\"state\":\"success\",\"target_url\":\"${PREVIEW_URL}\",\"description\":\"LABUCO customer storefront is live\",\"context\":\"LABUCO Storefront Preview\"}" \
-            >/dev/null
-          echo "## LABUCO Customer Storefront" >> "$GITHUB_STEP_SUMMARY"
-          echo "Storefront: ${PREVIEW_URL}" >> "$GITHUB_STEP_SUMMARY"
-
       - name: Import complete LABUCO catalog
         env:
           SPREE_API_URL: http://127.0.0.1:3000
@@ -254,6 +255,26 @@ jobs:
           if report['requested'] != 3316 or imported != 3316 or report['failed'] != 0:
               raise SystemExit('Full LABUCO catalog import verification failed')
           PY
+
+      - name: Publish the complete catalog to the customer channel
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose -f /tmp/labuco-storefront-preview/docker-compose.yml exec -T web \
+            ./bin/rails runner '
+              store = Spree::Store.default
+              channel = store.channels.find_by(active: true) || store.channels.first
+              raise "Seed did not create an active customer channel" unless channel
+              products = Spree::Product.where(store_id: [nil, store.id])
+              products.where(store_id: nil).update_all(store_id: store.id)
+              products.find_each do |product|
+                publication = Spree::ProductPublication.find_or_initialize_by(product: product, channel: channel)
+                publication.published_at ||= Time.current
+                publication.unpublished_at = nil
+                publication.save!
+              end
+              puts "LABUCO_PUBLISHED=#{Spree::ProductPublication.where(channel: channel).count}"
+            '
 
       - name: Verify LABUCO catalog
         shell: bash
@@ -283,6 +304,29 @@ jobs:
             echo "Catalog exists in the database but is not visible in the customer Store API" >&2
             exit 1
           fi
+
+      - name: Verify and publish storefront URL
+        env:
+          PREVIEW_URL: ${{ steps.tunnel.outputs.url }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$PREVIEW_URL"
+          page=$(curl --fail --location --retry 15 --retry-delay 2 "$PREVIEW_URL/pl/pl")
+          if printf '%s' "$page" | grep -q 'Nie znaleziono produkt'; then
+            echo "Storefront rendered an empty catalog" >&2
+            exit 1
+          fi
+          curl --fail-with-body -sS -X POST \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -d "{\"state\":\"success\",\"target_url\":\"${PREVIEW_URL}\",\"description\":\"LABUCO customer storefront is live\",\"context\":\"LABUCO Storefront Preview\"}" \
+            >/dev/null
+          echo "## LABUCO Customer Storefront" >> "$GITHUB_STEP_SUMMARY"
+          echo "Storefront: ${PREVIEW_URL}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Keep storefront online
         env:
