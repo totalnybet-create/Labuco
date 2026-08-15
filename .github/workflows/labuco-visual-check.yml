@@ -186,6 +186,12 @@ jobs:
             await page.screenshot({ path: `/tmp/labuco-visual/${prefix}-viewport.png` })
             await page.screenshot({ path: `/tmp/labuco-visual/${prefix}-full.png`, fullPage: true })
 
+            await page.goto(`http://127.0.0.1:3001${productHrefs[0]}`, { waitUntil: 'networkidle' })
+            const firstProductText = await page.locator('main').innerText()
+            if (!firstProductText.includes('149,00 zł') || firstProductText.includes('14 900,00 zł')) {
+              throw new Error('Storefront price does not match the 149.00 PLN catalog source')
+            }
+
             let productName = ''
             let addToCart = null
             for (const productHref of productHrefs.slice(0, 12)) {

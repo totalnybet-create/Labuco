@@ -125,6 +125,26 @@ class LabucoSpreeImportTests(unittest.TestCase):
         self.assertEqual(request.call_args_list[1].args[2], "PATCH")
         self.assertEqual(request.call_args_list[2].args[2], "PATCH")
 
+    def test_corrects_spree_nested_price_subunit_regression(self):
+        payload = spree_import.build_payload(catalog_record(), {}, active=False)
+        responses = [
+            {"data": []},
+            {"id": "prod-new"},
+            {"id": "prod-new", "price": {"amount": "12090.0"}},
+            {"id": "prod-new", "price": {"amount": "120.90"}},
+        ]
+        with mock.patch.object(spree_import, "request_json", side_effect=responses) as request:
+            product, action = spree_import.upsert_and_enforce_product(
+                "https://spree.example", "sk_test", "LAB-TEST-001", payload
+            )
+
+        self.assertEqual(action, "created")
+        self.assertEqual(product["price"]["amount"], "120.90")
+        self.assertEqual(
+            request.call_args_list[3].args[4]["variants"][0]["prices"][0]["amount"],
+            "1.209",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

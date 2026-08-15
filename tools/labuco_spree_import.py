@@ -17,6 +17,7 @@ follow-up PATCH after creation so SKU, price and cost are enforced reliably.
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import os
@@ -25,6 +26,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -104,6 +106,16 @@ def idempotency_key(prefix: str, sku: str, payload: dict[str, Any]) -> str:
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     digest = hashlib.sha256(encoded).hexdigest()[:24]
     return f"labuco-{prefix}-{sku}-{digest}"[:255]
+
+
+def response_price_amount(product: dict[str, Any]) -> Decimal | None:
+    price = product.get("price")
+    if not isinstance(price, dict):
+        return None
+    try:
+        return Decimal(str(price.get("amount")))
+    except (InvalidOperation, TypeError):
+        return None
 
 
 def build_payload(record: dict[str, Any], category_map: dict[str, str], active: bool) -> dict[str, Any]:
@@ -212,6 +224,32 @@ def upsert_and_enforce_product(
         commercial,
         idempotency_key("product-commercial", sku, commercial),
     )
+
+    # Spree 5.6.1's nested product endpoint currently applies a second
+    # subunit conversion to prices even though the documented payload uses
+    # major-unit strings (for example "29.99"). Detect that exact 100x
+    # response and compensate, while retaining normal behaviour for versions
+    # where the endpoint already follows the documented contract.
+    expected_price = Decimal(str(payload["variants"][0]["prices"][0]["amount"]))
+    actual_price = response_price_amount(enforced)
+    if actual_price == expected_price * 100:
+        corrected = copy.deepcopy(commercial)
+        corrected_amount = expected_price / 100
+        corrected["variants"][0]["prices"][0]["amount"] = format(corrected_amount, "f")
+        enforced = request_json(
+            base_url,
+            api_key,
+            "PATCH",
+            f"/api/v3/admin/products/{product_id}",
+            corrected,
+            idempotency_key("product-price-subunit-fix", sku, corrected),
+        )
+        actual_price = response_price_amount(enforced)
+
+    if actual_price != expected_price:
+        raise RuntimeError(
+            f"Spree price verification failed for {sku}: expected {expected_price}, got {actual_price}"
+        )
     return enforced or product, action
 
 
