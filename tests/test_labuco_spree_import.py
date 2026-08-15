@@ -161,8 +161,8 @@ class LabucoSpreeImportTests(unittest.TestCase):
         self.assertEqual(product["price"]["amount"], "12090.0")
         self.assertEqual(request.call_args_list[3].args[3], "/api/v3/admin/prices/price-new")
         self.assertEqual(request.call_args_list[3].args[4]["amount"], "120.90")
-        self.assertEqual(request.call_args_list[4].args[4]["amount"], "1.209")
-        self.assertEqual(pricing_state["price_endpoint_divisor"], spree_import.Decimal("100"))
+        self.assertEqual(request.call_args_list[4].args[4]["amount"], "120,90")
+        self.assertEqual(pricing_state["price_decimal_separator"], ",")
 
     def test_accepts_draft_response_that_omits_resolved_price(self):
         payload = spree_import.build_payload(catalog_record(), {}, active=False)
@@ -182,11 +182,11 @@ class LabucoSpreeImportTests(unittest.TestCase):
         self.assertEqual(product["id"], "prod-new")
         self.assertIn("q%5Bvariant_id_eq%5D=variant-new", request.call_args_list[3].args[3])
 
-    def test_reuses_detected_price_endpoint_divisor(self):
+    def test_reuses_detected_price_decimal_separator(self):
         payload = spree_import.build_payload(
             catalog_record(labuco_price_pln="50.00"), {}, active=True
         )
-        pricing_state = {"price_endpoint_divisor": spree_import.Decimal("100")}
+        pricing_state = {"price_decimal_separator": ","}
         responses = [
             {"data": []},
             {"id": "prod-new", "price": {"id": "price-new", "amount": "5000.0"}},
@@ -203,7 +203,7 @@ class LabucoSpreeImportTests(unittest.TestCase):
                 pricing_state,
             )
 
-        self.assertEqual(request.call_args_list[3].args[4]["amount"], "0.50")
+        self.assertEqual(request.call_args_list[3].args[4]["amount"], "50,00")
         self.assertEqual(len(request.call_args_list), 4)
 
 
