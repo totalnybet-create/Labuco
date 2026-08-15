@@ -229,7 +229,9 @@ def upsert_and_enforce_product(
     api_key: str,
     sku: str,
     payload: dict[str, Any],
+    pricing_state: dict[str, Decimal] | None = None,
 ) -> tuple[dict[str, Any], str]:
+    pricing_state = pricing_state if pricing_state is not None else {}
     existing = find_product_by_sku(base_url, api_key, sku)
     if existing:
         product_id = existing["id"]
@@ -276,7 +278,8 @@ def upsert_and_enforce_product(
     price_id = find_base_price_id(base_url, api_key, product, enforced)
     if not price_id:
         raise RuntimeError(f"Spree response has no base PLN price id for {sku}")
-    price_payload = {"amount": format(expected_price, "f")}
+    divisor = pricing_state.get("price_endpoint_divisor", Decimal("1"))
+    price_payload = {"amount": format(expected_price / divisor, "f")}
     updated_price = request_json(
         base_url,
         api_key,
@@ -286,6 +289,23 @@ def upsert_and_enforce_product(
         idempotency_key("price-update", sku, price_payload),
     )
     actual_price = response_price_amount({"price": updated_price})
+    if actual_price == expected_price * 100 and divisor == Decimal("1"):
+        # Spree 5.6.1 treats the dedicated endpoint amount as a major-unit
+        # value and then applies another 100x conversion. Current Spree uses
+        # the documented major-unit string. Detect the old behaviour once,
+        # compensate, and reuse the result for the remainder of the import.
+        divisor = Decimal("100")
+        pricing_state["price_endpoint_divisor"] = divisor
+        price_payload = {"amount": format(expected_price / divisor, "f")}
+        updated_price = request_json(
+            base_url,
+            api_key,
+            "PATCH",
+            f"/api/v3/admin/prices/{price_id}",
+            price_payload,
+            idempotency_key("price-subunit-fix", sku, price_payload),
+        )
+        actual_price = response_price_amount({"price": updated_price})
 
     if actual_price != expected_price:
         raise RuntimeError(
@@ -327,6 +347,7 @@ def main() -> int:
         "failed": 0,
         "items": [],
     }
+    pricing_state: dict[str, Decimal] = {}
     if args.commit:
         base_url = os.getenv("SPREE_API_URL", "").strip()
         api_key = os.getenv("SPREE_API_KEY", "").strip()
@@ -369,7 +390,9 @@ def main() -> int:
             continue
 
         try:
-            result, action = upsert_and_enforce_product(base_url, api_key, sku, payload)
+            result, action = upsert_and_enforce_product(
+                base_url, api_key, sku, payload, pricing_state
+            )
             report[action] += 1
             report["items"].append(
                 {
