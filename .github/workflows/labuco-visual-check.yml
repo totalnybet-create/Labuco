@@ -20,7 +20,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: labuco-visual-check
+  group: labuco-visual-check-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -78,6 +78,7 @@ jobs:
             if curl --fail --silent http://127.0.0.1:3000/up >/dev/null; then exit 0; fi
             sleep 4
           done
+          docker compose -f /tmp/labuco-visual/docker-compose.yml logs --no-color web || true
           exit 1
 
       - name: Seed and configure market
@@ -165,73 +166,84 @@ jobs:
           exit 1
 
       - name: Smoke test and capture mobile + desktop
+        id: visual
+        continue-on-error: true
         working-directory: apps/storefront
         shell: bash
         run: |
           set -euo pipefail
-          pnpm exec playwright install --with-deps chromium >/dev/null
+          pnpm exec playwright install --with-deps chromium
           node <<'NODE'
           const { chromium } = require('@playwright/test')
 
           async function verify(viewport, prefix) {
             const browser = await chromium.launch()
             const page = await browser.newPage({ viewport })
-            await page.goto('http://127.0.0.1:3001/pl/pl', { waitUntil: 'networkidle' })
+            try {
+              await page.goto('http://127.0.0.1:3001/pl/pl', { waitUntil: 'networkidle', timeout: 45000 })
 
-            const productHrefs = await page.locator('a[href*="/products/"]').evaluateAll((links) =>
-              [...new Set(links.map((link) => link.getAttribute('href')).filter(Boolean))]
-            )
-            if (productHrefs.length < 1) throw new Error('Homepage has no product links')
-            const guideHref = await page.locator('a[href*="/guides/"]').first().getAttribute('href')
-            if (!guideHref) throw new Error('Homepage has no working guide links')
-            if ((await page.locator('body').innerText()).includes('Nie znaleziono produktów')) {
-              throw new Error('Homepage renders an empty product state')
-            }
-            const loadedProductImages = await page.locator('a[href*="/products/"] img').evaluateAll(
-              (images) => images.filter((image) => image.complete && image.naturalWidth > 0).length
-            )
-            if (loadedProductImages < 1) throw new Error('Homepage has no loaded product images')
+              // Capture first, assert second. Even a broken layout remains visible to the auditor.
+              await page.screenshot({ path: `/tmp/labuco-visual/${prefix}-viewport.png` })
+              await page.screenshot({ path: `/tmp/labuco-visual/${prefix}-full.png`, fullPage: true })
 
-            const overflow = await page.evaluate(() =>
-              Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth
-            )
-            if (overflow > 1) throw new Error(`Horizontal overflow: ${overflow}px`)
-
-            await page.screenshot({ path: `/tmp/labuco-visual/${prefix}-viewport.png` })
-            await page.screenshot({ path: `/tmp/labuco-visual/${prefix}-full.png`, fullPage: true })
-
-            await page.goto(`http://127.0.0.1:3001${productHrefs[0]}`, { waitUntil: 'networkidle' })
-            const firstProductText = await page.locator('main').innerText()
-            if (!firstProductText.includes('149,00 zł') || firstProductText.includes('14 900,00 zł')) {
-              throw new Error('Storefront price does not match the 149.00 PLN catalog source')
-            }
-
-            let productName = ''
-            let addToCart = null
-            for (const productHref of productHrefs.slice(0, 12)) {
-              await page.goto(`http://127.0.0.1:3001${productHref}`, { waitUntil: 'networkidle' })
-              const candidate = page.getByRole('button', { name: 'Dodaj do koszyka' })
-              if ((await candidate.count()) > 0 && !(await candidate.isDisabled())) {
-                productName = (await page.getByRole('heading', { level: 1 }).innerText()).trim()
-                addToCart = candidate
-                break
+              const productHrefs = await page.locator('a[href*="/products/"]').evaluateAll((links) =>
+                [...new Set(links.map((link) => link.getAttribute('href')).filter(Boolean))]
+              )
+              if (productHrefs.length < 1) throw new Error('Homepage has no product links')
+              const guideHref = await page.locator('a[href*="/guides/"]').first().getAttribute('href')
+              if (!guideHref) throw new Error('Homepage has no working guide links')
+              if ((await page.locator('body').innerText()).includes('Nie znaleziono produktów')) {
+                throw new Error('Homepage renders an empty product state')
               }
-            }
-            if (!addToCart) throw new Error('Homepage has no purchasable products')
-            await addToCart.click()
-            const cartDrawer = page.getByRole('dialog')
-            await cartDrawer.waitFor()
-            if (!(await cartDrawer.innerText()).includes(productName)) {
-              throw new Error('Added product is missing from the cart drawer')
-            }
+              const loadedProductImages = await page.locator('a[href*="/products/"] img').evaluateAll(
+                (images) => images.filter((image) => image.complete && image.naturalWidth > 0).length
+              )
+              if (loadedProductImages < 1) throw new Error('Homepage has no loaded product images')
 
-            await page.goto(`http://127.0.0.1:3001${guideHref}`, { waitUntil: 'domcontentloaded' })
-            await page.getByRole('heading', { level: 1 }).waitFor()
-            if ((await page.locator('main').innerText()).trim().length < 500) {
-              throw new Error('Guide page does not contain complete content')
-            }
+              const overflow = await page.evaluate(() =>
+                Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth
+              )
+              if (overflow > 1) throw new Error(`Horizontal overflow: ${overflow}px`)
 
-            await browser.close()
+              await page.goto(`http://127.0.0.1:3001${productHrefs[0]}`, { waitUntil: 'networkidle', timeout: 45000 })
+              const firstProductText = await page.locator('main').innerText()
+              if (!firstProductText.includes('149,00 zł') || firstProductText.includes('14 900,00 zł')) {
+                throw new Error('Storefront price does not match the 149.00 PLN catalog source')
+              }
+
+              let productName = ''
+              let addToCart = null
+              for (const productHref of productHrefs.slice(0, 12)) {
+                await page.goto(`http://127.0.0.1:3001${productHref}`, { waitUntil: 'networkidle', timeout: 45000 })
+                const candidate = page.getByRole('button', { name: 'Dodaj do koszyka' })
+                if ((await candidate.count()) > 0 && !(await candidate.isDisabled())) {
+                  productName = (await page.getByRole('heading', { level: 1 }).innerText()).trim()
+                  addToCart = candidate
+                  break
+                }
+              }
+              if (!addToCart) throw new Error('Homepage has no purchasable products')
+              await addToCart.click()
+              const cartDrawer = page.getByRole('dialog')
+              await cartDrawer.waitFor({ timeout: 15000 })
+              if (!(await cartDrawer.innerText()).includes(productName)) {
+                throw new Error('Added product is missing from the cart drawer')
+              }
+
+              await page.goto(`http://127.0.0.1:3001${guideHref}`, { waitUntil: 'domcontentloaded', timeout: 45000 })
+              await page.getByRole('heading', { level: 1 }).waitFor({ timeout: 15000 })
+              if ((await page.locator('main').innerText()).trim().length < 500) {
+                throw new Error('Guide page does not contain complete content')
+              }
+            } catch (error) {
+              console.error(`[${prefix}] visual check failed:`, error)
+              try {
+                await page.screenshot({ path: `/tmp/labuco-visual/${prefix}-error.png`, fullPage: true })
+              } catch (_) {}
+              throw error
+            } finally {
+              await browser.close()
+            }
           }
 
           Promise.all([
@@ -242,22 +254,27 @@ jobs:
             process.exit(1)
           })
           NODE
-          file /tmp/labuco-visual/mobile-full.png /tmp/labuco-visual/mobile-viewport.png /tmp/labuco-visual/desktop-full.png /tmp/labuco-visual/desktop-viewport.png
 
-      - name: Upload screenshots
+      - name: Upload visual diagnostics
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: labuco-reference-check
+          name: labuco-reference-check-${{ github.run_id }}
           path: |
-            /tmp/labuco-visual/mobile-full.png
-            /tmp/labuco-visual/mobile-viewport.png
-            /tmp/labuco-visual/desktop-full.png
-            /tmp/labuco-visual/desktop-viewport.png
-          retention-days: 1
-          if-no-files-found: error
+            /tmp/labuco-visual/*.png
+            /tmp/labuco-visual/storefront.log
+            /tmp/labuco-visual/starter.json
+          retention-days: 7
+          if-no-files-found: warn
 
-      - name: Dump logs on failure
-        if: failure()
+      - name: Dump logs
+        if: always()
         run: |
+          echo '--- storefront ---'
           cat /tmp/labuco-visual/storefront.log || true
+          echo '--- backend ---'
           docker compose -f /tmp/labuco-visual/docker-compose.yml logs --no-color web || true
+
+      - name: Fail when visual verification failed
+        if: steps.visual.outcome == 'failure'
+        run: exit 1
