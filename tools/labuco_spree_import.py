@@ -17,7 +17,6 @@ follow-up PATCH after creation so SKU, price and cost are enforced reliably.
 from __future__ import annotations
 
 import argparse
-import copy
 import hashlib
 import json
 import os
@@ -118,14 +117,6 @@ def response_price_amount(product: dict[str, Any]) -> Decimal | None:
         return None
 
 
-def payload_with_price_divisor(payload: dict[str, Any], divisor: Decimal) -> dict[str, Any]:
-    """Return a payload adjusted for a detected nested-price API regression."""
-    adjusted = copy.deepcopy(payload)
-    amount = Decimal(str(adjusted["variants"][0]["prices"][0]["amount"]))
-    adjusted["variants"][0]["prices"][0]["amount"] = format(amount / divisor, "f")
-    return adjusted
-
-
 def build_payload(record: dict[str, Any], category_map: dict[str, str], active: bool) -> dict[str, Any]:
     record = normalize_record(record)
     category_id = category_map.get(str(record.get("category") or ""))
@@ -201,16 +192,44 @@ def find_product_by_sku(base_url: str, api_key: str, sku: str) -> dict[str, Any]
     return None
 
 
+def find_base_price_id(
+    base_url: str,
+    api_key: str,
+    product: dict[str, Any],
+    enforced: dict[str, Any],
+) -> str | None:
+    for candidate in (enforced, product):
+        price = candidate.get("price")
+        if isinstance(price, dict) and price.get("id"):
+            return str(price["id"])
+
+    variant_id = enforced.get("default_variant_id") or product.get("default_variant_id")
+    if not variant_id:
+        return None
+    query = urllib.parse.urlencode(
+        {
+            "q[variant_id_eq]": str(variant_id),
+            "q[currency_eq]": "PLN",
+            "q[price_list_id_null]": "true",
+            "limit": 2,
+        }
+    )
+    response = request_json(base_url, api_key, "GET", f"/api/v3/admin/prices?{query}")
+    prices = response.get("data")
+    if not isinstance(prices, list):
+        return None
+    for price in prices:
+        if isinstance(price, dict) and price.get("id"):
+            return str(price["id"])
+    return None
+
+
 def upsert_and_enforce_product(
     base_url: str,
     api_key: str,
     sku: str,
     payload: dict[str, Any],
-    pricing_state: dict[str, Decimal] | None = None,
 ) -> tuple[dict[str, Any], str]:
-    pricing_state = pricing_state if pricing_state is not None else {}
-    divisor = pricing_state.get("nested_price_divisor", Decimal("1"))
-    api_payload = payload_with_price_divisor(payload, divisor)
     existing = find_product_by_sku(base_url, api_key, sku)
     if existing:
         product_id = existing["id"]
@@ -219,8 +238,8 @@ def upsert_and_enforce_product(
             api_key,
             "PATCH",
             f"/api/v3/admin/products/{product_id}",
-            api_payload,
-            idempotency_key("product-update", sku, api_payload),
+            payload,
+            idempotency_key("product-update", sku, payload),
         )
         action = "updated"
     else:
@@ -229,8 +248,8 @@ def upsert_and_enforce_product(
             api_key,
             "POST",
             "/api/v3/admin/products",
-            api_payload,
-            idempotency_key("product-create", sku, api_payload),
+            payload,
+            idempotency_key("product-create", sku, payload),
         )
         product_id = product.get("id")
         action = "created"
@@ -238,19 +257,12 @@ def upsert_and_enforce_product(
     if not product_id:
         raise RuntimeError(f"Spree {action} response has no product id for {sku}")
 
-    expected_price = Decimal(str(payload["variants"][0]["prices"][0]["amount"]))
-    created_price = response_price_amount(product)
-    if created_price == expected_price * 100:
-        # Remember the behaviour for the rest of a bulk import. This avoids a
-        # third write per product and prevents exhausting the Admin API burst
-        # limit on a 100-product smoke import.
-        divisor = Decimal("100")
-        pricing_state["nested_price_divisor"] = divisor
-        api_payload = payload_with_price_divisor(payload, divisor)
-
     # Spree v5.6 keeps purchasable fields on variants. An entry without option
-    # values is an upsert of the simple product's master/default variant.
-    commercial = {"variants": api_payload["variants"]}
+    # values is an upsert of the simple product's master/default variant. Price
+    # is deliberately handled by the dedicated prices endpoint below because
+    # Spree 5.6.1 corrupts decimal amounts in nested product price updates.
+    variant = {key: value for key, value in payload["variants"][0].items() if key != "prices"}
+    commercial = {"variants": [variant]}
     enforced = request_json(
         base_url,
         api_key,
@@ -260,29 +272,20 @@ def upsert_and_enforce_product(
         idempotency_key("product-commercial", sku, commercial),
     )
 
-    # Spree 5.6.1's nested product endpoint currently applies a second
-    # subunit conversion to prices even though the documented payload uses
-    # major-unit strings (for example "29.99"). Detect that exact 100x
-    # response and compensate, while retaining normal behaviour for versions
-    # where the endpoint already follows the documented contract.
-    actual_price = response_price_amount(enforced)
-    # Draft responses on newer Spree images can omit the resolved price. The
-    # catalog smoke test verifies those rows directly in the database; active
-    # storefront responses include the price and are checked below.
-    if actual_price is None:
-        return enforced or product, action
-    if actual_price == expected_price * 100:
-        corrected = {"variants": payload_with_price_divisor(payload, Decimal("100"))["variants"]}
-        enforced = request_json(
-            base_url,
-            api_key,
-            "PATCH",
-            f"/api/v3/admin/products/{product_id}",
-            corrected,
-            idempotency_key("product-price-subunit-fix", sku, corrected),
-        )
-        actual_price = response_price_amount(enforced)
-        pricing_state["nested_price_divisor"] = Decimal("100")
+    expected_price = Decimal(str(payload["variants"][0]["prices"][0]["amount"]))
+    price_id = find_base_price_id(base_url, api_key, product, enforced)
+    if not price_id:
+        raise RuntimeError(f"Spree response has no base PLN price id for {sku}")
+    price_payload = {"amount": format(expected_price, "f")}
+    updated_price = request_json(
+        base_url,
+        api_key,
+        "PATCH",
+        f"/api/v3/admin/prices/{price_id}",
+        price_payload,
+        idempotency_key("price-update", sku, price_payload),
+    )
+    actual_price = response_price_amount({"price": updated_price})
 
     if actual_price != expected_price:
         raise RuntimeError(
@@ -324,8 +327,6 @@ def main() -> int:
         "failed": 0,
         "items": [],
     }
-    pricing_state: dict[str, Decimal] = {}
-
     if args.commit:
         base_url = os.getenv("SPREE_API_URL", "").strip()
         api_key = os.getenv("SPREE_API_KEY", "").strip()
@@ -368,9 +369,7 @@ def main() -> int:
             continue
 
         try:
-            result, action = upsert_and_enforce_product(
-                base_url, api_key, sku, payload, pricing_state
-            )
+            result, action = upsert_and_enforce_product(base_url, api_key, sku, payload)
             report[action] += 1
             report["items"].append(
                 {
