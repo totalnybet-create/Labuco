@@ -7,68 +7,157 @@ on:
 
 permissions:
   contents: read
-  statuses: read
+
+concurrency:
+  group: labuco-visual-check
+  cancel-in-progress: true
 
 jobs:
   capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - name: Wait for current storefront preview
-        id: preview
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:18
         env:
-          GH_TOKEN: ${{ github.token }}
-          PREVIEW_SHA: b796f74dd629575a6b08e23e4bee351ad79530ff
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout proven LABUCO backend
+        uses: actions/checkout@v4
+        with:
+          ref: ed09bb524f09eb7cd86c772f5792718e4f265947
+          path: proven
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.4
+
+      - name: Build backend
+        run: docker build -f proven/backend/Dockerfile -t labuco-visual-backend proven
+
+      - name: Start backend
         shell: bash
         run: |
           set -euo pipefail
+          createdb -h 127.0.0.1 -U postgres spree_visual_check || true
+          mkdir -p /tmp/labuco-visual
+          SECRET_KEY_BASE="$(openssl rand -hex 64)"
+          cat >/tmp/labuco-visual/docker-compose.yml <<EOF
+          services:
+            web:
+              image: labuco-visual-backend
+              network_mode: host
+              environment:
+                DATABASE_URL: postgres://postgres@127.0.0.1:5432/spree_visual_check
+                SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+                RAILS_ENV: production
+                RAILS_LOG_TO_STDOUT: "true"
+                RAILS_SERVE_STATIC_FILES: "true"
+          EOF
+          docker compose -f /tmp/labuco-visual/docker-compose.yml up -d
           for attempt in $(seq 1 90); do
-            payload=$(curl --fail --silent --show-error \
-              -H "Authorization: Bearer ${GH_TOKEN}" \
-              -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/${PREVIEW_SHA}/status")
-            url=$(printf '%s' "$payload" | jq -r '.statuses[] | select(.context == "LABUCO Storefront Preview" and .state == "success") | .target_url' | head -n1)
-            if [[ -n "$url" && "$url" != "null" ]]; then
-              echo "url=$url" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            sleep 10
+            if curl --fail --silent http://127.0.0.1:3000/up >/dev/null; then exit 0; fi
+            sleep 4
           done
-          echo "Storefront preview URL was not published in time" >&2
           exit 1
 
-      - name: Install Playwright
+      - name: Seed and configure market
         shell: bash
+        working-directory: /tmp/labuco-visual
         run: |
-          mkdir -p /tmp/labuco-visual
-          cd /tmp/labuco-visual
-          npm init -y >/dev/null 2>&1
-          npm install playwright@1.60.0 >/dev/null 2>&1
-          npx playwright install --with-deps chromium >/dev/null
+          set -euo pipefail
+          npx --yes @spree/cli@2.4.4 seed
+          docker compose -f docker-compose.yml exec -T web ./bin/rails runner '
+            store = Spree::Store.default
+            poland = Spree::Country.find_by!(iso: "PL")
+            store.update!(name: "Labuco", default_country: poland, default_currency: "PLN", supported_currencies: ["PLN"], default_locale: "pl", supported_locales: ["pl"])
+            market = store.markets.find_by(default: true) || store.markets.first
+            store.markets.where.not(id: market.id).update_all(default: false)
+            market.update!(name: "Polska", currency: "PLN", default_locale: "pl", supported_locales: ["pl"], default: true)
+            market.countries = [poland]
+          '
 
-      - name: Capture mobile storefront
-        env:
-          LABUCO_URL: ${{ steps.preview.outputs.url }}
+      - name: Create API keys
+        id: keys
+        working-directory: /tmp/labuco-visual
         shell: bash
         run: |
-          cd /tmp/labuco-visual
-          cat > capture.js <<'EOF'
-          const { chromium } = require('playwright');
-          (async () => {
-            const browser = await chromium.launch({ headless: true });
-            const context = await browser.newContext({ viewport: { width: 390, height: 910 }, deviceScaleFactor: 1 });
-            const page = await context.newPage();
-            await page.goto(process.env.LABUCO_URL, { waitUntil: 'networkidle', timeout: 120000 });
-            await page.waitForTimeout(2500);
-            await page.screenshot({ path: 'mobile-full.png', fullPage: true });
-            await page.screenshot({ path: 'mobile-viewport.png', fullPage: false });
-            console.log(`URL=${page.url()}`);
-            console.log(`TITLE=${await page.title()}`);
-            console.log(`SIZE=${await page.evaluate(() => JSON.stringify({width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight}))}`);
-            await browser.close();
-          })();
-          EOF
-          node capture.js
+          set -euo pipefail
+          secret_out=$(npx --yes @spree/cli@2.4.4 api-key create --name LabucoVisualCatalog --type secret --scopes write_products)
+          secret=$(printf '%s\n' "$secret_out" | grep -oE 'sk_[A-Za-z0-9_-]+' | head -n1)
+          public_out=$(npx --yes @spree/cli@2.4.4 api-key create --name LabucoVisualStorefront --type publishable)
+          public=$(printf '%s\n' "$public_out" | grep -oE 'pk_[A-Za-z0-9_-]+' | head -n1)
+          test -n "$secret"; test -n "$public"
+          echo "::add-mask::$secret"; echo "::add-mask::$public"
+          echo "secret=$secret" >> "$GITHUB_OUTPUT"
+          echo "public=$public" >> "$GITHUB_OUTPUT"
+
+      - name: Import starter products
+        env:
+          SPREE_API_URL: http://127.0.0.1:3000
+          SPREE_API_KEY: ${{ steps.keys.outputs.secret }}
+          LABUCO_ALLOW_PRODUCTION_IMPORT: YES
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/labuco_spree_import.py data/labuco_catalog.json --commit --activate --include-class-c --limit 100 --report /tmp/labuco-visual/starter.json
+          docker compose -f /tmp/labuco-visual/docker-compose.yml exec -T web ./bin/rails runner '
+            store = Spree::Store.default
+            channel = store.channels.find_by(active: true) || store.channels.first
+            products = Spree::Product.where(store_id: [nil, store.id])
+            products.where(store_id: nil).update_all(store_id: store.id)
+            products.find_each do |product|
+              publication = Spree::ProductPublication.find_or_initialize_by(product: product, channel: channel)
+              publication.published_at ||= Time.current
+              publication.unpublished_at = nil
+              publication.save!
+            end
+          '
+
+      - name: Build and start storefront
+        working-directory: apps/storefront
+        env:
+          SPREE_API_URL: http://127.0.0.1:3000
+          SPREE_PUBLISHABLE_KEY: ${{ steps.keys.outputs.public }}
+          NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3001
+          NEXT_PUBLIC_DEFAULT_COUNTRY: pl
+          NEXT_PUBLIC_DEFAULT_LOCALE: pl
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm install --frozen-lockfile
+          pnpm run build
+          nohup pnpm start >/tmp/labuco-visual/storefront.log 2>&1 &
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent --location http://127.0.0.1:3001/pl/pl >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          cat /tmp/labuco-visual/storefront.log
+          exit 1
+
+      - name: Capture 390px mobile reference
+        working-directory: apps/storefront
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec playwright install --with-deps chromium >/dev/null
+          pnpm exec playwright screenshot --browser chromium --viewport-size "390,910" --wait-for-timeout 2500 --full-page http://127.0.0.1:3001/pl/pl /tmp/labuco-visual/mobile-full.png
+          pnpm exec playwright screenshot --browser chromium --viewport-size "390,910" --wait-for-timeout 2500 http://127.0.0.1:3001/pl/pl /tmp/labuco-visual/mobile-viewport.png
+          file /tmp/labuco-visual/mobile-full.png /tmp/labuco-visual/mobile-viewport.png
 
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
@@ -79,3 +168,9 @@ jobs:
             /tmp/labuco-visual/mobile-viewport.png
           retention-days: 1
           if-no-files-found: error
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          cat /tmp/labuco-visual/storefront.log || true
+          docker compose -f /tmp/labuco-visual/docker-compose.yml logs --no-color web || true
