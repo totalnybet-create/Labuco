@@ -18,13 +18,20 @@ export function BrandLogo({
   const wordmarkColor = inverted ? "text-white" : "text-slate-950";
 
   return (
-    <span className={`inline-flex items-center gap-2 whitespace-nowrap ${className}`}>
+    <span
+      className={`inline-flex items-center gap-2 whitespace-nowrap ${className}`}
+    >
       <svg
         viewBox="0 0 48 48"
         className={`${markSize} shrink-0 ${markColor}`}
         aria-hidden="true"
       >
-        <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+        <g
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M24 42V13" strokeWidth="2.1" />
           <path d="M24 14C20 8 19 4 24 1c5 3 4 7 0 13Z" strokeWidth="1.8" />
           <path d="M22 17C14 13 10 10 9 5c7 0 12 4 13 12Z" strokeWidth="1.8" />
@@ -35,7 +42,9 @@ export function BrandLogo({
           <path d="M27 28c8 1 13 0 17-4-7-3-13-2-17 4Z" strokeWidth="1.8" />
         </g>
       </svg>
-      <span className={`${wordmarkSize} ${wordmarkColor} font-semibold leading-none tracking-[-0.045em]`}>
+      <span
+        className={`${wordmarkSize} ${wordmarkColor} font-semibold leading-none tracking-[-0.045em]`}
+      >
         {name}
       </span>
     </span>
