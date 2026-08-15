@@ -168,11 +168,10 @@ jobs:
             const page = await browser.newPage({ viewport })
             await page.goto('http://127.0.0.1:3001/pl/pl', { waitUntil: 'networkidle' })
 
-            const productLocator = page.locator('a[href*="/products/"]').first()
-            const productLinks = await page.locator('a[href*="/products/"]').count()
-            if (productLinks < 1) throw new Error('Homepage has no product links')
-            const productHref = await productLocator.getAttribute('href')
-            if (!productHref) throw new Error('Homepage product link has no destination')
+            const productHrefs = await page.locator('a[href*="/products/"]').evaluateAll((links) =>
+              [...new Set(links.map((link) => link.getAttribute('href')).filter(Boolean))]
+            )
+            if (productHrefs.length < 1) throw new Error('Homepage has no product links')
             const guideHref = await page.locator('a[href*="/guides/"]').first().getAttribute('href')
             if (!guideHref) throw new Error('Homepage has no working guide links')
             if ((await page.locator('body').innerText()).includes('Nie znaleziono produktów')) {
@@ -187,11 +186,18 @@ jobs:
             await page.screenshot({ path: `/tmp/labuco-visual/${prefix}-viewport.png` })
             await page.screenshot({ path: `/tmp/labuco-visual/${prefix}-full.png`, fullPage: true })
 
-            await page.goto(`http://127.0.0.1:3001${productHref}`, { waitUntil: 'networkidle' })
-            const productName = (await page.getByRole('heading', { level: 1 }).innerText()).trim()
-            const addToCart = page.getByRole('button', { name: 'Dodaj do koszyka' })
-            await addToCart.waitFor()
-            if (await addToCart.isDisabled()) throw new Error('Product is not purchasable')
+            let productName = ''
+            let addToCart = null
+            for (const productHref of productHrefs.slice(0, 12)) {
+              await page.goto(`http://127.0.0.1:3001${productHref}`, { waitUntil: 'networkidle' })
+              const candidate = page.getByRole('button', { name: 'Dodaj do koszyka' })
+              if ((await candidate.count()) > 0 && !(await candidate.isDisabled())) {
+                productName = (await page.getByRole('heading', { level: 1 }).innerText()).trim()
+                addToCart = candidate
+                break
+              }
+            }
+            if (!addToCart) throw new Error('Homepage has no purchasable products')
             await addToCart.click()
             const cartDrawer = page.getByRole('dialog')
             await cartDrawer.waitFor()
