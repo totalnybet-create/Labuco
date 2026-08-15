@@ -7,12 +7,26 @@ namespace :labuco do
       store = Spree::Store.default
       raise 'Default Spree store is missing' unless store
 
+      # Spree 5.6 stores capture policy in `auto_capture`; Spree 6 replaces it
+      # with the more expressive `capture_method`. Keep the bootstrap task
+      # compatible with both so an application upgrade does not require a
+      # second payment configuration path.
+      capture_attributes = lambda do |payment_method, capture_method|
+        if payment_method.respond_to?(:capture_method=)
+          { capture_method: capture_method }
+        elsif payment_method.respond_to?(:auto_capture=)
+          { auto_capture: capture_method == 'checkout' }
+        else
+          {}
+        end
+      end
+
       bank_account = ENV.fetch('LABUCO_BANK_ACCOUNT', 'PL88 1050 1748 1000 0098 5745 4228').to_s.strip
       bank = Spree::PaymentMethod::Check.where(name: 'Przelew bankowy').first_or_initialize
       bank.assign_attributes(
         active: true,
         display_on: 'both',
-        capture_method: 'manual',
+        **capture_attributes.call(bank, 'manual'),
         store: store,
         description: "Wpłać na rachunek #{bank_account}. W tytule przelewu podaj numer zamówienia. Realizacja rozpocznie się po zaksięgowaniu wpłaty."
       )
@@ -33,7 +47,7 @@ namespace :labuco do
         hotpay.assign_attributes(
           active: true,
           display_on: 'both',
-          capture_method: 'checkout',
+          **capture_attributes.call(hotpay, 'checkout'),
           store: store,
           description: 'BLIK i szybkie przelewy bankowe obsługiwane przez HotPay.',
           preferences: {
@@ -57,7 +71,7 @@ namespace :labuco do
         paypal.assign_attributes(
           active: true,
           display_on: 'both',
-          capture_method: 'checkout',
+          **capture_attributes.call(paypal, 'checkout'),
           store: store,
           preferences: {
             client_id: paypal_client_id,
