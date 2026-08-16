@@ -2,7 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getGuideArticle, GUIDE_ARTICLES } from "@/lib/content/guides";
+import { GUIDE_ARTICLES, getGuideArticle } from "@/lib/content/guides";
 
 interface GuideArticlePageProps {
   params: Promise<{ country: string; locale: string; slug: string }>;
