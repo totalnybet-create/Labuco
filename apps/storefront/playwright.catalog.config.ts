@@ -22,7 +22,7 @@ export default defineConfig({
   webServer: {
     command: "pnpm start",
     url: "http://127.0.0.1:3001/pl/pl",
-    reuseExistingServer: false,
+    reuseExistingServer: true,
     timeout: 120_000,
     stdout: "pipe",
     stderr: "pipe",

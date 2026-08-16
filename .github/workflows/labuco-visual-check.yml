@@ -57,7 +57,7 @@ jobs:
         run: |
           set -euo pipefail
           pnpm exec playwright install --with-deps chromium >/dev/null
-          pnpm exec playwright test e2e-catalog/catalog-preview.spec.ts --grep "catalog mode works without Spree" --reporter=line
+          pnpm exec playwright test --config=playwright.catalog.config.ts --grep "catalog mode works without Spree" --reporter=line
 
       - name: Capture mobile and desktop references
         working-directory: apps/storefront
