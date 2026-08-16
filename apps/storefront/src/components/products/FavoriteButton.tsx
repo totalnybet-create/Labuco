@@ -38,7 +38,11 @@ export function FavoriteButton({
       type="button"
       className={`inline-flex items-center justify-center gap-2 rounded-full border border-white/70 bg-white/90 p-2.5 text-gray-700 shadow-sm backdrop-blur transition hover:text-primary ${className}`}
       aria-pressed={active}
-      aria-label={active ? `Usuń ${product.name} z ulubionych` : `Dodaj ${product.name} do ulubionych`}
+      aria-label={
+        active
+          ? `Usuń ${product.name} z ulubionych`
+          : `Dodaj ${product.name} do ulubionych`
+      }
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -58,7 +62,9 @@ export function FavoriteButton({
         fill={active ? "currentColor" : "none"}
         aria-hidden="true"
       />
-      {showLabel && <span>{active ? "W ulubionych" : "Dodaj do ulubionych"}</span>}
+      {showLabel && (
+        <span>{active ? "W ulubionych" : "Dodaj do ulubionych"}</span>
+      )}
     </button>
   );
 }
