@@ -68,6 +68,7 @@ export const ProductCard = memo(function ProductCard({
   const t = useTranslations("products");
   const imageUrl = product.thumbnail_url || null;
   const displayPrice = product.price?.display_amount;
+  const compactFeatured = listId === "featured-products";
 
   const currentAmountCents = product.price?.amount_in_cents;
   const originalAmountCents = product.original_price?.amount_in_cents;
@@ -95,19 +96,23 @@ export const ProductCard = memo(function ProductCard({
 
   return (
     <div className="group relative">
-      <div className="relative aspect-square bg-gray-100 rounded-md overflow-hidden">
+      <div
+        className={`relative bg-gray-100 rounded-md overflow-hidden ${
+          compactFeatured ? "h-[92px] sm:h-auto sm:aspect-square" : "aspect-square"
+        }`}
+      >
         <ProductImage
           src={imageUrl}
           alt={product.name}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-300"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 300px"
-          iconClassName="w-16 h-16"
+          iconClassName={compactFeatured ? "w-10 h-10 sm:w-16 sm:h-16" : "w-16 h-16"}
           fetchPriority={fetchPriority}
         />
         <FavoriteButton
           product={product}
-          className="absolute right-2 top-2 z-20"
+          className={`absolute z-20 ${compactFeatured ? "right-1.5 top-1.5 sm:right-2 sm:top-2" : "right-2 top-2"}`}
         />
         {onSale && (
           <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-medium px-2 py-1 rounded">
@@ -116,8 +121,12 @@ export const ProductCard = memo(function ProductCard({
         )}
       </div>
 
-      <div className="p-4">
-        <h3 className="text-sm font-medium text-gray-900 group-hover:text-primary transition-colors line-clamp-2">
+      <div className={compactFeatured ? "p-1.5 sm:p-4" : "p-4"}>
+        <h3
+          className={`font-medium text-gray-900 group-hover:text-primary transition-colors line-clamp-2 ${
+            compactFeatured ? "text-[8px] leading-[1.15] sm:text-sm sm:leading-normal" : "text-sm"
+          }`}
+        >
           <Link
             href={`${basePath}/products/${product.slug}${categoryId ? `?category_id=${categoryId}` : ""}`}
             className="after:absolute after:inset-0"
@@ -127,9 +136,15 @@ export const ProductCard = memo(function ProductCard({
           </Link>
         </h3>
 
-        <div className="mt-2 flex items-center gap-2">
+        <div
+          className={`flex items-center gap-2 ${compactFeatured ? "mt-1 sm:mt-2" : "mt-2"}`}
+        >
           {displayPrice ? (
-            <span className="text-lg font-semibold text-gray-900">
+            <span
+              className={`font-semibold text-gray-900 ${
+                compactFeatured ? "text-[11px] sm:text-lg" : "text-lg"
+              }`}
+            >
               {displayPrice}
             </span>
           ) : (
@@ -143,7 +158,15 @@ export const ProductCard = memo(function ProductCard({
         </div>
 
         {!product.purchasable && (
-          <span className="mt-2 text-sm text-gray-500">{t("outOfStock")}</span>
+          <span
+            className={
+              compactFeatured
+                ? "mt-0.5 block text-[7px] leading-none text-gray-500 sm:mt-2 sm:text-sm sm:leading-normal"
+                : "mt-2 text-sm text-gray-500"
+            }
+          >
+            {t("outOfStock")}
+          </span>
         )}
 
         {showQuickAdd && <QuickAddButton product={product} />}
