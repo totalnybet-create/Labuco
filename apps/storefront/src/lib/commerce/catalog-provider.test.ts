@@ -1,17 +1,10 @@
-import { beforeAll, describe, expect, it, vi } from "vitest";
-
-vi.mock("server-only", () => ({}));
-
-let catalogPrice: typeof import("./catalog-provider").catalogPrice;
-let catalogProductSlug: typeof import("./catalog-provider").catalogProductSlug;
-let mapCatalogRecordToProduct: typeof import("./catalog-provider").mapCatalogRecordToProduct;
-
-beforeAll(async () => {
-  const mod = await import("./catalog-provider");
-  catalogPrice = mod.catalogPrice;
-  catalogProductSlug = mod.catalogProductSlug;
-  mapCatalogRecordToProduct = mod.mapCatalogRecordToProduct;
-});
+import { describe, expect, it } from "vitest";
+import {
+  catalogPrice,
+  catalogProductSlug,
+  listCatalogProducts,
+  mapCatalogRecordToProduct,
+} from "./catalog-provider";
 
 describe("catalog commerce contract", () => {
   it("keeps PLN major units and cents separate", () => {
@@ -52,5 +45,10 @@ describe("catalog commerce contract", () => {
     expect(product.price?.display_amount).toContain("149");
     expect(product.default_variant?.price?.amount_in_cents).toBe(14900);
     expect(product.purchasable).toBe(true);
+  });
+
+  it("matches Polish catalog text when the query omits diacritics", async () => {
+    const result = await listCatalogProducts({ search: "oswietlenie", limit: 10 });
+    expect(result.data.length).toBeGreaterThan(0);
   });
 });
