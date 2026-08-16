@@ -47,16 +47,16 @@ export async function Footer({ basePath, locale, categoryLinks }: FooterProps) {
 
   return (
     <footer className="bg-primary text-gray-300">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="container mx-auto px-4 py-8 sm:px-6 md:py-12 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-5">
           <div className="col-span-1 md:col-span-2">
             <BrandLogo name={storeName} inverted />
-            <p className="mt-4 text-sm text-neutral-400">
+            <p className="mt-4 max-w-md text-sm text-neutral-400">
               {locale === "pl" ? storeDescription : t("description")}
             </p>
           </div>
 
-          <div>
+          <div className="hidden md:block">
             <h3 className="text-sm font-medium text-neutral-300">
               {t("shop")}
             </h3>
@@ -73,7 +73,7 @@ export async function Footer({ basePath, locale, categoryLinks }: FooterProps) {
             </ul>
           </div>
 
-          <div>
+          <div className="hidden md:block">
             <h3 className="text-sm font-medium text-neutral-300">
               {t("account")}
             </h3>
@@ -161,7 +161,7 @@ export async function Footer({ basePath, locale, categoryLinks }: FooterProps) {
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-neutral-800 text-xs text-neutral-400 text-center">
+        <div className="mt-8 border-t border-neutral-800 pt-8 text-center text-xs text-neutral-400">
           <p>
             &copy; <CurrentYear /> {storeName}
           </p>
