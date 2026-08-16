@@ -1,5 +1,3 @@
-import "server-only";
-
 import type { Cart, LineItem, Product } from "@spree/sdk";
 import { cookies } from "next/headers";
 import { getCatalogProduct } from "@/lib/commerce/catalog-provider";
@@ -156,7 +154,6 @@ export async function addCatalogCartItem(
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) {
     throw new Error("Invalid quantity");
   }
-  // Validate variant before persisting it.
   await getCatalogProduct(skuFromVariantId(variantId));
 
   const state = (await readState()) ?? emptyState();
