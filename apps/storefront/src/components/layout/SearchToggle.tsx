@@ -1,21 +1,9 @@
 "use client";
 
 import { CreditCard, Flame, Grid2X2, ShieldCheck, Truck } from "lucide-react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { ReactNode } from "react";
-
-const SearchBar = dynamic(
-  () =>
-    import("@/components/search/SearchBar").then((mod) => ({
-      default: mod.SearchBar,
-    })),
-  {
-    loading: () => (
-      <div className="labuco-search-skeleton" aria-hidden="true" />
-    ),
-  },
-);
+import { SearchBar } from "@/components/search/SearchBar";
 
 interface SearchToggleProps {
   basePath: string;
