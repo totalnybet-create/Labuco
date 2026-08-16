@@ -22,7 +22,14 @@ export async function HeroSection({ basePath }: HeroSectionProps) {
         }}
         aria-hidden="true"
       />
-      <div className="labuco-hero-vignette" aria-hidden="true" />
+      <div
+        className="labuco-hero-vignette"
+        style={{
+          background:
+            "linear-gradient(90deg,#061610 0%,#061610 37%,rgba(6,22,16,.78) 47%,rgba(6,22,16,.12) 64%,rgba(5,15,11,.03) 100%),linear-gradient(0deg,rgba(3,13,9,.32),transparent 46%)",
+        }}
+        aria-hidden="true"
+      />
 
       <div className="labuco-hero-copy">
         <p className="labuco-eyebrow">PUFPUF.SHOP · INDOOR GROW</p>
