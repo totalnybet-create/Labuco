@@ -5,6 +5,7 @@ import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { memo } from "react";
+import { FavoriteButton } from "@/components/products/FavoriteButton";
 import { HiddenPricePrompt } from "@/components/products/HiddenPricePrompt";
 import { ProductImage } from "@/components/ui/product-image";
 import { useCart } from "@/contexts/CartContext";
@@ -104,6 +105,7 @@ export const ProductCard = memo(function ProductCard({
           iconClassName="w-16 h-16"
           fetchPriority={fetchPriority}
         />
+        <FavoriteButton product={product} className="absolute right-2 top-2 z-20" />
         {onSale && (
           <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-medium px-2 py-1 rounded">
             {t("sale")}
