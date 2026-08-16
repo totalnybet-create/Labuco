@@ -48,7 +48,8 @@ export default function FavoritesPage() {
         <h1 className="text-3xl font-bold text-gray-950">Ulubione</h1>
       </div>
       <p className="mt-2 text-gray-600">
-        Produkty zapisane na tym urządzeniu. Lista nie zależy od backendu sklepu.
+        Produkty zapisane na tym urządzeniu. Lista nie zależy od backendu
+        sklepu.
       </p>
 
       {items.length === 0 ? (
@@ -67,13 +68,18 @@ export default function FavoritesPage() {
       ) : (
         <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
           {items.map((item) => (
-            <article key={item.id} className="relative rounded-xl border border-gray-200 bg-white p-3">
+            <article
+              key={item.id}
+              className="relative rounded-xl border border-gray-200 bg-white p-3"
+            >
               <button
                 type="button"
                 className="absolute right-4 top-4 z-10 rounded-full bg-white/90 p-2 text-gray-600 shadow-sm hover:text-red-600"
                 aria-label={`Usuń ${item.name} z ulubionych`}
                 onClick={() =>
-                  writeFavorites(items.filter((candidate) => candidate.id !== item.id))
+                  writeFavorites(
+                    items.filter((candidate) => candidate.id !== item.id),
+                  )
                 }
               >
                 <Trash2 className="size-4" aria-hidden="true" />
