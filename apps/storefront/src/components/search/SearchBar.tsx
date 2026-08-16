@@ -89,8 +89,10 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
     }
   };
 
-  const navigateToResults = () => {
-    const normalized = inputRef.current?.value.trim() || query.trim();
+  const navigateToResults = (rawValue?: string) => {
+    const normalized = (
+      rawValue ?? inputRef.current?.value ?? query
+    ).trim();
     if (!normalized) return;
     router.push(`${basePath}/products?q=${encodeURIComponent(normalized)}`);
     setIsOpen(false);
@@ -98,9 +100,9 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
     onNavigate?.();
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    navigateToResults();
+    navigateToResults(inputRef.current?.value);
   };
 
   const handleSuggestionClick = (product: Product, index: number) => {
@@ -123,10 +125,10 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
     }
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter" && selectedIndex < 0) {
       event.preventDefault();
-      navigateToResults();
+      navigateToResults(event.currentTarget.value);
       return;
     }
 
@@ -184,7 +186,7 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
           <InputGroupAddon align="inline-end">
             <InputGroupButton
               type="button"
-              onClick={navigateToResults}
+              onClick={() => navigateToResults(inputRef.current?.value)}
               size="icon-sm"
               variant="ghost"
               aria-label={t("search")}
@@ -250,7 +252,7 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
                   <li className="border-t border-gray-100">
                     <button
                       type="button"
-                      onClick={navigateToResults}
+                      onClick={() => navigateToResults(inputRef.current?.value)}
                       className="w-full p-3 text-sm text-primary hover:bg-gray-50 text-center font-medium"
                     >
                       {t("viewAllResultsFor", { query: query.trim() })}
