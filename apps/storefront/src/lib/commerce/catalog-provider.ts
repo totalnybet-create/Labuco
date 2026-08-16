@@ -1,5 +1,3 @@
-import "server-only";
-
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type {
@@ -64,14 +62,17 @@ export function loadCatalog(): Promise<CatalogRecord[]> {
   return catalogPromise;
 }
 
-export function slugifyCatalogValue(value: string): string {
+function normalizeSearchText(value: string): string {
   return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 96);
+    .toLocaleLowerCase("pl")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+export function slugifyCatalogValue(value: string): string {
+  return normalizeSearchText(value).replaceAll(" ", "-").slice(0, 96);
 }
 
 export function catalogCategoryId(category: string): string {
@@ -137,7 +138,8 @@ export function mapCatalogRecordToProduct(record: CatalogRecord): Product {
   const inStock = isRecordInStock(record);
   const category = categoryForRecord(record);
   const image = record.reference_image?.trim() || null;
-  const description = record.description?.trim() || record.short_description?.trim() || "";
+  const description =
+    record.description?.trim() || record.short_description?.trim() || "";
 
   const variant = {
     id: variantId,
@@ -219,7 +221,8 @@ function sortCatalog(records: CatalogRecord[], sort?: string): CatalogRecord[] {
   return [...records].sort((a, b) => {
     if (normalized === "price") {
       return (
-        (Number.parseFloat(a.labuco_price_pln) - Number.parseFloat(b.labuco_price_pln)) *
+        (Number.parseFloat(a.labuco_price_pln) -
+          Number.parseFloat(b.labuco_price_pln)) *
         direction
       );
     }
@@ -238,18 +241,25 @@ export async function listCatalogProducts(
 ): Promise<PaginatedResponse<Product>> {
   const all = await loadCatalog();
   const p = normalizeParams(params);
-  const search = stringParam(p.search)?.toLocaleLowerCase("pl");
+  const searchRaw = stringParam(p.search);
+  const search = searchRaw ? normalizeSearchText(searchRaw) : undefined;
   const categoryId = stringParam(p.in_category);
   const minPrice = numericParam(p.price_gte);
   const maxPrice = numericParam(p.price_lte);
   const requireInStock = p.in_stock === true || p.in_stock === "true";
-  const requireOutOfStock = p.out_of_stock === true || p.out_of_stock === "true";
+  const requireOutOfStock =
+    p.out_of_stock === true || p.out_of_stock === "true";
 
   let filtered = all.filter((record) => {
-    const haystack = `${record.title} ${record.brand ?? ""} ${record.category ?? ""}`.toLocaleLowerCase("pl");
+    const haystack = normalizeSearchText(
+      `${record.title} ${record.brand ?? ""} ${record.category ?? ""}`,
+    );
     if (search && !haystack.includes(search)) return false;
 
-    if (categoryId && record.category && catalogCategoryId(record.category) !== categoryId) {
+    if (
+      categoryId &&
+      (!record.category || catalogCategoryId(record.category) !== categoryId)
+    ) {
       return false;
     }
 
@@ -271,7 +281,9 @@ export async function listCatalogProducts(
   const count = filtered.length;
   const pages = Math.max(1, Math.ceil(count / limit));
   const start = (page - 1) * limit;
-  const data = filtered.slice(start, start + limit).map(mapCatalogRecordToProduct);
+  const data = filtered
+    .slice(start, start + limit)
+    .map(mapCatalogRecordToProduct);
 
   return {
     data,
@@ -298,31 +310,41 @@ export async function getCatalogProduct(slugOrId: string): Promise<Product> {
 
 export async function getCatalogCategories(): Promise<{ data: Category[] }> {
   const all = await loadCatalog();
-  const names = [...new Set(all.map((record) => record.category?.trim()).filter(Boolean))] as string[];
+  const names = [
+    ...new Set(all.map((record) => record.category?.trim()).filter(Boolean)),
+  ] as string[];
   const data = names
     .sort((a, b) => a.localeCompare(b, "pl"))
-    .map((name) => categoryForRecord({
-      labuco_sku: `category-${catalogCategoryId(name)}`,
-      title: name,
-      category: name,
-      labuco_price_pln: "0",
-    }) as Category);
+    .map(
+      (name) =>
+        categoryForRecord({
+          labuco_sku: `category-${catalogCategoryId(name)}`,
+          title: name,
+          category: name,
+          labuco_price_pln: "0",
+        }) as Category,
+    );
   return { data };
 }
 
-export async function getCatalogCategory(idOrPermalink: string): Promise<Category> {
+export async function getCatalogCategory(
+  idOrPermalink: string,
+): Promise<Category> {
   const { data } = await getCatalogCategories();
   const category = data.find(
     (candidate) =>
       candidate.id === idOrPermalink || candidate.permalink === idOrPermalink,
   );
-  if (!category) throw new Error(`Catalog category not found: ${idOrPermalink}`);
+  if (!category)
+    throw new Error(`Catalog category not found: ${idOrPermalink}`);
   return category;
 }
 
 export async function getCatalogProductFilters(): Promise<ProductFiltersResponse> {
   const all = await loadCatalog();
-  const prices = all.map((record) => Number.parseFloat(record.labuco_price_pln)).filter(Number.isFinite);
+  const prices = all
+    .map((record) => Number.parseFloat(record.labuco_price_pln))
+    .filter(Number.isFinite);
   const min = prices.length ? Math.min(...prices) : 0;
   const max = prices.length ? Math.max(...prices) : 0;
   const inStockCount = all.filter(isRecordInStock).length;
