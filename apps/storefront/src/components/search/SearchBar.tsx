@@ -151,12 +151,13 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
   return (
     <div className="relative">
       <form action={`${basePath}/products`} method="get">
-        <InputGroup>
+        <InputGroup style={{ height: 30, minHeight: 30 }}>
           <InputGroupInput
             ref={inputRef}
             type="search"
             name="q"
             defaultValue=""
+            style={{ height: 28, minHeight: 28 }}
             onChange={(event) => handleQueryChange(event.target.value)}
             onFocus={() => setIsOpen(true)}
             onBlur={handleBlur}
@@ -172,7 +173,7 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
             aria-autocomplete="list"
             aria-label={t("search")}
           />
-          <InputGroupAddon align="inline-end">
+          <InputGroupAddon align="inline-end" style={{ width: 40, padding: 0 }}>
             <InputGroupButton
               type="submit"
               size="icon-sm"
