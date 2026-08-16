@@ -15,10 +15,10 @@ export async function HeroSection({ basePath }: HeroSectionProps) {
         className="labuco-hero-media"
         style={{
           backgroundImage: `url("${HERO_IMAGE}")`,
-          width: "100%",
-          inset: 0,
-          backgroundSize: "cover",
-          backgroundPosition: "68% 50%",
+          width: "58%",
+          inset: "0 0 0 auto",
+          backgroundSize: "auto 100%",
+          backgroundPosition: "35% 50%",
         }}
         aria-hidden="true"
       />
@@ -26,7 +26,7 @@ export async function HeroSection({ basePath }: HeroSectionProps) {
         className="labuco-hero-vignette"
         style={{
           background:
-            "linear-gradient(90deg,#061610 0%,#061610 37%,rgba(6,22,16,.78) 47%,rgba(6,22,16,.12) 64%,rgba(5,15,11,.03) 100%),linear-gradient(0deg,rgba(3,13,9,.32),transparent 46%)",
+            "linear-gradient(90deg,#061610 0%,#061610 40%,rgba(6,22,16,.84) 48%,rgba(6,22,16,.24) 59%,rgba(5,15,11,.02) 73%,rgba(5,15,11,.02) 100%),linear-gradient(0deg,rgba(3,13,9,.30),transparent 46%)",
         }}
         aria-hidden="true"
       />
