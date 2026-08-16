@@ -156,7 +156,6 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
             ref={inputRef}
             type="search"
             name="q"
-            defaultValue=""
             style={{ height: 28, minHeight: 28 }}
             onChange={(event) => handleQueryChange(event.target.value)}
             onFocus={() => setIsOpen(true)}
