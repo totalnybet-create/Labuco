@@ -46,7 +46,7 @@ export async function Footer({ basePath, locale, categoryLinks }: FooterProps) {
   const transactionalCommerce = isTransactionalCommerceEnabled();
 
   return (
-    <footer className="bg-primary text-gray-300">
+    <footer className="bg-primary pb-[calc(68px+env(safe-area-inset-bottom))] text-gray-300 md:pb-0">
       <div className="container mx-auto px-4 py-8 sm:px-6 md:py-12 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-5">
           <div className="col-span-1 md:col-span-2">
