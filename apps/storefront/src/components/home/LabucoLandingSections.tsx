@@ -117,7 +117,10 @@ export function TrustStrip() {
   ] as const;
 
   return (
-    <section className="labuco-trust-strip" aria-label="Dlaczego pufpuf.shop">
+    <section
+      className="labuco-trust-strip !mt-[9px] !mb-[4px] !py-[10px] md:!mt-[18px] md:!mb-[4px] md:!py-[13px]"
+      aria-label="Dlaczego pufpuf.shop"
+    >
       {items.map(({ title, copy, icon: Icon }) => (
         <div className="labuco-trust-item" key={title}>
           <Icon aria-hidden="true" />
@@ -153,11 +156,11 @@ export function KnowledgeSection({ basePath }: SectionProps) {
             key={title}
           >
             <div
-              className="labuco-guide-art"
+              className="labuco-guide-art !h-[38px] md:!h-[132px]"
               style={spriteStyle(spritePosition)}
               aria-hidden="true"
             />
-            <div className="labuco-guide-copy">
+            <div className="labuco-guide-copy !min-h-[32px] md:!min-h-[62px]">
               <span>{kicker}</span>
               <h3>{title}</h3>
             </div>
