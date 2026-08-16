@@ -82,12 +82,13 @@ export default async function HomePage({ params }: HomePageProps) {
       <section className="labuco-hero" aria-labelledby="labuco-home-title">
         <div className="labuco-hero-visual" aria-hidden="true">
           <Image
-            src="/labuco/reference-hero.jpg"
+            src="/labuco/reference-guides.jpg"
             alt=""
             fill
             priority
             sizes="(max-width: 767px) 62vw, 58vw"
             className="labuco-hero-image"
+            style={{ objectPosition: "18% 50%" }}
           />
         </div>
         <div className="labuco-shell">
@@ -174,10 +175,7 @@ export default async function HomePage({ params }: HomePageProps) {
         </div>
       </section>
 
-      <section
-        className="labuco-section labuco-products-section"
-        aria-labelledby="bestsellers"
-      >
+      <section className="labuco-section" aria-labelledby="bestsellers">
         <div className="labuco-shell">
           <div className="labuco-section-heading">
             <h2 id="bestsellers">Bestsellery</h2>
@@ -190,6 +188,8 @@ export default async function HomePage({ params }: HomePageProps) {
             locale={locale}
             country={country}
             currency={currency}
+            compact
+            appearance="labuco"
           />
         </div>
       </section>
