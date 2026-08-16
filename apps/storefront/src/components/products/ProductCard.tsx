@@ -43,7 +43,7 @@ function QuickAddButton({ product }: QuickAddButtonProps) {
   return (
     <button
       type="button"
-      className="labuco-card-cart relative z-10"
+      className="labuco-card-cart relative z-10 !min-h-[22px] !mt-[2px] !text-[7px] md:!min-h-[39px] md:!mt-[9px] md:!text-[12px]"
       disabled={updating}
       onClick={handleQuickAdd}
       aria-label={`Dodaj ${product.name} do koszyka`}
@@ -98,7 +98,7 @@ export const ProductCard = memo(function ProductCard({
     <div className="group relative">
       <div
         className={`relative bg-gray-100 rounded-md overflow-hidden ${
-          compactFeatured ? "h-[70px] sm:h-auto sm:aspect-square" : "aspect-square"
+          compactFeatured ? "h-[66px] sm:h-auto sm:aspect-square" : "aspect-square"
         }`}
       >
         <ProductImage
