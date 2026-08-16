@@ -5,9 +5,9 @@ import { useState } from "react";
 
 export function NewsletterForm() {
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
-    "idle",
-  );
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const [message, setMessage] = useState("");
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -38,7 +38,9 @@ export function NewsletterForm() {
     } catch (error) {
       setStatus("error");
       setMessage(
-        error instanceof Error ? error.message : "Nie udało się zapisać adresu.",
+        error instanceof Error
+          ? error.message
+          : "Nie udało się zapisać adresu.",
       );
     }
   };
