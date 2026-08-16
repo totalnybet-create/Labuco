@@ -19,8 +19,9 @@ async function captureHome(
   const search = page.getByRole("combobox").first();
   if ((await search.inputValue()) !== "") await search.fill("");
 
-  const footer = page.locator("footer");
-  await footer.scrollIntoViewIfNeeded();
+  await page.evaluate(() =>
+    window.scrollTo(0, document.documentElement.scrollHeight),
+  );
   await page.waitForTimeout(250);
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(
