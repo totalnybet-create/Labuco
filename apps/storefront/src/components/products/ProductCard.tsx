@@ -105,7 +105,10 @@ export const ProductCard = memo(function ProductCard({
           iconClassName="w-16 h-16"
           fetchPriority={fetchPriority}
         />
-        <FavoriteButton product={product} className="absolute right-2 top-2 z-20" />
+        <FavoriteButton
+          product={product}
+          className="absolute right-2 top-2 z-20"
+        />
         {onSale && (
           <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-medium px-2 py-1 rounded">
             {t("sale")}
