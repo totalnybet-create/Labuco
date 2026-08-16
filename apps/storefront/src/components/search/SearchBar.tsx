@@ -98,11 +98,6 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
     onNavigate?.();
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    navigateToResults(inputRef.current?.value);
-  };
-
   const handleSuggestionClick = (product: Product, index: number) => {
     trackSelectItem(product, "quick-search", "Quick Search", index, currency);
     router.push(`${basePath}/products/${product.slug}`);
@@ -124,12 +119,6 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter" && selectedIndex < 0) {
-      event.preventDefault();
-      navigateToResults(event.currentTarget.value);
-      return;
-    }
-
     if (!isOpen || suggestions.length === 0) return;
 
     switch (event.key) {
@@ -160,7 +149,7 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
 
   return (
     <div className="relative">
-      <form action={`${basePath}/products`} method="get" onSubmit={handleSubmit}>
+      <form action={`${basePath}/products`} method="get">
         <InputGroup>
           <InputGroupInput
             ref={inputRef}
