@@ -1,6 +1,12 @@
 import "@testing-library/jest-dom/vitest";
 import { vi } from "vitest";
 
+// Existing unit tests mock the Spree SDK and verify the historical transactional
+// contract. Keep that suite explicitly on Spree so adding a catalog-mode runtime
+// fallback does not silently change what those tests exercise. Catalog mode has
+// its own unit and browser-contract coverage.
+process.env.COMMERCE_PROVIDER ??= "spree";
+
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
