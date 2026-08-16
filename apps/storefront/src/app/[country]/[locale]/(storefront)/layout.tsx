@@ -70,16 +70,25 @@ async function StorefrontCategoryNavigation({
   const rootCategories = await getRootCategories(country, locale);
 
   return (
-    <nav aria-label="Kategorie sklepu" className="labuco-category-nav">
-      <ul>
-        <li>
-          <Link href={`${basePath}/products`} className="labuco-category-nav-all">
+    <nav
+      aria-label="Kategorie sklepu"
+      className="hidden border-b border-white/10 bg-[#10251a] text-[#e5eee7] md:block"
+    >
+      <ul className="mx-auto flex min-h-12 max-w-[1296px] items-center gap-6 overflow-hidden px-12 text-xs font-semibold">
+        <li className="shrink-0">
+          <Link
+            href={`${basePath}/products`}
+            className="font-extrabold text-[#b7f34b] transition-colors hover:text-white"
+          >
             Wszystkie produkty
           </Link>
         </li>
         {rootCategories.slice(0, 7).map((category) => (
-          <li key={category.id}>
-            <Link href={`${basePath}/c/${category.permalink}`}>
+          <li key={category.id} className="min-w-0 shrink-0">
+            <Link
+              href={`${basePath}/c/${category.permalink}`}
+              className="transition-colors hover:text-[#b7f34b]"
+            >
               {category.name}
             </Link>
           </li>
