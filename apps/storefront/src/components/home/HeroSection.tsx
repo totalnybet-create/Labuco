@@ -13,7 +13,13 @@ export async function HeroSection({ basePath }: HeroSectionProps) {
     <section className="labuco-hero">
       <div
         className="labuco-hero-media"
-        style={{ backgroundImage: `url("${HERO_IMAGE}")` }}
+        style={{
+          backgroundImage: `url("${HERO_IMAGE}")`,
+          width: "100%",
+          inset: 0,
+          backgroundSize: "cover",
+          backgroundPosition: "68% 50%",
+        }}
         aria-hidden="true"
       />
       <div className="labuco-hero-vignette" aria-hidden="true" />
