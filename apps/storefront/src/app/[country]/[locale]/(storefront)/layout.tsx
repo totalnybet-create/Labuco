@@ -1,6 +1,3 @@
-import "@/app/labuco.css";
-import "@/app/labuco-products.css";
-import "@/app/labuco-hotfix.css";
 import type { Category } from "@spree/sdk";
 import Link from "next/link";
 import { connection } from "next/server";
