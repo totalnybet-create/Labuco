@@ -34,10 +34,15 @@ export function getStoreUrl(): string | undefined {
 }
 
 /**
- * Get the store name from environment variables.
+ * Get the public store name. Legacy LABUCO deployments intentionally resolve
+ * to the new pufpuf.shop brand until their environment is migrated.
  */
 export function getStoreName(): string {
-  return process.env.NEXT_PUBLIC_STORE_NAME || "Labuco";
+  const configured = process.env.NEXT_PUBLIC_STORE_NAME?.trim();
+  if (!configured || configured.toLowerCase() === "labuco") {
+    return "pufpuf.shop";
+  }
+  return configured;
 }
 
 /**
@@ -66,10 +71,14 @@ export function getDefaultLocale(): string {
 
 /**
  * Get the SEO title, preferring STORE_SEO_TITLE and falling back to the
- * store name (NEXT_PUBLIC_STORE_NAME).
+ * normalized public store name.
  */
 export function getStoreSeoTitle(): string {
-  return process.env.STORE_SEO_TITLE || getStoreName();
+  const configured = process.env.STORE_SEO_TITLE?.trim();
+  if (!configured || configured.toLowerCase() === "labuco") {
+    return getStoreName();
+  }
+  return configured;
 }
 
 /**
