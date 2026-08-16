@@ -51,29 +51,6 @@ const getRootCategories = cache(async (country: string, locale: string) => {
     });
 });
 
-function CategoryLinks({
-  categories,
-  basePath,
-}: {
-  categories: Category[];
-  basePath: string;
-}) {
-  return (
-    <ul>
-      {categories.map((category) => (
-        <li key={category.id}>
-          <Link href={`${basePath}/c/${category.permalink}`}>
-            {category.name}
-          </Link>
-          {category.children && category.children.length > 0 && (
-            <CategoryLinks categories={category.children} basePath={basePath} />
-          )}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 async function StorefrontMobileNavigation({
   basePath,
   country,
@@ -91,11 +68,23 @@ async function StorefrontCategoryNavigation({
   locale,
 }: StorefrontNavigationProps) {
   const rootCategories = await getRootCategories(country, locale);
-  if (rootCategories.length === 0) return null;
 
   return (
-    <nav aria-label="Category navigation" className="sr-only">
-      <CategoryLinks categories={rootCategories} basePath={basePath} />
+    <nav aria-label="Kategorie sklepu" className="labuco-category-nav">
+      <ul>
+        <li>
+          <Link href={`${basePath}/products`} className="labuco-category-nav-all">
+            Wszystkie produkty
+          </Link>
+        </li>
+        {rootCategories.slice(0, 7).map((category) => (
+          <li key={category.id}>
+            <Link href={`${basePath}/c/${category.permalink}`}>
+              {category.name}
+            </Link>
+          </li>
+        ))}
+      </ul>
     </nav>
   );
 }
