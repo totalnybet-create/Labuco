@@ -35,7 +35,7 @@ export async function FeaturedProducts({
 }: FeaturedProductsProps) {
   const userToken = await getAccessToken();
   const productsResponse = await cachedListProducts(
-    { limit: 8, fields: PRODUCT_CARD_FIELDS },
+    { limit: 4, fields: PRODUCT_CARD_FIELDS },
     { locale, country },
     "dtc",
     userToken,
