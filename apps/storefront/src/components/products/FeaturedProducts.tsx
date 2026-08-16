@@ -41,9 +41,13 @@ export async function FeaturedProducts({
     userToken,
   );
 
+  const products = [...(productsResponse.data ?? [])].sort(
+    (a, b) => Number(Boolean(b.purchasable)) - Number(Boolean(a.purchasable)),
+  );
+
   return (
     <LazyProductCarousel
-      products={productsResponse.data ?? []}
+      products={products}
       basePath={basePath}
       currency={currency}
       showQuickAdd
