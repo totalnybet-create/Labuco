@@ -90,7 +90,7 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
   };
 
   const navigateToResults = () => {
-    const normalized = query.trim();
+    const normalized = inputRef.current?.value.trim() || query.trim();
     if (!normalized) return;
     router.push(`${basePath}/products?q=${encodeURIComponent(normalized)}`);
     setIsOpen(false);
