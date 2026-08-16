@@ -46,8 +46,12 @@ export function SearchToggle({
       </div>
 
       <div className="labuco-header-main">
-        <div className="labuco-header-left">{left}</div>
-        <div className="labuco-header-center">{center}</div>
+        <div className="labuco-header-left" style={{ transform: "translateX(-8px)" }}>
+          {left}
+        </div>
+        <div className="labuco-header-center" style={{ justifyContent: "center" }}>
+          {center}
+        </div>
         <div className="labuco-header-right">
           {rightStart}
           {rightEnd}
