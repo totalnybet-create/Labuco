@@ -1,0 +1,103 @@
+name: LABUCO Spree Price Contract
+
+on:
+  push:
+    branches:
+      - redesign/labuco-visual-reset-20260816
+    paths:
+      - '.github/workflows/labuco-spree-price-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout proven LABUCO backend
+        uses: actions/checkout@v4
+        with:
+          ref: ed09bb524f09eb7cd86c772f5792718e4f265947
+          path: proven
+      - name: Build backend
+        run: docker build -f proven/backend/Dockerfile -t labuco-price-contract proven
+      - name: Start backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          createdb -h 127.0.0.1 -U postgres spree_price_contract || true
+          mkdir -p /tmp/labuco-price-contract
+          SECRET_KEY_BASE="$(openssl rand -hex 64)"
+          cat >/tmp/labuco-price-contract/docker-compose.yml <<EOF
+          services:
+            web:
+              image: labuco-price-contract
+              network_mode: host
+              environment:
+                DATABASE_URL: postgres://postgres@127.0.0.1:5432/spree_price_contract
+                SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+                RAILS_ENV: production
+                RAILS_LOG_TO_STDOUT: 'true'
+                RAILS_SERVE_STATIC_FILES: 'true'
+          EOF
+          docker compose -f /tmp/labuco-price-contract/docker-compose.yml up -d
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:3000/up >/dev/null; then exit 0; fi
+            sleep 4
+          done
+          docker compose -f /tmp/labuco-price-contract/docker-compose.yml logs web
+          exit 1
+      - name: Inspect installed Spree price implementation
+        working-directory: /tmp/labuco-price-contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose -f docker-compose.yml exec -T web sh -lc '
+            echo "=== GEMS ==="
+            bundle list | grep -E "spree|money" || true
+            echo "=== PRICE PARAM / CONTRACT CANDIDATES ==="
+            for gem in spree spree_api spree_core spree_backend; do
+              path=$(bundle show "$gem" 2>/dev/null || true)
+              if [ -n "$path" ]; then
+                echo "GEM_PATH $gem $path"
+                grep -R -n -E "amount_in_cents|prices_attributes|price.*amount|amount.*price" "$path/app" "$path/lib" 2>/dev/null | head -n 160 || true
+              fi
+            done
+          '
+      - name: Seed and run direct model setter experiment
+        working-directory: /tmp/labuco-price-contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose -f docker-compose.yml exec -T web ./bin/rails runner '
+            store = Spree::Store.default
+            pl = Spree::Country.find_by(iso: "PL") || Spree::Country.first
+            store.update!(default_country: pl, default_currency: "PLN", supported_currencies: ["PLN"])
+            product = Spree::Product.create!(name: "Price Contract Probe", status: "active", stores: [store])
+            variant = product.master
+            p = variant.prices.find_or_initialize_by(currency: "PLN")
+            puts "INITIAL amount=#{p.amount.inspect} amount_in_cents=#{p.respond_to?(:amount_in_cents) ? p.amount_in_cents.inspect : :na}"
+            ["149.00", "1.49", 14900, 149].each do |value|
+              p.amount = value
+              p.save!
+              p.reload
+              puts "MODEL_SET value=#{value.inspect} stored_amount=#{p.amount.inspect} cents=#{p.respond_to?(:amount_in_cents) ? p.amount_in_cents.inspect : :na} display=#{p.respond_to?(:display_amount) ? p.display_amount.to_s.inspect : :na}"
+            end
+          '
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose -f /tmp/labuco-price-contract/docker-compose.yml logs web || true
