@@ -7,16 +7,24 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ message: "Nieprawidłowe dane formularza." }, { status: 400 });
+    return NextResponse.json(
+      { message: "Nieprawidłowe dane formularza." },
+      { status: 400 },
+    );
   }
 
   const email =
     typeof body === "object" && body !== null && "email" in body
-      ? String((body as { email?: unknown }).email ?? "").trim().toLowerCase()
+      ? String((body as { email?: unknown }).email ?? "")
+          .trim()
+          .toLowerCase()
       : "";
 
   if (email.length < 5 || email.length > 254 || !EMAIL_PATTERN.test(email)) {
-    return NextResponse.json({ message: "Podaj prawidłowy adres e-mail." }, { status: 400 });
+    return NextResponse.json(
+      { message: "Podaj prawidłowy adres e-mail." },
+      { status: 400 },
+    );
   }
 
   const supabaseUrl = process.env.SUPABASE_URL?.trim();
@@ -24,7 +32,10 @@ export async function POST(request: Request) {
 
   if (!supabaseUrl || !publishableKey) {
     return NextResponse.json(
-      { message: "Newsletter nie jest jeszcze skonfigurowany na tym środowisku." },
+      {
+        message:
+          "Newsletter nie jest jeszcze skonfigurowany na tym środowisku.",
+      },
       { status: 503 },
     );
   }
@@ -48,13 +59,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Gotowe. Adres został zapisany." });
   }
 
-  // Unique e-mail is intentional: repeated signup is treated as success from
-  // the user's perspective and does not disclose subscriber state elsewhere.
   if (response.status === 409) {
     return NextResponse.json({ message: "Ten adres jest już zapisany." });
   }
 
-  console.error("Newsletter signup failed", response.status, await response.text());
+  console.error(
+    "Newsletter signup failed",
+    response.status,
+    await response.text(),
+  );
   return NextResponse.json(
     { message: "Nie udało się zapisać adresu. Spróbuj ponownie później." },
     { status: 502 },
