@@ -131,10 +131,8 @@ test("catalog mode works without Spree and stays non-transactional", async ({
   await page.goto("/pl/pl");
   const searchByButton = page.getByRole("combobox").first();
   await searchByButton.fill("wentylacja");
-  await page
-    .getByRole("button", { name: /Szukaj/i })
-    .first()
-    .click();
+  const searchForm = searchByButton.locator("xpath=ancestor::form[1]");
+  await searchForm.getByRole("button", { name: /Szukaj/i }).click();
   await expect(page).toHaveURL(/\/products\?q=wentylacja/);
 
   await captureHome(
