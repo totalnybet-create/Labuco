@@ -1,0 +1,106 @@
+name: LABUCO Catalog Diagnostic
+
+on:
+  push:
+    branches:
+      - redesign/labuco-visual-reset-20260816
+    paths:
+      - '.github/workflows/labuco-catalog-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect source catalog price and image fields
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from decimal import Decimal, InvalidOperation
+
+          path = Path('data/labuco_catalog.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          if isinstance(data, dict):
+              products = data.get('products') or data.get('items') or data.get('data') or []
+          else:
+              products = data
+          print(f'CATALOG_COUNT={len(products)}')
+
+          price_keys = [
+              'labuco_price_pln','price','price_pln','price_retail_gross',
+              'labuco_wholesale_net','wholesale_net','price_wholesale_net',
+              'price_net','price_gross','regular_price'
+          ]
+          image_keys = [
+              'image','image_url','image_urls','images','photo','photo_url',
+              'thumbnail','thumbnail_url','main_image','main_image_url'
+          ]
+
+          def scalar(v):
+              if isinstance(v, (str,int,float)) or v is None:
+                  return v
+              if isinstance(v, list):
+                  return f'list[{len(v)}]:' + repr(v[:2])[:300]
+              if isinstance(v, dict):
+                  return 'dict:' + repr(list(v.items())[:4])[:300]
+              return repr(v)[:300]
+
+          def dec(v):
+              try:
+                  if v is None or v == '': return None
+                  return Decimal(str(v).replace(' ', '').replace(',', '.'))
+              except (InvalidOperation, ValueError):
+                  return None
+
+          print('\n=== FIRST 15 PRODUCTS ===')
+          for i,p in enumerate(products[:15],1):
+              print(f'[{i}] name={p.get("name")!r} sku={p.get("sku")!r}')
+              print('  prices=', {k: scalar(p.get(k)) for k in price_keys if k in p})
+              print('  images=', {k: scalar(p.get(k)) for k in image_keys if k in p})
+
+          print('\n=== HIGH LABUCO PRICE >= 1000 ===')
+          high=[]
+          for p in products:
+              v=dec(p.get('labuco_price_pln'))
+              if v is not None and v >= 1000:
+                  high.append((v,p))
+          for v,p in sorted(high, key=lambda x:x[0], reverse=True)[:30]:
+              print('name=',p.get('name'),'sku=',p.get('sku'),'labuco_price_pln=',v,
+                    'price_retail_gross=',scalar(p.get('price_retail_gross')),
+                    'wholesale=',scalar(p.get('labuco_wholesale_net') or p.get('wholesale_net') or p.get('price_wholesale_net')))
+          print('HIGH_PRICE_COUNT=',len(high))
+
+          print('\n=== PRICE RATIO SAMPLES ===')
+          shown=0
+          for p in products:
+              retail=dec(p.get('labuco_price_pln'))
+              base=dec(p.get('price_retail_gross')) or dec(p.get('price')) or dec(p.get('labuco_wholesale_net'))
+              if retail is not None and base not in (None, Decimal(0)):
+                  ratio=retail/base
+                  if ratio >= 50 or ratio <= Decimal('0.02'):
+                      print('name=',p.get('name'),'retail=',retail,'base=',base,'ratio=',ratio)
+                      shown += 1
+                      if shown >= 30: break
+          print('RATIO_ANOMALY_SAMPLES=',shown)
+
+          print('\n=== IMAGE COVERAGE ===')
+          with_images=0
+          examples=[]
+          for p in products:
+              vals=[p.get(k) for k in image_keys]
+              has=any(v not in (None,'',[],{}) for v in vals)
+              if has:
+                  with_images += 1
+                  if len(examples)<10:
+                      examples.append((p.get('name'), {k:scalar(p.get(k)) for k in image_keys if p.get(k) not in (None,'',[],{})}))
+          print('WITH_IMAGES=',with_images,'WITHOUT_IMAGES=',len(products)-with_images)
+          for e in examples: print('IMAGE_EXAMPLE=',e)
+
+          print('\n=== TOP-LEVEL FIELD NAMES ===')
+          keys=sorted({k for p in products[:200] if isinstance(p,dict) for k in p.keys()})
+          print(keys)
+          PY
