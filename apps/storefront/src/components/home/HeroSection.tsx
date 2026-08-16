@@ -59,7 +59,10 @@ export async function HeroSection({ basePath }: HeroSectionProps) {
         </div>
       </div>
 
-      <div className="labuco-hero-art" aria-hidden="true">
+      <div
+        className="labuco-hero-art md:[-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_18%,black_100%)] md:[mask-image:linear-gradient(to_right,transparent_0%,black_18%,black_100%)]"
+        aria-hidden="true"
+      >
         <div className="labuco-grow-tent">
           <div className="labuco-led-bars">
             <i />
