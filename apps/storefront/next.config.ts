@@ -1,3 +1,4 @@
+import path from "node:path";
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 import type { RemotePattern } from "next/dist/shared/lib/image-config";
@@ -5,17 +6,6 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin();
 
-/**
- * Allow product/asset images served by the configured Spree backend. Spree
- * returns Active Storage URLs on its own host (which may differ from
- * SPREE_API_URL's — e.g. store URL vs API URL, http vs https, with or without a
- * port), so we allow the SPREE_API_URL hostname over both protocols and any
- * port rather than hardcoding specific hosts. Set SPREE_IMAGES_URL when images
- * are served from a different host than the API — e.g. spree.sh puts images
- * behind a CDN (console.spree.sh) — and it takes precedence over SPREE_API_URL.
- * The pathname stays scoped to Active Storage. Falls back to `localhost` when
- * neither variable is set (dev).
- */
 function spreeImagePatterns(): RemotePattern[] {
   const raw = (
     process.env.SPREE_IMAGES_URL || process.env.SPREE_API_URL
@@ -37,6 +27,13 @@ function spreeImagePatterns(): RemotePattern[] {
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // The no-Spree catalog lives at repository level. Include it in the traced
+  // standalone output so staging/production can switch providers without
+  // copying thousands of product records into the React source tree.
+  outputFileTracingRoot: path.join(__dirname, "../.."),
+  outputFileTracingIncludes: {
+    "/*": ["../../data/labuco_catalog.json"],
+  },
   allowedDevOrigins: ["shop.lvh.me", "*.trycloudflare.com", "192.168.33.13"],
   env: {
     NEXT_PUBLIC_SENTRY_DSN: process.env.SENTRY_DSN || "",
@@ -56,20 +53,29 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   cacheLife: {
     tenMinutes: {
-      stale: 300, // 5 minutes client stale window
-      revalidate: 600, // 10 minutes until background revalidation
-      expire: 3600, // 1 hour max before recompute on idle entries
+      stale: 300,
+      revalidate: 600,
+      expire: 3600,
     },
   },
   images: {
     qualities: [25, 50, 75, 85, 100],
-    dangerouslyAllowLocalIP: true, // Allow localhost images in development
+    dangerouslyAllowLocalIP: true,
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
-      // Derived from SPREE_IMAGES_URL (if set) or SPREE_API_URL.
       ...spreeImagePatterns(),
-      // Hosted demo / tunnel backends whose image host differs from SPREE_API_URL.
+      // Product reference images used by the backend-neutral Labuco catalog.
+      {
+        protocol: "https",
+        hostname: "www.growtent.pl",
+        pathname: "/hpeciai/**",
+      },
+      {
+        protocol: "https",
+        hostname: "growtent.pl",
+        pathname: "/hpeciai/**",
+      },
     ],
   },
 };
@@ -82,17 +88,10 @@ export default process.env.SENTRY_DSN
       project: process.env.SENTRY_PROJECT,
       authToken: process.env.SENTRY_AUTH_TOKEN,
       silent: !process.env.CI,
-
-      // Upload a larger set of source maps for prettier stack traces (increases build time)
       widenClientFileUpload: true,
-
-      // Automatically delete source maps after uploading to Sentry
-      // so they are not served publicly
       sourcemaps: {
         deleteSourcemapsAfterUpload: true,
       },
-
-      // Disables the Sentry SDK build-time telemetry
       telemetry: false,
     })
   : configWithIntl;

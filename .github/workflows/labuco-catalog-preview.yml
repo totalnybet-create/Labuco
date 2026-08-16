@@ -1,0 +1,74 @@
+name: LABUCO Catalog Preview
+
+on:
+  push:
+    branches: [main, "refactor/**"]
+    paths:
+      - ".github/workflows/labuco-catalog-preview.yml"
+      - "apps/storefront/**"
+      - "data/labuco_catalog.json"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/labuco-catalog-preview.yml"
+      - "apps/storefront/**"
+      - "data/labuco_catalog.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: labuco-catalog-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  catalog-preview:
+    name: Build + browser QA (no Spree)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/storefront
+    env:
+      COMMERCE_PROVIDER: catalog
+      NEXT_PUBLIC_DEFAULT_COUNTRY: pl
+      NEXT_PUBLIC_DEFAULT_LOCALE: pl
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3001
+      NEXT_PUBLIC_STORE_NAME: Labuco
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: apps/storefront/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Production build with no Spree variables
+        run: pnpm run build
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run catalog browser contract
+        run: pnpm exec playwright test --config=playwright.catalog.config.ts
+
+      - name: Upload catalog screenshots and traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: labuco-catalog-preview
+          path: |
+            apps/storefront/artifacts/catalog-preview/
+            apps/storefront/test-results/
+          retention-days: 3
+          if-no-files-found: warn

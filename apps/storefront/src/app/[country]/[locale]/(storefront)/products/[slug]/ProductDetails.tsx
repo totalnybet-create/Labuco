@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { QuantityPickerField } from "@/components/cart/QuantityPickerField";
+import { FavoriteButton } from "@/components/products/FavoriteButton";
 import { HiddenPricePrompt } from "@/components/products/HiddenPricePrompt";
 import { MediaGallery } from "@/components/products/MediaGallery";
 import { ProductCustomFields } from "@/components/products/ProductCustomFields";
@@ -26,12 +27,9 @@ export function ProductDetails({ product, basePath }: ProductDetailsProps) {
   const { currency } = useStore();
   const t = useTranslations("products");
   const tw = useTranslations("wholesale");
-  // Non-null inside a HiddenPricingProvider (wholesale `prices_hidden`, guest
-  // view): prices are null on purpose, and ordering is gated behind sign-in.
   const hiddenPricing = useHiddenPricing();
   const pricesHidden = hiddenPricing !== null;
 
-  // Filter variants list
   const variants = useMemo(() => {
     return (product.variants || []).filter(Boolean);
   }, [product.variants]);
@@ -39,7 +37,6 @@ export function ProductDetails({ product, basePath }: ProductDetailsProps) {
   const hasVariants = variants.length > 0;
   const optionTypes = product.option_types || [];
 
-  // Initialize with default variant or first available variant
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(() => {
     if (product.default_variant) {
       return product.default_variant;
@@ -47,14 +44,12 @@ export function ProductDetails({ product, basePath }: ProductDetailsProps) {
     if (hasVariants) {
       return variants.find((v) => v.purchasable) || variants[0];
     }
-    // For products without variants, use default variant
     return product.default_variant || null;
   });
 
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // Track product view (analytics - client-only side effect)
   useEffect(() => {
     trackViewItem(product, currency);
   }, [product, currency]);
@@ -96,7 +91,6 @@ export function ProductDetails({ product, basePath }: ProductDetailsProps) {
 
   const sku = selectedVariant?.sku ?? product.default_variant?.sku;
 
-  // Purchasability
   const isPurchasable = hasVariants
     ? (selectedVariant?.purchasable ?? false)
     : (product.purchasable ?? false);
@@ -121,9 +115,8 @@ export function ProductDetails({ product, basePath }: ProductDetailsProps) {
   };
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8  py-8">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Media Gallery */}
         <div>
           <MediaGallery
             images={galleryImages}
@@ -132,11 +125,12 @@ export function ProductDetails({ product, basePath }: ProductDetailsProps) {
           />
         </div>
 
-        {/* Product Info */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
+            <FavoriteButton product={product} />
+          </div>
 
-          {/* Price */}
           <div className="mt-4 flex items-center gap-4">
             {displayPrice ? (
               <span className="text-3xl font-bold text-gray-900">
@@ -157,7 +151,6 @@ export function ProductDetails({ product, basePath }: ProductDetailsProps) {
             )}
           </div>
 
-          {/* Stock Status */}
           <div className="mt-4">
             {inStock ? (
               <span className="inline-flex items-center gap-1.5 text-green-600">
@@ -172,7 +165,6 @@ export function ProductDetails({ product, basePath }: ProductDetailsProps) {
             )}
           </div>
 
-          {/* Variant Picker */}
           {hasVariants && optionTypes.length > 0 && (
             <div className="mt-8">
               <VariantPicker
@@ -184,11 +176,8 @@ export function ProductDetails({ product, basePath }: ProductDetailsProps) {
             </div>
           )}
 
-          {/* Quantity & Add to Cart */}
           <div className="mt-8">
             {pricesHidden ? (
-              // Guest on a prices-hidden channel: no pricing, no ordering —
-              // route them through the wholesale sign-in first.
               <Button asChild size="lg">
                 <Link href={hiddenPricing.signInHref}>
                   {tw("hiddenPrice.signInToOrder")}
@@ -202,7 +191,6 @@ export function ProductDetails({ product, basePath }: ProductDetailsProps) {
                   size="lg"
                 />
 
-                {/* Add to Cart Button */}
                 <Button
                   size="lg"
                   onClick={handleAddToCart}
@@ -226,13 +214,11 @@ export function ProductDetails({ product, basePath }: ProductDetailsProps) {
             )}
           </div>
 
-          {/* Description */}
           {product.description_html && (
             <div className="mt-10 border-t pt-8">
               <h2 className="text-lg font-medium text-gray-900 mb-4">
                 {t("description")}
               </h2>
-              {/* Description is admin-authored HTML from the Spree CMS backend (trusted source) */}
               <div
                 className="text-gray-600 prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{
@@ -242,10 +228,8 @@ export function ProductDetails({ product, basePath }: ProductDetailsProps) {
             </div>
           )}
 
-          {/* Custom Fields */}
           <ProductCustomFields customFields={product.custom_fields} />
 
-          {/* Product Details */}
           <div className="mt-8 border-t pt-8">
             <h2 className="text-lg font-medium text-gray-900 mb-4">
               {t("details")}

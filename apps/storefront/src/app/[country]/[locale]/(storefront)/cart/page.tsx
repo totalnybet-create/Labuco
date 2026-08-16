@@ -1,7 +1,7 @@
 "use client";
 
 import type { LineItem } from "@spree/sdk";
-import { ShoppingBag } from "lucide-react";
+import { Info, ShoppingBag } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -31,7 +31,6 @@ export default function CartPage() {
   const t = useTranslations("cart");
   const tc = useTranslations("common");
 
-  // Track view_cart when cart loads with items
   useEffect(() => {
     if (
       !loading &&
@@ -53,12 +52,12 @@ export default function CartPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8  py-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-32 mb-8"></div>
+          <div className="h-8 bg-gray-200 rounded w-32 mb-8" />
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+              <div key={i} className="h-24 bg-gray-200 rounded" />
             ))}
           </div>
         </div>
@@ -68,7 +67,7 @@ export default function CartPage() {
 
   if (!cart?.items || cart.items.length === 0) {
     return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8  py-16">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center">
           <ShoppingBag
             className="w-24 h-24 text-gray-300 mx-auto"
@@ -90,19 +89,19 @@ export default function CartPage() {
     );
   }
 
+  const isPreviewCart = cart.id === "catalog-preview-cart";
+
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8  py-8">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">
         {t("shoppingCart")}
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Cart Items */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl border border-gray-200 divide-y">
             {cart.items.map((item) => (
               <div key={item.id} className="p-6 flex gap-6">
-                {/* Image */}
                 <div className="relative w-24 h-24 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
                   <ProductImage
                     src={item.thumbnail_url}
@@ -113,7 +112,6 @@ export default function CartPage() {
                   />
                 </div>
 
-                {/* Details */}
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-medium text-gray-900 truncate">
                     {item.name}
@@ -128,7 +126,6 @@ export default function CartPage() {
                   </p>
                 </div>
 
-                {/* Quantity & Actions */}
                 <div className="flex flex-col items-end gap-2">
                   <QuantityPickerField
                     quantity={item.quantity}
@@ -152,7 +149,6 @@ export default function CartPage() {
           </div>
         </div>
 
-        {/* Order Summary */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-24">
             <h2 className="text-lg font-medium text-gray-900">
@@ -221,26 +217,51 @@ export default function CartPage() {
             </dl>
 
             <div className="mt-6 space-y-3">
-              {parseFloat(cart.total ?? "0") > 0 && (
-                <ExpressCheckoutButton
-                  cart={cart}
-                  basePath={basePath}
-                  onComplete={() => {}}
-                  onProcessingChange={setExpressProcessing}
-                />
-              )}
-              {!expressProcessing && (
+              {isPreviewCart ? (
                 <>
-                  <Button size="lg" asChild className="w-full">
-                    <Link href={`${basePath}/checkout/${cart.id}`}>
-                      {t("proceedToCheckout")}
-                    </Link>
-                  </Button>
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+                    <div className="flex gap-2">
+                      <Info
+                        className="mt-0.5 size-4 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <p>
+                        To bezpieczny koszyk podglądowy. Checkout i płatność
+                        zostaną aktywowane dopiero po podłączeniu docelowego
+                        backendu commerce.
+                      </p>
+                    </div>
+                  </div>
                   <Button variant="link" asChild className="w-full">
                     <Link href={`${basePath}/products`}>
                       {tc("continueShopping")}
                     </Link>
                   </Button>
+                </>
+              ) : (
+                <>
+                  {parseFloat(cart.total ?? "0") > 0 && (
+                    <ExpressCheckoutButton
+                      cart={cart}
+                      basePath={basePath}
+                      onComplete={() => {}}
+                      onProcessingChange={setExpressProcessing}
+                    />
+                  )}
+                  {!expressProcessing && (
+                    <>
+                      <Button size="lg" asChild className="w-full">
+                        <Link href={`${basePath}/checkout/${cart.id}`}>
+                          {t("proceedToCheckout")}
+                        </Link>
+                      </Button>
+                      <Button variant="link" asChild className="w-full">
+                        <Link href={`${basePath}/products`}>
+                          {tc("continueShopping")}
+                        </Link>
+                      </Button>
+                    </>
+                  )}
                 </>
               )}
             </div>

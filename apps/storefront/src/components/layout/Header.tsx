@@ -88,7 +88,7 @@ export async function Header({
             <span>Konto</span>
           </Link>
           <Link
-            href={`${basePath}/account`}
+            href={`${basePath}/ulubione`}
             className="labuco-header-action"
             aria-label="Ulubione"
           >

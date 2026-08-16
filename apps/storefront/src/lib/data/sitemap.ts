@@ -2,6 +2,12 @@
 
 import type { Category, Media, Product } from "@spree/sdk";
 import { cacheLife, cacheTag } from "next/cache";
+import {
+  getCatalogCategories,
+  getCatalogMarket,
+  listCatalogProducts,
+} from "@/lib/commerce/catalog-provider";
+import { isCatalogCommerce } from "@/lib/commerce/config";
 import { getClient } from "@/lib/spree";
 
 interface LocaleOptions {
@@ -24,6 +30,8 @@ export async function getSitemapMarkets(options: LocaleOptions) {
   "use cache: remote";
   cacheLife("hours");
   cacheTag("markets", "sitemap");
+
+  if (isCatalogCommerce()) return [getCatalogMarket()];
   return (await getClient().markets.list(options)).data;
 }
 
@@ -35,6 +43,13 @@ export async function getSitemapResourceCount(
   "use cache: remote";
   cacheLife("tenMinutes");
   cacheTag("sitemap", resource, `sitemap-market:${marketId}`);
+
+  if (isCatalogCommerce()) {
+    if (resource === "products") {
+      return (await listCatalogProducts({ page: 1, limit: 1 })).meta.count;
+    }
+    return (await getCatalogCategories()).data.length;
+  }
 
   const response =
     resource === "products"
@@ -55,6 +70,12 @@ export async function getSitemapProductPage(
   "use cache: remote";
   cacheLife("tenMinutes");
   cacheTag("sitemap", "products", `sitemap-market:${marketId}`);
+
+  if (isCatalogCommerce()) {
+    return (await listCatalogProducts({ page, limit }))
+      .data as SitemapProduct[];
+  }
+
   const response = await getClient().products.list(
     { page, limit, expand: ["media"] },
     options,
@@ -71,6 +92,13 @@ export async function getSitemapCategoryPage(
   "use cache: remote";
   cacheLife("tenMinutes");
   cacheTag("sitemap", "categories", `sitemap-market:${marketId}`);
+
+  if (isCatalogCommerce()) {
+    const categories = (await getCatalogCategories()).data;
+    const start = Math.max(0, page - 1) * limit;
+    return categories.slice(start, start + limit) as SitemapCategory[];
+  }
+
   const response = await getClient().categories.list(
     { page, limit, parent_id_not_null: true },
     options,

@@ -6,7 +6,6 @@ import {
   FlaskConical,
   Gauge,
   Lightbulb,
-  Mail,
   Package,
   Scissors,
   ShieldCheck,
@@ -14,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
+import { NewsletterForm } from "@/components/home/NewsletterForm";
 
 interface SectionProps {
   basePath: string;
@@ -34,21 +34,25 @@ const guides = [
   {
     kicker: "PODSTAWY",
     title: "Jak zacząć uprawę indoor?",
+    slug: "jak-zaczac-uprawe-indoor",
     icon: Sprout,
   },
   {
     kicker: "OŚWIETLENIE",
     title: "Jak dobrać oświetlenie do namiotu?",
+    slug: "jak-dobrac-oswietlenie-do-namiotu",
     icon: Lightbulb,
   },
   {
     kicker: "NAWOŻENIE",
     title: "Nawożenie roślin — poradnik",
+    slug: "nawozenie-roslin-poradnik",
     icon: FlaskConical,
   },
   {
     kicker: "PROBLEMY",
     title: "Najczęstsze problemy w uprawie",
+    slug: "najczestsze-problemy-w-uprawie",
     icon: BookOpen,
   },
 ] as const;
@@ -122,17 +126,25 @@ export function TrustStrip() {
 
 export function KnowledgeSection({ basePath }: SectionProps) {
   return (
-    <section className="labuco-section" aria-labelledby="knowledge-heading">
+    <section
+      id="poradniki"
+      className="labuco-section"
+      aria-labelledby="knowledge-heading"
+    >
       <div className="labuco-section-heading">
         <h2 id="knowledge-heading">Poradniki i wiedza</h2>
-        <Link href={`${basePath}/products`} className="labuco-view-all">
+        <Link href={`${basePath}/poradniki`} className="labuco-view-all">
           Zobacz wszystkie <span aria-hidden="true">→</span>
         </Link>
       </div>
 
       <div className="labuco-guide-grid">
-        {guides.map(({ kicker, title, icon: Icon }) => (
-          <article className="labuco-guide-card" key={title}>
+        {guides.map(({ kicker, title, slug, icon: Icon }) => (
+          <Link
+            href={`${basePath}/poradniki/${slug}`}
+            className="labuco-guide-card"
+            key={title}
+          >
             <div className="labuco-guide-art" aria-hidden="true">
               <Icon />
             </div>
@@ -140,7 +152,7 @@ export function KnowledgeSection({ basePath }: SectionProps) {
               <span>{kicker}</span>
               <h3>{title}</h3>
             </div>
-          </article>
+          </Link>
         ))}
       </div>
     </section>
@@ -159,23 +171,7 @@ export function NewsletterSection() {
           Zapisz się i otrzymuj informacje o promocjach, poradach oraz
           nowościach.
         </p>
-        <form className="labuco-newsletter-form" action="#">
-          <label className="sr-only" htmlFor="labuco-newsletter-email">
-            Twój e-mail
-          </label>
-          <Mail aria-hidden="true" />
-          <input
-            id="labuco-newsletter-email"
-            name="email"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            placeholder="Twój e-mail"
-          />
-          <button type="submit" aria-label="Zapisz się do newslettera">
-            →
-          </button>
-        </form>
+        <NewsletterForm />
       </div>
       <div className="labuco-newsletter-art" aria-hidden="true">
         <Sprout />
