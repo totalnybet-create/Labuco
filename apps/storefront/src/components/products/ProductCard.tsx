@@ -21,6 +21,7 @@ interface ProductCardProps {
   fetchPriority?: "high" | "low" | "auto";
   currency?: string;
   showQuickAdd?: boolean;
+  appearance?: "default" | "labuco";
 }
 
 interface QuickAddButtonProps {
@@ -43,12 +44,12 @@ function QuickAddButton({ product }: QuickAddButtonProps) {
   return (
     <button
       type="button"
-      className="labuco-card-cart relative z-10"
+      className="labuco-card-cart relative z-10 mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
       disabled={updating}
       onClick={handleQuickAdd}
       aria-label={`Dodaj ${product.name} do koszyka`}
     >
-      <ShoppingCart aria-hidden="true" />
+      <ShoppingCart className="size-4" aria-hidden="true" />
       <span>{updating ? "Dodaję…" : "Do koszyka"}</span>
     </button>
   );
@@ -64,10 +65,12 @@ export const ProductCard = memo(function ProductCard({
   fetchPriority,
   currency,
   showQuickAdd = false,
+  appearance = "default",
 }: ProductCardProps) {
   const t = useTranslations("products");
   const imageUrl = product.thumbnail_url || null;
   const displayPrice = product.price?.display_amount;
+  const isLabuco = appearance === "labuco";
 
   const currentAmountCents = product.price?.amount_in_cents;
   const originalAmountCents = product.original_price?.amount_in_cents;
@@ -94,8 +97,20 @@ export const ProductCard = memo(function ProductCard({
   };
 
   return (
-    <div className="group relative">
-      <div className="relative aspect-square bg-gray-100 rounded-md overflow-hidden">
+    <div
+      className={
+        isLabuco
+          ? "group relative h-full overflow-hidden rounded-xl border border-white/10 bg-[#0b2118] shadow-sm"
+          : "group relative"
+      }
+    >
+      <div
+        className={
+          isLabuco
+            ? "relative aspect-square overflow-hidden bg-[#eef2ec]"
+            : "relative aspect-square bg-gray-100 rounded-md overflow-hidden"
+        }
+      >
         <ProductImage
           src={imageUrl}
           alt={product.name}
@@ -116,8 +131,14 @@ export const ProductCard = memo(function ProductCard({
         )}
       </div>
 
-      <div className="p-4">
-        <h3 className="text-sm font-medium text-gray-900 group-hover:text-primary transition-colors line-clamp-2">
+      <div className={isLabuco ? "p-3 sm:p-4" : "p-4"}>
+        <h3
+          className={
+            isLabuco
+              ? "line-clamp-2 min-h-10 text-sm font-semibold leading-5 text-white transition-colors group-hover:text-[#c0dd62]"
+              : "text-sm font-medium text-gray-900 group-hover:text-primary transition-colors line-clamp-2"
+          }
+        >
           <Link
             href={`${basePath}/products/${product.slug}${categoryId ? `?category_id=${categoryId}` : ""}`}
             className="after:absolute after:inset-0"
@@ -129,21 +150,41 @@ export const ProductCard = memo(function ProductCard({
 
         <div className="mt-2 flex items-center gap-2">
           {displayPrice ? (
-            <span className="text-lg font-semibold text-gray-900">
+            <span
+              className={
+                isLabuco
+                  ? "text-base font-bold text-white sm:text-lg"
+                  : "text-lg font-semibold text-gray-900"
+              }
+            >
               {displayPrice}
             </span>
           ) : (
             <HiddenPricePrompt />
           )}
           {onSale && strikethroughPrice && (
-            <span className="text-sm text-gray-500 line-through">
+            <span
+              className={
+                isLabuco
+                  ? "text-xs text-white/55 line-through sm:text-sm"
+                  : "text-sm text-gray-500 line-through"
+              }
+            >
               {strikethroughPrice}
             </span>
           )}
         </div>
 
         {!product.purchasable && (
-          <span className="mt-2 text-sm text-gray-500">{t("outOfStock")}</span>
+          <span
+            className={
+              isLabuco
+                ? "mt-2 block text-xs text-white/55 sm:text-sm"
+                : "mt-2 text-sm text-gray-500"
+            }
+          >
+            {t("outOfStock")}
+          </span>
         )}
 
         {showQuickAdd && <QuickAddButton product={product} />}
