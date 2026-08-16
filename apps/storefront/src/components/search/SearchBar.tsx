@@ -160,10 +160,11 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
 
   return (
     <div className="relative">
-      <form onSubmit={handleSubmit}>
+      <form action={`${basePath}/products`} method="get" onSubmit={handleSubmit}>
         <InputGroup>
           <InputGroupInput
             ref={inputRef}
+            name="q"
             type="search"
             value={query}
             onChange={(event) => handleQueryChange(event.target.value)}
@@ -183,8 +184,7 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
           />
           <InputGroupAddon align="inline-end">
             <InputGroupButton
-              type="button"
-              onClick={() => navigateToResults(inputRef.current?.value)}
+              type="submit"
               size="icon-sm"
               variant="ghost"
               aria-label={t("search")}
