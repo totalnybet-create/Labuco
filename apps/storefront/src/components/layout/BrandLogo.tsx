@@ -5,54 +5,51 @@ interface BrandLogoProps {
   inverted?: boolean;
 }
 
-/** Labuco wordmark with an abstract sprout mark for storefront chrome. */
+/** pufpuf.shop wordmark with a lightweight botanical mark. */
 export function BrandLogo({
   name,
   className = "",
   compact = false,
   inverted = false,
 }: BrandLogoProps) {
+  const displayName =
+    !name || name.trim().toLowerCase() === "labuco" ? "pufpuf.shop" : name;
   const markSize = compact ? "size-8" : "size-9";
-  const wordmarkSize = compact ? "text-xl" : "text-2xl";
-  const markColor = inverted ? "text-emerald-400" : "text-emerald-700";
+  const wordmarkSize = compact ? "text-lg" : "text-xl";
+  const markColor = inverted ? "text-[#97c928]" : "text-[#6f9d14]";
   const wordmarkColor = inverted ? "text-white" : "text-slate-950";
 
   return (
     <span
-      className={`inline-flex items-center gap-2.5 whitespace-nowrap ${className}`}
+      className={`inline-flex items-center gap-2 whitespace-nowrap ${className}`}
     >
       <svg
-        viewBox="0 0 40 40"
+        viewBox="0 0 44 44"
         className={`${markSize} shrink-0 ${markColor}`}
         aria-hidden="true"
       >
-        <rect width="40" height="40" rx="12" fill="currentColor" />
         <path
-          d="M20 29V17.5"
+          d="M22 39V19M22 23c-7.2-.4-11.8-4.4-12.4-10.9 7.5-.1 12 3.7 12.4 10.9Zm0-5.8c.5-7.2 4.8-11.1 12.4-11.2-.3 6.8-4.8 10.9-12.4 11.2Z"
           fill="none"
-          stroke="white"
-          strokeWidth="2.4"
+          stroke="currentColor"
+          strokeWidth="2.1"
           strokeLinecap="round"
-        />
-        <path
-          d="M19.8 20.5c-5.6 0-9.2-3.3-9.2-8.4 5.7-.3 9.1 2.5 9.2 8.4Z"
-          fill="none"
-          stroke="white"
-          strokeWidth="2.4"
           strokeLinejoin="round"
         />
         <path
-          d="M20.2 17.7c.1-5.6 3.5-8.5 9.2-8.2 0 5.1-3.6 8.3-9.2 8.2Z"
+          d="M21.8 31.5c-5.8-.2-9.7-3-11.3-7.9 6.2-.9 10.2 1.8 11.3 7.9Zm.4-5.1c1.2-5.1 5-7.6 10.8-7.2-1.1 5.1-4.8 7.6-10.8 7.2Z"
           fill="none"
-          stroke="white"
-          strokeWidth="2.4"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
           strokeLinejoin="round"
+          opacity=".9"
         />
       </svg>
       <span
-        className={`${wordmarkSize} ${wordmarkColor} font-semibold leading-none tracking-[-0.055em]`}
+        className={`${wordmarkSize} ${wordmarkColor} font-semibold leading-none tracking-[-0.045em]`}
       >
-        {name}
+        {displayName}
       </span>
     </span>
   );
