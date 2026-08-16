@@ -129,7 +129,9 @@ export default function CartPage() {
                 <div className="flex flex-col items-end gap-2">
                   <QuantityPickerField
                     quantity={item.quantity}
-                    onQuantityChange={(quantity) => updateItem(item.id, quantity)}
+                    onQuantityChange={(quantity) =>
+                      updateItem(item.id, quantity)
+                    }
                     disabled={updating}
                   />
                   <Button
@@ -219,7 +221,10 @@ export default function CartPage() {
                 <>
                   <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
                     <div className="flex gap-2">
-                      <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                      <Info
+                        className="mt-0.5 size-4 shrink-0"
+                        aria-hidden="true"
+                      />
                       <p>
                         To bezpieczny koszyk podglądowy. Checkout i płatność
                         zostaną aktywowane dopiero po podłączeniu docelowego
