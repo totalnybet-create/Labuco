@@ -2,8 +2,6 @@ import { mkdir } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
 
 const HERBGARDEN = "Herbgarden 120 - namiot do uprawy 120x120x200cm";
-const HERBGARDEN_SLUG =
-  "herbgarden-120-namiot-do-uprawy-120x120x200cm-71";
 const BUBBLE_BAGS = "Bubble bags | Torby ekstrakcyjne 4x 20L";
 
 async function captureHome(
@@ -15,9 +13,12 @@ async function captureHome(
   await page.setViewportSize(viewport);
   await page.goto("/pl/pl", { waitUntil: "load" });
   await expect(
-    page.getByRole("heading", { level: 1, name: "Labuco" }),
+    page.getByRole("heading", {
+      level: 1,
+      name: /Wszystko, czego potrzebujesz/i,
+    }),
   ).toBeVisible();
-  await expect(page.locator('[data-visual-baseline="clean"]')).toBeVisible();
+  await expect(page.locator('[data-visual-baseline="designed"]')).toBeVisible();
 
   const screenshot = await page.screenshot({
     path: `artifacts/catalog-preview/${filename}`,
@@ -35,9 +36,12 @@ test("catalog mode works without Spree and stays non-transactional", async ({
 
   await page.goto("/pl/pl");
   await expect(
-    page.getByRole("heading", { level: 1, name: "Labuco" }),
+    page.getByRole("heading", {
+      level: 1,
+      name: /Wszystko, czego potrzebujesz/i,
+    }),
   ).toBeVisible();
-  await expect(page.locator('[data-visual-baseline="clean"]')).toBeVisible();
+  await expect(page.locator('[data-visual-baseline="designed"]')).toBeVisible();
 
   await page.goto("/pl/pl/products");
   await expect(
@@ -56,10 +60,14 @@ test("catalog mode works without Spree and stays non-transactional", async ({
     .getAttribute("src");
   expect(bubbleImageSrc).toContain("growtent.pl");
 
-  const herbgardenCard = page
-    .getByRole("link", { name: HERBGARDEN })
-    .first()
-    .locator("xpath=ancestor::div[contains(@class, 'group')][1]");
+  const herbgardenLink = page.getByRole("link", { name: HERBGARDEN }).first();
+  const herbgardenHref = await herbgardenLink.getAttribute("href");
+  if (!herbgardenHref) {
+    throw new Error("Herbgarden product link is missing its href");
+  }
+  const herbgardenCard = herbgardenLink.locator(
+    "xpath=ancestor::div[contains(@class, 'group')][1]",
+  );
   await expect(herbgardenCard).toContainText(/549[,.]00/);
   await expect(herbgardenCard).not.toContainText(/54[\s .]?900/);
 
@@ -92,7 +100,7 @@ test("catalog mode works without Spree and stays non-transactional", async ({
   await page.goto("/pl/pl/account/orders");
   await expect(page).toHaveURL(/\/pl\/pl\/account$/);
 
-  await page.goto(`/pl/pl/products/${HERBGARDEN_SLUG}`);
+  await page.goto(herbgardenHref);
   await expect(
     page.getByRole("heading", { level: 1, name: HERBGARDEN }),
   ).toBeVisible();
