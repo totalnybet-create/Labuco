@@ -3,7 +3,7 @@
 import type { Product } from "@spree/sdk";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 import { useCallback, useRef, useState } from "react";
 import type Swiper from "swiper";
 import { Navigation, Pagination } from "swiper/modules";
@@ -21,8 +21,21 @@ interface ProductCarouselProps {
   showQuickAdd?: boolean;
 }
 
+type SwiperCssProperties = CSSProperties & Record<`--${string}`, string | number>;
+
 const NAV_BUTTON_BASE =
-  "absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center cursor-pointer rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors";
+  "absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 hidden md:flex items-center justify-center cursor-pointer rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors";
+
+const PAGINATION_STYLE: SwiperCssProperties = {
+  "--swiper-pagination-color": "#98cf1e",
+  "--swiper-pagination-bullet-inactive-color": "#244233",
+  "--swiper-pagination-bullet-inactive-opacity": 0.8,
+  "--swiper-pagination-bullet-width": "12px",
+  "--swiper-pagination-bullet-height": "3px",
+  "--swiper-pagination-bullet-border-radius": "999px",
+  "--swiper-pagination-bullet-horizontal-gap": "2px",
+  "--swiper-pagination-bottom": "0px",
+};
 
 export function ProductCarousel({
   products,
@@ -96,7 +109,8 @@ export function ProductCarousel({
           768: { slidesPerView: 3, spaceBetween: 24 },
           1024: { slidesPerView: 4, spaceBetween: 24 },
         }}
-        className="product-carousel"
+        style={PAGINATION_STYLE}
+        className="product-carousel pb-2.5 md:pb-0 md:[&_.swiper-pagination]:hidden"
       >
         {products.map((product, index) => (
           <SwiperSlide key={product.id} className="p-0.5 sm:p-1">
