@@ -48,7 +48,10 @@ describe("catalog commerce contract", () => {
   });
 
   it("matches Polish catalog text when the query omits diacritics", async () => {
-    const result = await listCatalogProducts({ search: "oswietlenie", limit: 10 });
+    const result = await listCatalogProducts({
+      search: "oswietlenie",
+      limit: 10,
+    });
     expect(result.data.length).toBeGreaterThan(0);
   });
 });
