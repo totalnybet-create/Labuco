@@ -108,6 +108,7 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
     router.push(`${basePath}/products/${product.slug}`);
     setIsOpen(false);
     setQuery("");
+    if (inputRef.current) inputRef.current.value = "";
     onNavigate?.();
   };
 
@@ -164,7 +165,6 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
             ref={inputRef}
             name="q"
             type="search"
-            value={query}
             onChange={(event) => handleQueryChange(event.target.value)}
             onFocus={() => setIsOpen(true)}
             onBlur={handleBlur}
