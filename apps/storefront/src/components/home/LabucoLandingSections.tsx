@@ -110,13 +110,16 @@ export function TrustStrip() {
   ] as const;
 
   return (
-    <section className="labuco-trust-strip" aria-label="Dlaczego LaBuco">
+    <section
+      className="labuco-trust-strip max-md:[&_.labuco-trust-title]:text-[10.5px] max-md:[&_.labuco-trust-title]:leading-[1.2] max-md:[&_.labuco-trust-copy]:text-[8.5px] max-md:[&_.labuco-trust-copy]:leading-[1.35]"
+      aria-label="Dlaczego LaBuco"
+    >
       {items.map(({ title, copy, icon: Icon }) => (
         <div className="labuco-trust-item" key={title}>
           <Icon aria-hidden="true" />
           <div>
-            <strong>{title}</strong>
-            <p>{copy}</p>
+            <strong className="labuco-trust-title">{title}</strong>
+            <p className="labuco-trust-copy">{copy}</p>
           </div>
         </div>
       ))}
