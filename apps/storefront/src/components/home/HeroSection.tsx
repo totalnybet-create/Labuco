@@ -1,10 +1,4 @@
-import {
-  ArrowRight,
-  LockKeyhole,
-  ShieldCheck,
-  Sprout,
-  Truck,
-} from "lucide-react";
+import { ArrowRight, LockKeyhole, ShieldCheck, Truck } from "lucide-react";
 import Link from "next/link";
 
 interface HeroSectionProps {
@@ -12,11 +6,21 @@ interface HeroSectionProps {
   locale: string;
 }
 
+const HERO_IMAGE =
+  "https://www.growtent.pl/hpeciai/fd674b7b5a8ddbde31a2f4169983bdf3/pol_pl_Zestaw-growbox-Secret-Jardin-80x80x180cm-LED-LUMATEK-ATS-200W-PRO-548_2.webp";
+
 export async function HeroSection({ basePath }: HeroSectionProps) {
   return (
     <section className="labuco-hero">
+      <div
+        className="labuco-hero-media"
+        style={{ backgroundImage: `url("${HERO_IMAGE}")` }}
+        aria-hidden="true"
+      />
+      <div className="labuco-hero-vignette" aria-hidden="true" />
+
       <div className="labuco-hero-copy">
-        <p className="labuco-eyebrow">LABUCO · INDOOR GROW</p>
+        <p className="labuco-eyebrow">PUFPUF.SHOP · INDOOR GROW</p>
         <h1>
           Wszystko, czego potrzebujesz
           <span> do udanej uprawy.</span>
@@ -57,33 +61,6 @@ export async function HeroSection({ basePath }: HeroSectionProps) {
             Poradniki uprawy <ArrowRight aria-hidden="true" />
           </Link>
         </div>
-      </div>
-
-      <div className="labuco-hero-art" aria-hidden="true">
-        <div className="labuco-grow-tent">
-          <div className="labuco-led-bars">
-            <i />
-            <i />
-            <i />
-            <i />
-            <i />
-          </div>
-          <div className="labuco-plant plant-one">
-            <Sprout />
-          </div>
-          <div className="labuco-plant plant-two">
-            <Sprout />
-          </div>
-          <div className="labuco-plant plant-three">
-            <Sprout />
-          </div>
-          <div className="labuco-fan">
-            <span />
-            <span />
-            <span />
-          </div>
-        </div>
-        <div className="labuco-hero-vignette" />
       </div>
     </section>
   );
