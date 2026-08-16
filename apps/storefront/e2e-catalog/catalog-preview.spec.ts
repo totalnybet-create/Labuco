@@ -22,7 +22,10 @@ test("catalog mode works without Spree and stays non-transactional", async ({
     .first();
   await expect(bubbleCard).toContainText(/149[,.]00/);
   await expect(bubbleCard).not.toContainText(/14[\s .]?900/);
-  const bubbleImageSrc = await bubbleCard.locator("img").first().getAttribute("src");
+  const bubbleImageSrc = await bubbleCard
+    .locator("img")
+    .first()
+    .getAttribute("src");
   expect(bubbleImageSrc).toContain("growtent.pl");
 
   const herbgardenCard = page
@@ -45,7 +48,10 @@ test("catalog mode works without Spree and stays non-transactional", async ({
   await expect(
     page.getByRole("heading", { level: 1, name: "Poradniki i wiedza" }),
   ).toBeVisible();
-  await page.getByRole("link", { name: /Jak zacząć uprawę indoor/i }).first().click();
+  await page
+    .getByRole("link", { name: /Jak zacząć uprawę indoor/i })
+    .first()
+    .click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Jak zacząć uprawę indoor?" }),
   ).toBeVisible();
@@ -72,7 +78,9 @@ test("catalog mode works without Spree and stays non-transactional", async ({
   await search.fill("oswietlenie");
   await search.press("Enter");
   await expect(page).toHaveURL(/\/products\?q=oswietlenie/);
-  await expect(page.locator('main h3 a[href*="/products/"]').first()).toBeVisible();
+  await expect(
+    page.locator('main h3 a[href*="/products/"]').first(),
+  ).toBeVisible();
 
   await page.goto("/pl/pl");
   await page.setViewportSize({ width: 1440, height: 1000 });
