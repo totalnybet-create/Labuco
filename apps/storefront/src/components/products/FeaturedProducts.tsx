@@ -25,6 +25,8 @@ interface FeaturedProductsProps {
   locale: string;
   country: string;
   currency?: string;
+  compact?: boolean;
+  appearance?: "default" | "labuco";
 }
 
 export async function FeaturedProducts({
@@ -32,6 +34,8 @@ export async function FeaturedProducts({
   locale,
   country,
   currency,
+  compact = false,
+  appearance = "default",
 }: FeaturedProductsProps) {
   const userToken = await getAccessToken();
   const productsResponse = await cachedListProducts(
@@ -47,6 +51,8 @@ export async function FeaturedProducts({
       basePath={basePath}
       currency={currency}
       showQuickAdd
+      compact={compact}
+      appearance={appearance}
     />
   );
 }
