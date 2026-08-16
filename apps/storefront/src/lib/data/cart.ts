@@ -3,6 +3,15 @@
 import type { Cart, CreateCartParams } from "@spree/sdk";
 import { updateTag } from "next/cache";
 import {
+  addCatalogCartItem,
+  clearCatalogCart,
+  getCatalogCart,
+  getOrCreateCatalogCart,
+  removeCatalogCartItem,
+  updateCatalogCartItem,
+} from "@/lib/commerce/catalog-cart";
+import { isCatalogCommerce } from "@/lib/commerce/config";
+import {
   cacheTagSuffix,
   clearCartCookies,
   DEFAULT_SURFACE,
@@ -19,43 +28,34 @@ import {
 } from "@/lib/spree";
 import { actionResult } from "./utils";
 
-/** Cache tag for a surface's cart, so DTC and wholesale carts invalidate independently. */
 function cartTag(surface: Surface): string {
   return `cart${cacheTagSuffix(surface)}`;
 }
 
-/**
- * Whether a cart belongs to the given surface's sales channel. Cross-surface
- * isolation guard: a cart carries the channel it was created on (`channel_id`),
- * and each surface only shows its own channel's cart. Prevents a cart-id cookie
- * that was poisoned with another surface's cart (see getCart) from resurrecting
- * that cart via the intentionally cross-channel `carts.get` endpoint.
- *
- * Returns true when the cart's channel is unknown (null) or matches — i.e. only
- * a *confirmed* mismatch rejects, so this never hides a legitimate cart.
- */
+function usesCatalogCart(surface: Surface): boolean {
+  return surface === "dtc" && isCatalogCommerce();
+}
+
 async function cartBelongsToSurface(
   cart: Cart,
   surface: Surface,
 ): Promise<boolean> {
-  if (!cart.channel_id) return true; // channel unknown — can't reject
+  if (!cart.channel_id) return true;
 
   try {
     const channel = await getClientForSurface(surface).channel.get();
     return channel.id === cart.channel_id;
   } catch {
-    // Channel lookup failed (transient) — don't reject on an unknown.
     return true;
   }
 }
 
-/**
- * Get the current cart for a surface. Returns null if no cart exists.
- */
 export async function getCart(
   explicitCartId?: string,
   surface: Surface = DEFAULT_SURFACE,
 ): Promise<Cart | null> {
+  if (usesCatalogCart(surface)) return getCatalogCart();
+
   const spreeToken = await getCartToken(surface);
   const token = await getAccessToken();
   const cartId = explicitCartId ?? (await getCartId(surface));
@@ -65,9 +65,6 @@ export async function getCart(
 
   try {
     if (cartId) {
-      // Guard the cookie-derived cart against cross-surface poisoning. Skipped
-      // for an explicit cartId (the shared checkout resolves surface itself and
-      // legitimately reads a cart by id across channels).
       if (!explicitCartId && (await isPoisonedDtcCartId(cartId, surface))) {
         await dropSurfaceCartCookies(surface);
         return null;
@@ -83,9 +80,6 @@ export async function getCart(
       return cart;
     }
 
-    // Authenticated user without stored cart ID — find their most recent cart.
-    // carts.list is channel-scoped on the backend, so this only returns carts
-    // for the surface's channel; still verify before adopting into the cookie.
     if (token) {
       const response = await client.carts.list({ token });
       if (response.data.length > 0) {
@@ -98,9 +92,6 @@ export async function getCart(
 
     return null;
   } catch {
-    // Cart not found (e.g., order was completed) — clear stale cookies.
-    // Wrapped in try/catch because clearCartCookies sets cookies, which
-    // is not allowed in Server Components (only in Server Actions).
     if (!explicitCartId) {
       await dropSurfaceCartCookies(surface);
     }
@@ -108,24 +99,20 @@ export async function getCart(
   }
 }
 
-/** Best-effort cookie clear (cookies aren't writable during a Server Component render). */
 async function dropSurfaceCartCookies(surface: Surface): Promise<void> {
   try {
     await clearCartCookies(surface);
   } catch {
-    // Ignore — cookie clearing is best-effort
+    // Cookie clearing is best-effort during Server Component renders.
   }
 }
 
-/**
- * Get existing cart or create a new one on a surface. Wholesale carts are
- * created through the wholesale client so the order attributes to the wholesale
- * channel and inherits its no-guest-checkout rule.
- */
 export async function getOrCreateCart(
   params?: CreateCartParams,
   surface: Surface = DEFAULT_SURFACE,
 ): Promise<Cart> {
+  if (usesCatalogCart(surface)) return getOrCreateCatalogCart();
+
   const existing = await getCart(undefined, surface);
   if (existing) return existing;
 
@@ -146,6 +133,11 @@ export async function getOrCreateCart(
 
 export async function clearCart(surface: Surface = DEFAULT_SURFACE) {
   return actionResult(async () => {
+    if (usesCatalogCart(surface)) {
+      await clearCatalogCart();
+      return {};
+    }
+
     await clearCartCookies(surface);
     updateTag(cartTag(surface));
     return {};
@@ -158,6 +150,10 @@ export async function addToCart(
   surface: Surface = DEFAULT_SURFACE,
 ) {
   return actionResult(async () => {
+    if (usesCatalogCart(surface)) {
+      return { cart: await addCatalogCartItem(variantId, quantity) };
+    }
+
     const cart = await getOrCreateCart(undefined, surface);
     const spreeToken = await getCartToken(surface);
     const token = await getAccessToken();
@@ -179,6 +175,10 @@ export async function updateCartItem(
   surface: Surface = DEFAULT_SURFACE,
 ) {
   return actionResult(async () => {
+    if (usesCatalogCart(surface)) {
+      return { cart: await updateCatalogCartItem(lineItemId, quantity) };
+    }
+
     const options = await getCartOptions(surface);
     const cartId = await requireCartId(surface);
 
@@ -199,6 +199,10 @@ export async function removeCartItem(
   surface: Surface = DEFAULT_SURFACE,
 ) {
   return actionResult(async () => {
+    if (usesCatalogCart(surface)) {
+      return { cart: await removeCatalogCartItem(lineItemId) };
+    }
+
     const options = await getCartOptions(surface);
     const cartId = await requireCartId(surface);
 
@@ -217,6 +221,8 @@ export async function associateCartWithUser(
   surface: Surface = DEFAULT_SURFACE,
 ) {
   return actionResult(async () => {
+    if (usesCatalogCart(surface)) return {};
+
     const spreeToken = await getCartToken(surface);
     const token = await getAccessToken();
     const cartId = await getCartId(surface);
@@ -229,7 +235,6 @@ export async function associateCartWithUser(
       });
       updateTag(cartTag(surface));
     } catch {
-      // Cart might already belong to another user — clear it
       await clearCartCookies(surface);
       updateTag(cartTag(surface));
     }
