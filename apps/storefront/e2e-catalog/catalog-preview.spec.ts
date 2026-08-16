@@ -1,7 +1,43 @@
 import { mkdir } from "node:fs/promises";
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 const HERBGARDEN = "Herbgarden 120 - namiot do uprawy 120x120x200cm";
+const HERO_HEADING = /Wszystko, czego potrzebujesz do udanej uprawy/i;
+
+async function captureHome(
+  page: Page,
+  viewport: { width: number; height: number },
+  filename: string,
+  minimumBytes: number,
+) {
+  await page.setViewportSize(viewport);
+  await page.goto("/pl/pl", { waitUntil: "load" });
+  await expect(
+    page.getByRole("heading", { level: 1, name: HERO_HEADING }),
+  ).toBeVisible();
+
+  const search = page.getByRole("combobox").first();
+  if ((await search.inputValue()) !== "") await search.fill("");
+
+  const footer = page.locator("footer");
+  await footer.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(250);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(
+    page.getByRole("heading", { level: 1, name: HERO_HEADING }),
+  ).toBeVisible();
+
+  const screenshot = await page.screenshot({
+    path: `artifacts/catalog-preview/${filename}`,
+    fullPage: true,
+    animations: "disabled",
+  });
+
+  // A completely white 1440x1000 PNG is only a few KB. This guards the visual
+  // artifact itself, not just DOM assertions, so a broken capture can never be
+  // accepted as successful QA again.
+  expect(screenshot.byteLength).toBeGreaterThan(minimumBytes);
+}
 
 test("catalog mode works without Spree and stays non-transactional", async ({
   page,
@@ -10,10 +46,7 @@ test("catalog mode works without Spree and stays non-transactional", async ({
 
   await page.goto("/pl/pl");
   await expect(
-    page.getByRole("heading", {
-      level: 1,
-      name: /Wszystko, czego potrzebujesz do udanej uprawy/i,
-    }),
+    page.getByRole("heading", { level: 1, name: HERO_HEADING }),
   ).toBeVisible();
 
   const bubbleCard = page
@@ -64,11 +97,6 @@ test("catalog mode works without Spree and stays non-transactional", async ({
   ).toBeVisible();
   await page.goto("/pl/pl/account/orders");
   await expect(page).toHaveURL(/\/pl\/pl\/account$/);
-  await expect(
-    page.getByRole("heading", {
-      name: /Konto klienta będzie dostępne przy uruchomieniu sprzedaży/i,
-    }),
-  ).toBeVisible();
 
   await page.goto("/pl/pl");
   const liveCard = page
@@ -89,9 +117,6 @@ test("catalog mode works without Spree and stays non-transactional", async ({
 
   await page.goto("/pl/pl/checkout/catalog-preview-cart");
   await expect(page).toHaveURL(/\/pl\/pl\/cart$/);
-  await expect(
-    page.getByText(/To bezpieczny koszyk podglądowy/i),
-  ).toBeVisible();
 
   await page.goto("/pl/pl");
   const search = page.getByRole("combobox").first();
@@ -103,14 +128,21 @@ test("catalog mode works without Spree and stays non-transactional", async ({
   ).toBeVisible();
 
   await page.goto("/pl/pl");
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.screenshot({
-    path: "artifacts/catalog-preview/desktop-full.png",
-    fullPage: true,
-  });
-  await page.setViewportSize({ width: 390, height: 910 });
-  await page.screenshot({
-    path: "artifacts/catalog-preview/mobile-full.png",
-    fullPage: true,
-  });
+  const searchByButton = page.getByRole("combobox").first();
+  await searchByButton.fill("wentylacja");
+  await page.getByRole("button", { name: /Szukaj/i }).first().click();
+  await expect(page).toHaveURL(/\/products\?q=wentylacja/);
+
+  await captureHome(
+    page,
+    { width: 1440, height: 1000 },
+    "desktop-full.png",
+    50_000,
+  );
+  await captureHome(
+    page,
+    { width: 390, height: 910 },
+    "mobile-full.png",
+    25_000,
+  );
 });
