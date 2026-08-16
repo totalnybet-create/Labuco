@@ -1,0 +1,125 @@
+name: LABUCO Spree Price Diagnostic
+
+on:
+  push:
+    branches:
+      - redesign/labuco-visual-reset-20260816
+    paths:
+      - '.github/workflows/labuco-spree-price-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  trace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout proven LABUCO backend
+        uses: actions/checkout@v4
+        with:
+          ref: ed09bb524f09eb7cd86c772f5792718e4f265947
+          path: proven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build backend
+        run: docker build -f proven/backend/Dockerfile -t labuco-price-diag proven
+      - name: Start backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          createdb -h 127.0.0.1 -U postgres spree_price_diag || true
+          mkdir -p /tmp/labuco-price-diag
+          SECRET_KEY_BASE="$(openssl rand -hex 64)"
+          cat >/tmp/labuco-price-diag/docker-compose.yml <<EOF
+          services:
+            web:
+              image: labuco-price-diag
+              network_mode: host
+              environment:
+                DATABASE_URL: postgres://postgres@127.0.0.1:5432/spree_price_diag
+                SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+                RAILS_ENV: production
+                RAILS_LOG_TO_STDOUT: "true"
+                RAILS_SERVE_STATIC_FILES: "true"
+          EOF
+          docker compose -f /tmp/labuco-price-diag/docker-compose.yml up -d
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:3000/up >/dev/null; then exit 0; fi
+            sleep 4
+          done
+          docker compose -f /tmp/labuco-price-diag/docker-compose.yml logs web
+          exit 1
+      - name: Seed Polish market and create secret API key
+        id: keys
+        working-directory: /tmp/labuco-price-diag
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes @spree/cli@2.4.4 seed
+          docker compose -f docker-compose.yml exec -T web ./bin/rails runner '
+            store = Spree::Store.default
+            poland = Spree::Country.find_by!(iso: "PL")
+            store.update!(name: "Labuco", default_country: poland, default_currency: "PLN", supported_currencies: ["PLN"], default_locale: "pl", supported_locales: ["pl"])
+            market = store.markets.find_by(default: true) || store.markets.first
+            store.markets.where.not(id: market.id).update_all(default: false)
+            market.update!(name: "Polska", currency: "PLN", default_locale: "pl", supported_locales: ["pl"], default: true)
+            market.countries = [poland]
+          '
+          secret_out=$(npx --yes @spree/cli@2.4.4 api-key create --name LabucoPriceDiag --type secret --scopes write_products)
+          secret=$(printf '%s\n' "$secret_out" | grep -oE 'sk_[A-Za-z0-9_-]+' | head -n1)
+          test -n "$secret"
+          echo "::add-mask::$secret"
+          echo "secret=$secret" >> "$GITHUB_OUTPUT"
+      - name: Show source values and import four products
+        env:
+          SPREE_API_URL: http://127.0.0.1:3000
+          SPREE_API_KEY: ${{ steps.keys.outputs.secret }}
+          LABUCO_ALLOW_PRODUCTION_IMPORT: YES
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          data=json.load(open('data/labuco_catalog.json',encoding='utf-8'))
+          products=data.get('products',data) if isinstance(data,dict) else data
+          for i,p in enumerate(products[:4],1):
+              print('SOURCE',i,'title=',p.get('title'),'sku=',p.get('labuco_sku'),'labuco_price_pln=',p.get('labuco_price_pln'),'wholesale_cost_pln=',p.get('wholesale_cost_pln'))
+          PY
+          python tools/labuco_spree_import.py data/labuco_catalog.json --commit --activate --include-class-c --limit 4 --report /tmp/labuco-price-diag/import.json
+      - name: Inspect Spree price storage directly
+        working-directory: /tmp/labuco-price-diag
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose -f docker-compose.yml exec -T web ./bin/rails runner '
+            puts "PRICE_COLUMNS=" + Spree::Price.columns.map { |c| [c.name,c.type,c.sql_type] }.inspect
+            Spree::Price.order(:id).limit(12).each do |price|
+              attrs = {id: price.id, variant_id: price.variant_id, currency: price.currency, amount: price.amount}
+              attrs[:amount_in_cents] = price.amount_in_cents if price.respond_to?(:amount_in_cents)
+              attrs[:display_amount] = price.display_amount.to_s if price.respond_to?(:display_amount)
+              puts "DB_PRICE=" + attrs.inspect
+            end
+            Spree::Variant.order(:id).limit(12).each do |variant|
+              puts "VARIANT=" + {id: variant.id, sku: variant.sku, price: (variant.price rescue nil), display_price: (variant.display_price.to_s rescue nil)}.inspect
+            end
+          '
+      - name: Show importer report
+        run: cat /tmp/labuco-price-diag/import.json
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose -f /tmp/labuco-price-diag/docker-compose.yml logs web || true
