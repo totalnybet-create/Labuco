@@ -1,0 +1,27 @@
+name: LABUCO Redesign Preview Trigger
+
+on:
+  push:
+    branches:
+      - redesign/labuco-visual-reset-20260816
+    paths:
+      - '.github/workflows/labuco-redesign-preview-trigger.yml'
+      - 'apps/storefront/**'
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: labuco-redesign-preview-trigger
+  cancel-in-progress: true
+
+jobs:
+  dispatch-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch existing storefront preview on this branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run labuco-storefront-preview.yml --ref "${GITHUB_REF_NAME}"
