@@ -72,7 +72,8 @@ export async function getSitemapProductPage(
   cacheTag("sitemap", "products", `sitemap-market:${marketId}`);
 
   if (isCatalogCommerce()) {
-    return (await listCatalogProducts({ page, limit })).data as SitemapProduct[];
+    return (await listCatalogProducts({ page, limit }))
+      .data as SitemapProduct[];
   }
 
   const response = await getClient().products.list(
