@@ -139,7 +139,7 @@ export default async function StorefrontLayout({
           locale={locale}
         />
       </Suspense>
-      <main className="flex-1 labuco-storefront-main">{children}</main>
+      <main className="min-w-0 flex-1">{children}</main>
       <Footer
         basePath={basePath}
         locale={locale as Locale}
