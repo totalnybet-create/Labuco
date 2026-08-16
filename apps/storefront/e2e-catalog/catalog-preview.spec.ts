@@ -56,6 +56,20 @@ test("catalog mode works without Spree and stays non-transactional", async ({
     page.getByRole("heading", { level: 1, name: "Jak zacząć uprawę indoor?" }),
   ).toBeVisible();
 
+  await page.goto("/pl/pl/account");
+  await expect(
+    page.getByRole("heading", {
+      name: /Konto klienta będzie dostępne przy uruchomieniu sprzedaży/i,
+    }),
+  ).toBeVisible();
+  await page.goto("/pl/pl/account/orders");
+  await expect(page).toHaveURL(/\/pl\/pl\/account$/);
+  await expect(
+    page.getByRole("heading", {
+      name: /Konto klienta będzie dostępne przy uruchomieniu sprzedaży/i,
+    }),
+  ).toBeVisible();
+
   await page.goto("/pl/pl");
   const liveCard = page
     .locator(".product-carousel .swiper-slide")
@@ -72,6 +86,12 @@ test("catalog mode works without Spree and stays non-transactional", async ({
   await expect(
     page.getByRole("link", { name: /Przejdź do kasy|Checkout/i }),
   ).toHaveCount(0);
+
+  await page.goto("/pl/pl/checkout/catalog-preview-cart");
+  await expect(page).toHaveURL(/\/pl\/pl\/cart$/);
+  await expect(
+    page.getByText(/To bezpieczny koszyk podglądowy/i),
+  ).toBeVisible();
 
   await page.goto("/pl/pl");
   const search = page.getByRole("combobox").first();
