@@ -1,0 +1,1096 @@
+:root {
+  --labuco-ink: #04110d;
+  --labuco-ink-2: #071b14;
+  --labuco-ink-3: #0d271d;
+  --labuco-line: rgba(179, 211, 106, 0.18);
+  --labuco-green: #a4c928;
+  --labuco-green-strong: #83ad12;
+  --labuco-green-soft: #c0dd62;
+  --labuco-text: #f7f8f4;
+  --labuco-muted: #adb8b1;
+}
+
+.labuco-storefront-main {
+  min-width: 0;
+}
+
+.labuco-site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  color: var(--labuco-text);
+  background: rgba(3, 15, 11, 0.97);
+  border-bottom: 1px solid var(--labuco-line);
+  backdrop-filter: blur(16px);
+}
+
+.labuco-service-bar {
+  min-height: 34px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 24px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: #dce4de;
+  font-size: 12px;
+}
+
+.labuco-service-bar span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.labuco-service-bar svg {
+  width: 16px;
+  height: 16px;
+  color: var(--labuco-green);
+}
+
+.labuco-header-main {
+  max-width: 1180px;
+  margin: 0 auto;
+  min-height: 72px;
+  padding: 12px 24px;
+  display: grid;
+  grid-template-columns: auto minmax(320px, 1fr) auto;
+  align-items: center;
+  gap: 28px;
+}
+
+.labuco-header-left {
+  display: none;
+}
+
+.labuco-header-center {
+  min-width: 176px;
+}
+
+.labuco-logo-link {
+  display: inline-flex;
+  text-decoration: none;
+}
+
+.labuco-header-search {
+  min-width: 0;
+}
+
+.labuco-search-skeleton,
+.labuco-header-search [data-slot="input-group"] {
+  height: 46px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  overflow: hidden;
+}
+
+.labuco-header-search [data-slot="input-group-control"] {
+  color: #fff;
+  padding-left: 16px;
+}
+
+.labuco-header-search [data-slot="input-group-control"]::placeholder {
+  color: #98a49d;
+}
+
+.labuco-header-search [data-slot="input-group-addon"] {
+  height: 100%;
+  min-width: 52px;
+  padding: 0;
+  margin: 0;
+  color: #081108;
+  background: linear-gradient(135deg, var(--labuco-green), var(--labuco-green-strong));
+}
+
+.labuco-header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+}
+
+.labuco-region-control {
+  color: #d7dfda;
+}
+
+.labuco-header-action,
+.labuco-cart-action {
+  min-width: 52px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: #f7f8f4;
+  font-size: 11px;
+  line-height: 1.1;
+  text-decoration: none;
+}
+
+.labuco-header-action svg,
+.labuco-cart-action svg {
+  width: 22px;
+  height: 22px;
+}
+
+.labuco-header-action:hover,
+.labuco-cart-action:hover {
+  color: var(--labuco-green-soft);
+}
+
+.labuco-desktop-nav {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: #020a08;
+}
+
+.labuco-desktop-nav-inner {
+  max-width: 1180px;
+  min-height: 46px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.labuco-desktop-nav a {
+  color: #e8ece9;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.labuco-desktop-nav a:hover {
+  color: var(--labuco-green-soft);
+}
+
+.labuco-nav-categories,
+.labuco-nav-deals {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 8px;
+}
+
+.labuco-nav-categories {
+  margin-right: 4px;
+  color: #071108;
+  background: linear-gradient(135deg, var(--labuco-green), var(--labuco-green-strong));
+}
+
+.labuco-desktop-nav .labuco-nav-categories:hover {
+  color: #071108;
+  filter: brightness(1.05);
+}
+
+.labuco-nav-deals {
+  margin-left: auto;
+  border: 1px solid rgba(164, 201, 40, 0.65);
+  color: var(--labuco-green-soft);
+}
+
+.labuco-nav-categories svg,
+.labuco-nav-deals svg {
+  width: 16px;
+  height: 16px;
+}
+
+.labuco-home {
+  --primary: oklch(0.68 0.17 125);
+  --primary-foreground: oklch(0.16 0.02 130);
+  color: var(--labuco-text);
+  background:
+    radial-gradient(circle at 18% 18%, rgba(55, 112, 70, 0.15), transparent 30%),
+    linear-gradient(180deg, #03100c 0%, #061b14 46%, #04110d 100%);
+}
+
+.labuco-shell {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+.labuco-hero {
+  position: relative;
+  min-height: 424px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--labuco-line);
+  background: #020b08;
+}
+
+.labuco-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, #03100d 0%, rgba(3, 16, 13, 0.96) 28%, rgba(3, 16, 13, 0.55) 56%, rgba(3, 16, 13, 0.06) 78%),
+    linear-gradient(0deg, rgba(2, 11, 8, 0.42), transparent 45%);
+}
+
+.labuco-hero-visual {
+  position: absolute;
+  inset: 0 0 0 44%;
+}
+
+.labuco-hero-image {
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(0.92) contrast(1.05) brightness(0.85);
+}
+
+.labuco-hero-content {
+  position: relative;
+  z-index: 2;
+  width: min(610px, 57%);
+  padding: 58px 0 52px;
+}
+
+.labuco-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  color: var(--labuco-green-soft);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.labuco-hero h1 {
+  max-width: 590px;
+  margin: 0;
+  font-size: clamp(42px, 4.4vw, 66px);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+  font-weight: 800;
+}
+
+.labuco-hero h1 span {
+  display: block;
+  margin-top: 8px;
+  color: var(--labuco-green);
+}
+
+.labuco-hero-copy {
+  max-width: 470px;
+  margin: 22px 0 0;
+  color: #d4ddd7;
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.labuco-hero-benefits {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+}
+
+.labuco-hero-benefits span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #e7ece8;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.labuco-hero-benefits svg {
+  width: 20px;
+  height: 20px;
+  color: var(--labuco-green);
+}
+
+.labuco-hero-actions {
+  margin-top: 30px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.labuco-primary-cta,
+.labuco-secondary-cta {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.labuco-primary-cta {
+  color: #071108;
+  background: linear-gradient(135deg, var(--labuco-green), #8eb81a);
+  box-shadow: 0 10px 30px rgba(132, 178, 22, 0.2);
+}
+
+.labuco-secondary-cta {
+  color: #f6f8f4;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  background: rgba(3, 15, 11, 0.54);
+}
+
+.labuco-primary-cta:hover,
+.labuco-secondary-cta:hover {
+  transform: translateY(-1px);
+}
+
+.labuco-primary-cta svg,
+.labuco-secondary-cta svg {
+  width: 17px;
+  height: 17px;
+}
+
+.labuco-section {
+  padding: 34px 0;
+  border-bottom: 1px solid rgba(175, 210, 100, 0.11);
+}
+
+.labuco-section-heading {
+  margin-bottom: 18px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.labuco-section-heading h2 {
+  margin: 0;
+  color: #f7f8f4;
+  font-size: 24px;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-weight: 800;
+}
+
+.labuco-section-heading a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--labuco-green-soft);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.labuco-section-heading svg {
+  width: 16px;
+  height: 16px;
+}
+
+.labuco-category-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.labuco-category-card {
+  min-height: 132px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  padding: 18px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #f4f7f2;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.028));
+  text-align: center;
+  text-decoration: none;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.labuco-category-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(164, 201, 40, 0.52);
+  background: rgba(164, 201, 40, 0.08);
+}
+
+.labuco-category-card svg {
+  width: 42px;
+  height: 42px;
+  stroke-width: 1.45;
+  color: var(--labuco-green-soft);
+}
+
+.labuco-category-card span {
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 750;
+}
+
+.labuco-trust-strip {
+  padding: 22px 0;
+  color: #13231a;
+  background: #f5f7f2;
+}
+
+.labuco-trust-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+}
+
+.labuco-trust-item {
+  min-height: 60px;
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 0 24px;
+  border-right: 1px solid #dfe5dc;
+}
+
+.labuco-trust-item:first-child {
+  padding-left: 0;
+}
+
+.labuco-trust-item:last-child {
+  padding-right: 0;
+  border-right: 0;
+}
+
+.labuco-trust-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #327630;
+  background: #e5eee0;
+}
+
+.labuco-trust-icon svg {
+  width: 23px;
+  height: 23px;
+}
+
+.labuco-trust-item strong,
+.labuco-trust-item small {
+  display: block;
+}
+
+.labuco-trust-item strong {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.labuco-trust-item small {
+  margin-top: 3px;
+  color: #5d6a62;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.labuco-products-section {
+  color: #111813;
+  background: #f8faf7;
+}
+
+.labuco-products-section .labuco-section-heading h2 {
+  color: #101813;
+}
+
+.labuco-products-section .labuco-section-heading a {
+  color: #557d16;
+}
+
+.labuco-products-section .product-carousel {
+  padding-bottom: 4px;
+}
+
+.labuco-products-section .swiper-slide > div {
+  height: 100%;
+}
+
+.labuco-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.labuco-guide-card {
+  position: relative;
+  min-height: 188px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #fff;
+  text-decoration: none;
+  background: #0b241a;
+}
+
+.labuco-guide-card img {
+  object-fit: cover;
+  transition: transform 240ms ease;
+}
+
+.labuco-guide-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(3, 12, 9, 0.04) 20%, rgba(3, 12, 9, 0.94) 86%);
+}
+
+.labuco-guide-card:hover img {
+  transform: scale(1.04);
+}
+
+.labuco-guide-copy {
+  position: relative;
+  z-index: 2;
+}
+
+.labuco-guide-copy span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--labuco-green-soft);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.labuco-guide-copy strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.labuco-newsletter {
+  position: relative;
+  min-height: 178px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 38%;
+  align-items: center;
+  margin-top: 26px;
+  border: 1px solid rgba(164, 201, 40, 0.28);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #09271b, #04110d 72%);
+}
+
+.labuco-newsletter-copy {
+  position: relative;
+  z-index: 2;
+  padding: 28px 32px;
+}
+
+.labuco-newsletter h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.labuco-newsletter p {
+  margin: 6px 0 16px;
+  color: #b7c3bb;
+  font-size: 13px;
+}
+
+.labuco-newsletter-image {
+  position: relative;
+  align-self: stretch;
+  min-height: 178px;
+}
+
+.labuco-newsletter-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(90deg, #071c14 0%, rgba(7, 28, 20, 0.15) 58%);
+}
+
+.labuco-newsletter-image img {
+  object-fit: cover;
+}
+
+.labuco-newsletter-form {
+  width: min(420px, 100%);
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 40px 1fr 48px;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.labuco-newsletter-form > svg {
+  width: 17px;
+  height: 17px;
+  margin-left: 14px;
+  color: #91a096;
+}
+
+.labuco-newsletter-form input {
+  min-width: 0;
+  height: 42px;
+  border: 0;
+  outline: 0;
+  color: #fff;
+  background: transparent;
+  font-size: 13px;
+}
+
+.labuco-newsletter-form input::placeholder {
+  color: #87968d;
+}
+
+.labuco-newsletter-form button {
+  align-self: stretch;
+  border: 0;
+  color: #071108;
+  background: var(--labuco-green);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.labuco-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .labuco-header-main,
+  .labuco-desktop-nav-inner,
+  .labuco-service-bar {
+    max-width: 100%;
+  }
+
+  .labuco-category-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .labuco-guide-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .labuco-storefront-main {
+    padding-bottom: calc(68px + env(safe-area-inset-bottom));
+  }
+
+  .labuco-site-header {
+    position: relative;
+  }
+
+  .labuco-service-bar {
+    min-height: 36px;
+    gap: 0;
+    padding: 0 10px;
+    font-size: 9px;
+  }
+
+  .labuco-service-bar span {
+    gap: 5px;
+  }
+
+  .labuco-service-bar svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .labuco-header-main {
+    min-height: 0;
+    padding: 12px 14px 13px;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    gap: 8px 10px;
+  }
+
+  .labuco-header-left {
+    display: block;
+    color: #fff;
+  }
+
+  .labuco-header-center {
+    min-width: 0;
+    justify-self: center;
+  }
+
+  .labuco-header-center .inline-flex {
+    gap: 7px;
+  }
+
+  .labuco-header-center svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .labuco-header-center span span:last-child {
+    font-size: 21px;
+  }
+
+  .labuco-header-search {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin-top: 5px;
+  }
+
+  .labuco-search-skeleton,
+  .labuco-header-search [data-slot="input-group"] {
+    height: 50px;
+    border-radius: 10px;
+  }
+
+  .labuco-header-right {
+    gap: 7px;
+  }
+
+  .labuco-region-control {
+    display: none;
+  }
+
+  .labuco-header-action,
+  .labuco-cart-action {
+    min-width: 42px;
+    font-size: 9px;
+  }
+
+  .labuco-header-action svg,
+  .labuco-cart-action svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .labuco-desktop-nav {
+    display: none;
+  }
+
+  .labuco-shell {
+    width: min(100% - 28px, 720px);
+  }
+
+  .labuco-hero {
+    min-height: 392px;
+  }
+
+  .labuco-hero::after {
+    background:
+      linear-gradient(90deg, #03100d 0%, rgba(3, 16, 13, 0.96) 38%, rgba(3, 16, 13, 0.5) 67%, rgba(3, 16, 13, 0.1) 100%),
+      linear-gradient(0deg, rgba(2, 11, 8, 0.5), transparent 50%);
+  }
+
+  .labuco-hero-visual {
+    inset-left: 45%;
+  }
+
+  .labuco-hero-content {
+    width: 64%;
+    padding: 28px 0 24px;
+  }
+
+  .labuco-hero-eyebrow {
+    margin-bottom: 9px;
+    font-size: 9px;
+  }
+
+  .labuco-hero h1 {
+    font-size: clamp(29px, 8.4vw, 38px);
+    line-height: 1.04;
+  }
+
+  .labuco-hero h1 span {
+    margin-top: 5px;
+  }
+
+  .labuco-hero-copy {
+    width: 92%;
+    margin-top: 15px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .labuco-hero-benefits {
+    margin-top: 17px;
+    display: grid;
+    gap: 7px;
+  }
+
+  .labuco-hero-benefits span {
+    font-size: 10px;
+  }
+
+  .labuco-hero-benefits svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .labuco-hero-actions {
+    width: min(348px, 148%);
+    margin-top: 19px;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .labuco-primary-cta,
+  .labuco-secondary-cta {
+    min-height: 46px;
+    flex: 1;
+    padding: 0 11px;
+    font-size: 12px;
+  }
+
+  .labuco-section {
+    padding: 24px 0;
+  }
+
+  .labuco-section-heading {
+    margin-bottom: 13px;
+  }
+
+  .labuco-section-heading h2 {
+    font-size: 20px;
+  }
+
+  .labuco-section-heading a {
+    font-size: 11px;
+  }
+
+  .labuco-category-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .labuco-category-card {
+    min-height: 116px;
+    gap: 9px;
+    padding: 12px 6px;
+  }
+
+  .labuco-category-card svg {
+    width: 34px;
+    height: 34px;
+  }
+
+  .labuco-category-card span {
+    font-size: 10px;
+  }
+
+  .labuco-trust-strip {
+    padding: 16px 0;
+    color: #edf4eb;
+    background: #061911;
+  }
+
+  .labuco-trust-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .labuco-trust-item,
+  .labuco-trust-item:first-child,
+  .labuco-trust-item:last-child {
+    min-height: 104px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 7px;
+    padding: 8px 4px;
+    border: 0;
+    text-align: center;
+  }
+
+  .labuco-trust-icon {
+    width: 35px;
+    height: 35px;
+    color: var(--labuco-green);
+    background: transparent;
+  }
+
+  .labuco-trust-icon svg {
+    width: 27px;
+    height: 27px;
+  }
+
+  .labuco-trust-item strong {
+    font-size: 9px;
+  }
+
+  .labuco-trust-item small {
+    color: #9eaaa2;
+    font-size: 8px;
+  }
+
+  .labuco-products-section {
+    color: #f6f8f4;
+    background: #04110d;
+  }
+
+  .labuco-products-section .labuco-section-heading h2 {
+    color: #f7f8f4;
+  }
+
+  .labuco-products-section .labuco-section-heading a {
+    color: var(--labuco-green-soft);
+  }
+
+  .labuco-guide-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .labuco-guide-card {
+    min-height: 142px;
+    padding: 11px;
+  }
+
+  .labuco-guide-copy strong {
+    font-size: 11px;
+  }
+
+  .labuco-newsletter {
+    min-height: 156px;
+    grid-template-columns: 1fr 34%;
+    margin-top: 18px;
+  }
+
+  .labuco-newsletter-copy {
+    padding: 19px 16px;
+  }
+
+  .labuco-newsletter h3 {
+    font-size: 20px;
+  }
+
+  .labuco-newsletter p {
+    max-width: 260px;
+    margin: 5px 0 12px;
+    font-size: 10px;
+  }
+
+  .labuco-newsletter-image {
+    min-height: 156px;
+  }
+
+  .labuco-newsletter-form {
+    min-height: 40px;
+    grid-template-columns: 34px 1fr 42px;
+  }
+
+  .labuco-newsletter-form input {
+    height: 38px;
+    font-size: 11px;
+  }
+
+  .labuco-bottom-nav {
+    position: fixed;
+    z-index: 60;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    min-height: 64px;
+    padding: 7px 9px calc(7px + env(safe-area-inset-bottom));
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: start;
+    color: #eef4ef;
+    background: rgba(2, 13, 9, 0.98);
+    border-top: 1px solid rgba(164, 201, 40, 0.23);
+    backdrop-filter: blur(18px);
+  }
+
+  .labuco-bottom-nav a,
+  .labuco-bottom-nav button {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-width: 0;
+    border: 0;
+    color: inherit;
+    background: transparent;
+    font-size: 9px;
+    text-decoration: none;
+  }
+
+  .labuco-bottom-nav svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .labuco-bottom-nav a:first-child {
+    color: var(--labuco-green);
+  }
+
+  .labuco-bottom-cart-icon {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .labuco-bottom-cart-icon b {
+    position: absolute;
+    top: -9px;
+    right: -12px;
+    min-width: 18px;
+    height: 18px;
+    display: grid;
+    place-items: center;
+    padding: 0 4px;
+    border-radius: 999px;
+    color: #071108;
+    background: var(--labuco-green);
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 420px) {
+  .labuco-shell {
+    width: calc(100% - 22px);
+  }
+
+  .labuco-service-bar span {
+    justify-content: flex-start;
+  }
+
+  .labuco-service-bar span:nth-child(2) {
+    justify-content: center;
+  }
+
+  .labuco-service-bar span:nth-child(3) {
+    justify-content: flex-end;
+  }
+
+  .labuco-header-main {
+    padding-inline: 10px;
+  }
+
+  .labuco-header-right {
+    gap: 2px;
+  }
+
+  .labuco-header-action,
+  .labuco-cart-action {
+    min-width: 39px;
+  }
+
+  .labuco-category-card {
+    min-height: 108px;
+  }
+}
