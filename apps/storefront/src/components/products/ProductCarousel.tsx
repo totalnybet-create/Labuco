@@ -6,10 +6,11 @@ import { useTranslations } from "next-intl";
 import type { ReactElement } from "react";
 import { useCallback, useRef, useState } from "react";
 import type Swiper from "swiper";
-import { Navigation } from "swiper/modules";
+import { Navigation, Pagination } from "swiper/modules";
 import { Swiper as SwiperComponent, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
+import "swiper/css/pagination";
 import { ProductCard } from "@/components/products/ProductCard";
 
 interface ProductCarouselProps {
@@ -63,7 +64,7 @@ export function ProductCarousel({
         type="button"
         aria-label={t("carouselPrev")}
         disabled={isBeginning}
-        className={`${NAV_BUTTON_BASE} -left-5 ${isBeginning ? "opacity-0" : ""}`}
+        className={`${NAV_BUTTON_BASE} product-carousel-prev -left-5 ${isBeginning ? "opacity-0" : ""}`}
       >
         <ChevronLeft className="w-5 h-5" />
       </button>
@@ -72,18 +73,19 @@ export function ProductCarousel({
         type="button"
         aria-label={t("carouselNext")}
         disabled={isEnd}
-        className={`${NAV_BUTTON_BASE} -right-5 ${isEnd ? "opacity-0" : ""}`}
+        className={`${NAV_BUTTON_BASE} product-carousel-next -right-5 ${isEnd ? "opacity-0" : ""}`}
       >
         <ChevronRight className="w-5 h-5" />
       </button>
       <SwiperComponent
-        modules={[Navigation]}
+        modules={[Navigation, Pagination]}
         spaceBetween={24}
         slidesPerView={1}
         navigation={{
           prevEl: prevRef.current,
           nextEl: nextRef.current,
         }}
+        pagination={{ clickable: true }}
         onBeforeInit={handleBeforeInit}
         onSlideChange={updateNavState}
         onReachBeginning={updateNavState}
@@ -97,7 +99,7 @@ export function ProductCarousel({
         className="product-carousel"
       >
         {products.map((product, index) => (
-          <SwiperSlide key={product.id} className="p-1">
+          <SwiperSlide key={product.id} className="p-0.5 sm:p-1">
             <ProductCard
               product={product}
               basePath={basePath}
