@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  CreditCard,
-  Flame,
-  Grid2X2,
-  ShieldCheck,
-  Truck,
-} from "lucide-react";
+import { CreditCard, Flame, Grid2X2, ShieldCheck, Truck } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -33,11 +27,10 @@ interface SearchToggleProps {
 
 const desktopLinks = [
   ["Sklep", "/products"],
-  ["Nowości", "/products?sort=newest"],
-  ["Promocje", "/products?sort=price_asc"],
+  ["Nowości", "/products"],
+  ["Promocje", "/products"],
   ["Poradniki", "/poradniki"],
   ["Marki", "/products"],
-  ["Kontakt", "/kontakt"],
 ] as const;
 
 export function SearchToggle({
