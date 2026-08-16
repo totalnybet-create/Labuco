@@ -34,7 +34,7 @@ const PAGINATION_STYLE: SwiperCssProperties = {
   "--swiper-pagination-bullet-height": "3px",
   "--swiper-pagination-bullet-border-radius": "999px",
   "--swiper-pagination-bullet-horizontal-gap": "2px",
-  "--swiper-pagination-bottom": "0px",
+  "--swiper-pagination-bottom": "-7px",
 };
 
 export function ProductCarousel({
@@ -92,8 +92,8 @@ export function ProductCarousel({
       </button>
       <SwiperComponent
         modules={[Navigation, Pagination]}
-        spaceBetween={24}
-        slidesPerView={1}
+        spaceBetween={8}
+        slidesPerView={2}
         navigation={{
           prevEl: prevRef.current,
           nextEl: nextRef.current,
