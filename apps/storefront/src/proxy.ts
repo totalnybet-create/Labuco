@@ -37,12 +37,19 @@ function catalogModeRedirect(request: NextRequest): NextResponse | null {
     return NextResponse.redirect(url);
   }
 
-  // The account landing page has a deliberate no-backend state. All deeper
-  // account routes require authentication/order data and therefore collapse
-  // back to that safe landing page until a transactional provider is enabled.
   if (rest.startsWith("/account/")) {
     const url = request.nextUrl.clone();
     url.pathname = `${prefix}/account`;
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
+  // Policies are supplied by the transactional commerce backend. In catalog
+  // mode we deliberately do not synthesize legal documents or leave a route
+  // that can crash while calling an unavailable provider.
+  if (rest === "/policies" || rest.startsWith("/policies/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = prefix;
     url.search = "";
     return NextResponse.redirect(url);
   }
