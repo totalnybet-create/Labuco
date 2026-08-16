@@ -103,7 +103,7 @@ export default async function HomePage({ params }: HomePageProps) {
               Profesjonalne produkty dla początkujących i doświadczonych
               hodowców. Sprzęt, który da się dobrać bez zgadywania.
             </p>
-            <div className="labuco-hero-benefits" aria-label="Korzyści zakupów">
+            <div className="labuco-hero-benefits">
               <span>
                 <ShieldCheck aria-hidden="true" /> Dyskretna wysyłka
               </span>
@@ -115,7 +115,10 @@ export default async function HomePage({ params }: HomePageProps) {
               </span>
             </div>
             <div className="labuco-hero-actions">
-              <Link className="labuco-primary-cta" href={`${basePath}/products`}>
+              <Link
+                className="labuco-primary-cta"
+                href={`${basePath}/products`}
+              >
                 Zobacz produkty <ArrowRight aria-hidden="true" />
               </Link>
               <Link
@@ -152,7 +155,10 @@ export default async function HomePage({ params }: HomePageProps) {
         </div>
       </section>
 
-      <section className="labuco-trust-strip" aria-label="Standard obsługi Labuco">
+      <section
+        className="labuco-trust-strip"
+        aria-label="Standard obsługi Labuco"
+      >
         <div className="labuco-shell labuco-trust-grid">
           {trustItems.map(({ title, copy, Icon }) => (
             <div className="labuco-trust-item" key={title}>
