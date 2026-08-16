@@ -98,7 +98,7 @@ export const ProductCard = memo(function ProductCard({
     <div className="group relative">
       <div
         className={`relative bg-gray-100 rounded-md overflow-hidden ${
-          compactFeatured ? "h-[92px] sm:h-auto sm:aspect-square" : "aspect-square"
+          compactFeatured ? "h-[70px] sm:h-auto sm:aspect-square" : "aspect-square"
         }`}
       >
         <ProductImage
@@ -107,12 +107,12 @@ export const ProductCard = memo(function ProductCard({
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-300"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 300px"
-          iconClassName={compactFeatured ? "w-10 h-10 sm:w-16 sm:h-16" : "w-16 h-16"}
+          iconClassName={compactFeatured ? "w-9 h-9 sm:w-16 sm:h-16" : "w-16 h-16"}
           fetchPriority={fetchPriority}
         />
         <FavoriteButton
           product={product}
-          className={`absolute z-20 ${compactFeatured ? "right-1.5 top-1.5 sm:right-2 sm:top-2" : "right-2 top-2"}`}
+          className={`absolute z-20 ${compactFeatured ? "right-1 top-1 sm:right-2 sm:top-2" : "right-2 top-2"}`}
         />
         {onSale && (
           <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-medium px-2 py-1 rounded">
