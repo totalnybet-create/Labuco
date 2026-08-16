@@ -183,7 +183,8 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
           />
           <InputGroupAddon align="inline-end">
             <InputGroupButton
-              type="submit"
+              type="button"
+              onClick={navigateToResults}
               size="icon-sm"
               variant="ghost"
               aria-label={t("search")}
