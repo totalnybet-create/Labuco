@@ -82,6 +82,7 @@ export async function Header({
           <Link
             href={`${basePath}/account`}
             className="labuco-header-action"
+            style={{ minWidth: 46 }}
             aria-label={t("account")}
           >
             <User aria-hidden="true" />
@@ -90,12 +91,13 @@ export async function Header({
           <Link
             href={`${basePath}/ulubione`}
             className="labuco-header-action"
+            style={{ minWidth: 46 }}
             aria-label="Ulubione"
           >
             <Heart aria-hidden="true" />
             <span>Ulubione</span>
           </Link>
-          <div className="labuco-cart-action">
+          <div className="labuco-cart-action" style={{ minWidth: 46 }}>
             <CartButton />
             <span>Koszyk</span>
           </div>
