@@ -81,8 +81,7 @@ export async function Header({
         <>
           <Link
             href={`${basePath}/account`}
-            className="labuco-header-action"
-            style={{ minWidth: 46 }}
+            className="labuco-header-action !min-w-[46px] md:!min-w-[44px]"
             aria-label={t("account")}
           >
             <User aria-hidden="true" />
@@ -90,14 +89,13 @@ export async function Header({
           </Link>
           <Link
             href={`${basePath}/ulubione`}
-            className="labuco-header-action"
-            style={{ minWidth: 46 }}
+            className="labuco-header-action !min-w-[46px] md:!min-w-[44px]"
             aria-label="Ulubione"
           >
             <Heart aria-hidden="true" />
             <span>Ulubione</span>
           </Link>
-          <div className="labuco-cart-action" style={{ minWidth: 46 }}>
+          <div className="labuco-cart-action !min-w-[70px] md:!min-w-[44px]">
             <CartButton />
             <span>Koszyk</span>
           </div>
