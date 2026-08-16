@@ -1,59 +1,37 @@
 import { Award, ShieldCheck, Sprout, Users } from "lucide-react";
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { NewsletterForm } from "@/components/home/NewsletterForm";
 
 interface SectionProps {
   basePath: string;
 }
 
+const REFERENCE_SPRITE = "/images/pufpuf/reference-sprite.webp";
+
+const spriteStyle = (position: string): CSSProperties => ({
+  backgroundImage: `url("${REFERENCE_SPRITE}")`,
+  backgroundSize: "400% 400%",
+  backgroundPosition: position,
+  backgroundRepeat: "no-repeat",
+});
+
 const categories = [
-  {
-    label: "Oświetlenie",
-    query: "oswietlenie",
-    image:
-      "https://www.growtent.pl/hpeciai/954a5102209f25b90ccbc26ea0ced3f1/pol_pl_Lampa-HPS-Lumatek-Dual-400W-240-Volt-290_1.webp",
-  },
-  {
-    label: "Wentylacja",
-    query: "wentylacja",
-    image:
-      "https://www.growtent.pl/hpeciai/bf4b54f4252bb14161d6db8cf642a1e4/pol_pl_Wentylator-Axial-Flo-100mm-105-m3-h-366_1.webp",
-  },
+  { label: "Oświetlenie", query: "oswietlenie", spritePosition: "0% 0%" },
+  { label: "Wentylacja", query: "wentylacja", spritePosition: "33.333% 0%" },
   {
     label: "Nawozy i stymulatory",
     query: "nawozy",
-    image:
-      "https://www.growtent.pl/hpeciai/9c4edf53d441f8ae0ec1e3e3742a52e7/pol_pl_Growth-Technology-Bloom-300-Growth-300-Micro-300-968_1.webp",
+    spritePosition: "66.667% 0%",
   },
-  {
-    label: "Namioty uprawowe",
-    query: "namioty",
-    image:
-      "https://www.growtent.pl/hpeciai/fd674b7b5a8ddbde31a2f4169983bdf3/pol_pl_Zestaw-growbox-Secret-Jardin-80x80x180cm-LED-LUMATEK-ATS-200W-PRO-548_2.webp",
-  },
-  {
-    label: "Nasiona",
-    query: "nasiona",
-    image:
-      "https://www.growtent.pl/hpeciai/4065afa50e1fb8202f7fb194e7a8a328/pol_pl_TRENDYGARDEN-Vacuum-Pack-60x40cm-Folia-prozniowa-w-worku-uprawa-i-przechowywanie-3012_1.webp",
-  },
-  {
-    label: "Akcesoria",
-    query: "akcesoria",
-    image:
-      "https://www.growtent.pl/hpeciai/e0578e55f9b809c8e989a98d06023022/pol_pl_Bubble-bags-5-workow-do-ekstrakcji-roslinnej-160L-4286_2.webp",
-  },
-  {
-    label: "Filtry i węgle",
-    query: "filtr",
-    image:
-      "https://www.growtent.pl/hpeciai/0285509788f6c9fdb3f455322b7bf9e0/pol_pl_Filtr-weglowy-Prima-Klima-Eco-Line-100mm-160-240m3-H-306_3.webp",
-  },
+  { label: "Namioty uprawowe", query: "namioty", spritePosition: "100% 0%" },
+  { label: "Nasiona", query: "nasiona", spritePosition: "0% 33.333%" },
+  { label: "Akcesoria", query: "akcesoria", spritePosition: "33.333% 33.333%" },
+  { label: "Filtry i węgle", query: "filtr", spritePosition: "66.667% 33.333%" },
   {
     label: "Pomiary i kontrola",
     query: "pomiary",
-    image:
-      "https://www.growtent.pl/hpeciai/0a85459939a5a52000f9361017b1dcab/pol_pl_Miernik-TDS-EC-Adwa-AD31-wodoszczelny-z-wymienna-elektroda-3787_1.webp",
+    spritePosition: "100% 33.333%",
   },
 ] as const;
 
@@ -62,34 +40,27 @@ const guides = [
     kicker: "PODSTAWY",
     title: "Jak zacząć uprawę indoor?",
     slug: "jak-zaczac-uprawe-indoor",
-    image:
-      "https://www.growtent.pl/hpeciai/fd674b7b5a8ddbde31a2f4169983bdf3/pol_pl_Zestaw-growbox-Secret-Jardin-80x80x180cm-LED-LUMATEK-ATS-200W-PRO-548_2.webp",
+    spritePosition: "0% 66.667%",
   },
   {
     kicker: "OŚWIETLENIE",
     title: "Jak dobrać oświetlenie do namiotu?",
     slug: "jak-dobrac-oswietlenie-do-namiotu",
-    image:
-      "https://www.growtent.pl/hpeciai/954a5102209f25b90ccbc26ea0ced3f1/pol_pl_Lampa-HPS-Lumatek-Dual-400W-240-Volt-290_1.webp",
+    spritePosition: "33.333% 66.667%",
   },
   {
     kicker: "NAWOŻENIE",
     title: "Nawożenie roślin — poradnik",
     slug: "nawozenie-roslin-poradnik",
-    image:
-      "https://www.growtent.pl/hpeciai/9c4edf53d441f8ae0ec1e3e3742a52e7/pol_pl_Growth-Technology-Bloom-300-Growth-300-Micro-300-968_1.webp",
+    spritePosition: "66.667% 66.667%",
   },
   {
     kicker: "PROBLEMY",
     title: "Najczęstsze problemy w uprawie",
     slug: "najczestsze-problemy-w-uprawie",
-    image:
-      "https://www.growtent.pl/hpeciai/0285509788f6c9fdb3f455322b7bf9e0/pol_pl_Filtr-weglowy-Prima-Klima-Eco-Line-100mm-160-240m3-H-306_3.webp",
+    spritePosition: "100% 66.667%",
   },
 ] as const;
-
-const NEWSLETTER_IMAGE =
-  "https://www.growtent.pl/hpeciai/c686f33c598cabd93c080d872285bdcd/pol_pl_Zestaw-Growbox-RoyalRoom-2-0-150x150x200cm-LUCKYGROW-FLEX-LED-720W-2-85-4781_2.webp";
 
 export function PopularCategoriesSection({ basePath }: SectionProps) {
   return (
@@ -102,7 +73,7 @@ export function PopularCategoriesSection({ basePath }: SectionProps) {
       </div>
 
       <div className="labuco-category-grid">
-        {categories.map(({ label, image, query }) => (
+        {categories.map(({ label, query, spritePosition }) => (
           <Link
             key={label}
             href={`${basePath}/products?q=${encodeURIComponent(query)}`}
@@ -110,7 +81,7 @@ export function PopularCategoriesSection({ basePath }: SectionProps) {
           >
             <span
               className="labuco-category-visual"
-              style={{ backgroundImage: `url("${image}")` }}
+              style={spriteStyle(spritePosition)}
               aria-hidden="true"
             />
             <span>{label}</span>
@@ -175,7 +146,7 @@ export function KnowledgeSection({ basePath }: SectionProps) {
       </div>
 
       <div className="labuco-guide-grid">
-        {guides.map(({ kicker, title, slug, image }) => (
+        {guides.map(({ kicker, title, slug, spritePosition }) => (
           <Link
             href={`${basePath}/poradniki/${slug}`}
             className="labuco-guide-card"
@@ -183,7 +154,7 @@ export function KnowledgeSection({ basePath }: SectionProps) {
           >
             <div
               className="labuco-guide-art"
-              style={{ backgroundImage: `url("${image}")` }}
+              style={spriteStyle(spritePosition)}
               aria-hidden="true"
             />
             <div className="labuco-guide-copy">
@@ -213,7 +184,7 @@ export function NewsletterSection() {
       </div>
       <div
         className="labuco-newsletter-art"
-        style={{ backgroundImage: `url("${NEWSLETTER_IMAGE}")` }}
+        style={spriteStyle("0% 100%")}
         aria-hidden="true"
       />
     </section>
