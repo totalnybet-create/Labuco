@@ -160,7 +160,11 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
 
   return (
     <div className="relative">
-      <form action={`${basePath}/products`} method="get" onSubmit={handleSubmit}>
+      <form
+        action={`${basePath}/products`}
+        method="get"
+        onSubmit={handleSubmit}
+      >
         <InputGroup>
           <InputGroupInput
             ref={inputRef}
