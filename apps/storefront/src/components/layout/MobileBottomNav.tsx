@@ -25,7 +25,7 @@ export function MobileBottomNav({ basePath }: MobileBottomNavProps) {
         <Search aria-hidden="true" />
         <span>Szukaj</span>
       </Link>
-      <Link href={`${basePath}/account`}>
+      <Link href={`${basePath}/ulubione`}>
         <Heart aria-hidden="true" />
         <span>Ulubione</span>
       </Link>
