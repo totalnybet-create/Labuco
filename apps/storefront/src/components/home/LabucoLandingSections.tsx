@@ -77,14 +77,14 @@ export function PopularCategoriesSection({ basePath }: SectionProps) {
           <Link
             key={label}
             href={`${basePath}/products?q=${encodeURIComponent(query)}`}
-            className="labuco-category-card"
+            className="labuco-category-card !min-h-[70px] md:!min-h-[148px]"
           >
             <span
-              className="labuco-category-visual"
+              className="labuco-category-visual !min-h-[46px] md:!min-h-[110px]"
               style={spriteStyle(spritePosition)}
               aria-hidden="true"
             />
-            <span>{label}</span>
+            <span className="!text-[7px] md:!text-[12px]">{label}</span>
           </Link>
         ))}
       </div>
@@ -118,7 +118,7 @@ export function TrustStrip() {
 
   return (
     <section
-      className="labuco-trust-strip !mt-[9px] !mb-[4px] !py-[10px] md:!mt-[18px] md:!mb-[4px] md:!py-[13px]"
+      className="labuco-trust-strip !mt-[9px] !mb-[4px] !pt-[14px] !pb-[13px] md:!mt-[18px] md:!mb-[4px] md:!py-[13px]"
       aria-label="Dlaczego pufpuf.shop"
     >
       {items.map(({ title, copy, icon: Icon }) => (
@@ -138,7 +138,7 @@ export function KnowledgeSection({ basePath }: SectionProps) {
   return (
     <section
       id="poradniki"
-      className="labuco-section"
+      className="labuco-section !pt-[11px] md:!pt-[22px]"
       aria-labelledby="knowledge-heading"
     >
       <div className="labuco-section-heading">
@@ -156,11 +156,11 @@ export function KnowledgeSection({ basePath }: SectionProps) {
             key={title}
           >
             <div
-              className="labuco-guide-art !h-[38px] md:!h-[132px]"
+              className="labuco-guide-art !h-[36px] md:!h-[132px]"
               style={spriteStyle(spritePosition)}
               aria-hidden="true"
             />
-            <div className="labuco-guide-copy !min-h-[32px] md:!min-h-[62px]">
+            <div className="labuco-guide-copy !min-h-[31px] md:!min-h-[62px]">
               <span>{kicker}</span>
               <h3>{title}</h3>
             </div>
