@@ -98,9 +98,9 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
     onNavigate?.();
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    navigateToResults(inputRef.current?.value);
+  const handleSubmit = () => {
+    setIsOpen(false);
+    onNavigate?.();
   };
 
   const handleSuggestionClick = (product: Product, index: number) => {
@@ -124,12 +124,6 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter" && selectedIndex < 0) {
-      event.preventDefault();
-      navigateToResults(event.currentTarget.value);
-      return;
-    }
-
     if (!isOpen || suggestions.length === 0) return;
 
     switch (event.key) {
