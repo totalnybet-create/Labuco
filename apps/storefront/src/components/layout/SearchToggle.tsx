@@ -46,7 +46,7 @@ export function SearchToggle({
       </div>
 
       <div className="labuco-header-main">
-        <div className="labuco-header-left">{left}</div>
+        <div className="labuco-header-left md:invisible">{left}</div>
         <div className="labuco-header-center">{center}</div>
         <div className="labuco-header-right">
           {rightStart}
