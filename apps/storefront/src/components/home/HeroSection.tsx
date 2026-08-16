@@ -6,8 +6,7 @@ interface HeroSectionProps {
   locale: string;
 }
 
-const HERO_IMAGE =
-  "https://www.growtent.pl/hpeciai/fd674b7b5a8ddbde31a2f4169983bdf3/pol_pl_Zestaw-growbox-Secret-Jardin-80x80x180cm-LED-LUMATEK-ATS-200W-PRO-548_2.webp";
+const HERO_IMAGE = "/images/pufpuf/reference-hero.webp";
 
 export async function HeroSection({ basePath }: HeroSectionProps) {
   return (
