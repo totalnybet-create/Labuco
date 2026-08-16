@@ -7,6 +7,9 @@ interface HeroSectionProps {
 }
 
 const HERO_IMAGE = "/images/pufpuf/reference-hero.webp";
+const benefitIconClass = "!h-[16px] !w-[16px] md:!h-[24px] md:!w-[24px]";
+const benefitTitleClass = "!text-[6.2px] md:!text-[11px]";
+const benefitCopyClass = "!text-[5px] md:!text-[9px]";
 
 export async function HeroSection({ basePath }: HeroSectionProps) {
   return (
@@ -19,6 +22,7 @@ export async function HeroSection({ basePath }: HeroSectionProps) {
           inset: "0 0 0 auto",
           backgroundSize: "auto 100%",
           backgroundPosition: "35% 50%",
+          filter: "saturate(1.05) contrast(1.02) brightness(1.08)",
         }}
         aria-hidden="true"
       />
@@ -33,34 +37,34 @@ export async function HeroSection({ basePath }: HeroSectionProps) {
 
       <div className="labuco-hero-copy">
         <p className="labuco-eyebrow">PUFPUF.SHOP · INDOOR GROW</p>
-        <h1>
+        <h1 className="!w-[170px] !text-[17px] md:!w-auto md:!max-w-[560px] md:!text-[54px]">
           Wszystko, czego potrzebujesz
           <span> do udanej uprawy.</span>
         </h1>
-        <p className="labuco-hero-lead">
+        <p className="labuco-hero-lead !w-[142px] !text-[7.2px] !leading-[1.35] md:!w-auto md:!max-w-[420px] md:!text-[16px]">
           Profesjonalne produkty dla początkujących i doświadczonych growerów.
         </p>
 
         <div className="labuco-hero-benefits">
           <div>
-            <ShieldCheck aria-hidden="true" />
+            <ShieldCheck className={benefitIconClass} aria-hidden="true" />
             <span>
-              <strong>Dyskretna wysyłka</strong>
-              <small>Neutralne opakowanie</small>
+              <strong className={benefitTitleClass}>Dyskretna wysyłka</strong>
+              <small className={benefitCopyClass}>Neutralne opakowanie</small>
             </span>
           </div>
           <div>
-            <Truck aria-hidden="true" />
+            <Truck className={benefitIconClass} aria-hidden="true" />
             <span>
-              <strong>Szybka dostawa</strong>
-              <small>1–2 dni robocze</small>
+              <strong className={benefitTitleClass}>Szybka dostawa</strong>
+              <small className={benefitCopyClass}>1–2 dni robocze</small>
             </span>
           </div>
           <div>
-            <LockKeyhole aria-hidden="true" />
+            <LockKeyhole className={benefitIconClass} aria-hidden="true" />
             <span>
-              <strong>Bezpieczne płatności</strong>
-              <small>SSL i zaufane metody</small>
+              <strong className={benefitTitleClass}>Bezpieczne płatności</strong>
+              <small className={benefitCopyClass}>SSL i zaufane metody</small>
             </span>
           </div>
         </div>
