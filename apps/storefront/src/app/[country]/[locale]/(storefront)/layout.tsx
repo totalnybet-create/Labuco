@@ -121,7 +121,7 @@ export default async function StorefrontLayout({
   const basePath = `/${country}/${locale}`;
 
   return (
-    <>
+    <div className="labuco-storefront-frame flex min-h-screen flex-col bg-[#03110c] text-white">
       <Header
         basePath={basePath}
         locale={locale as Locale}
@@ -157,6 +157,6 @@ export default async function StorefrontLayout({
         }
       />
       <MobileBottomNav basePath={basePath} />
-    </>
+    </div>
   );
 }
