@@ -82,6 +82,11 @@ export default async function HomePage({ params }: HomePageProps) {
             sizes="(max-width: 767px) 58vw, 64vw"
             className="labuco-hero-image"
           />
+          <img
+            src="/labuco/hero-mobile.svg"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover md:hidden"
+          />
         </div>
         <div className="labuco-shell">
           <div className="labuco-hero-content">
@@ -142,6 +147,10 @@ export default async function HomePage({ params }: HomePageProps) {
               >
                 <span
                   className={`labuco-category-photo labuco-category-photo-${index + 1}`}
+                  style={{
+                    backgroundImage: 'url("/labuco/categories-clean.svg")',
+                    backgroundSize: "400% 200%",
+                  }}
                   aria-hidden="true"
                 />
                 <span className="labuco-category-label">{label}</span>
