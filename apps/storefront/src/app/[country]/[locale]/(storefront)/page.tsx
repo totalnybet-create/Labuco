@@ -1,16 +1,9 @@
 import {
   ArrowRight,
-  CreditCard,
-  Fan,
-  Filter,
-  Gauge,
-  Headphones,
-  Leaf,
-  Lightbulb,
-  Package,
+  Award,
   ShieldCheck,
   Sprout,
-  Truck,
+  Users,
   Wrench,
 } from "lucide-react";
 import type { Metadata } from "next";
@@ -30,36 +23,36 @@ interface HomePageProps {
 }
 
 const categories = [
-  { label: "Oświetlenie", query: "oświetlenie", Icon: Lightbulb },
-  { label: "Wentylacja", query: "wentylacja", Icon: Fan },
-  { label: "Nawozy i stymulatory", query: "nawozy", Icon: Leaf },
-  { label: "Namioty uprawowe", query: "namiot", Icon: Package },
-  { label: "Nasiona", query: "nasiona", Icon: Sprout },
-  { label: "Akcesoria", query: "akcesoria", Icon: Wrench },
-  { label: "Filtry i węgle", query: "filtr", Icon: Filter },
-  { label: "Pomiary i kontrola", query: "miernik", Icon: Gauge },
+  { label: "Oświetlenie", query: "oświetlenie" },
+  { label: "Wentylacja", query: "wentylacja" },
+  { label: "Nawozy i stymulatory", query: "nawozy" },
+  { label: "Namioty uprawowe", query: "namiot" },
+  { label: "Nasiona", query: "nasiona" },
+  { label: "Akcesoria", query: "akcesoria" },
+  { label: "Filtry i węgle", query: "filtr" },
+  { label: "Pomiary i kontrola", query: "miernik" },
 ] as const;
 
 const trustItems = [
   {
-    title: "Dyskretna wysyłka",
-    copy: "Bezpieczne pakowanie bez oznaczeń sklepu",
+    title: "Dyskrecja przede wszystkim",
+    copy: "Neutralne opakowania i brak logotypów",
     Icon: ShieldCheck,
   },
   {
-    title: "Bezpieczne płatności",
-    copy: "Szyfrowane i zaufane metody",
-    Icon: CreditCard,
+    title: "Wiedza i doświadczenie",
+    copy: "Pomagamy w doborze sprzętu i uprawie",
+    Icon: Wrench,
   },
   {
-    title: "Szybka dostawa",
-    copy: "Sprawna realizacja zamówień",
-    Icon: Truck,
+    title: "Jakość premium",
+    copy: "Tylko sprawdzone produkty renomowanych marek",
+    Icon: Award,
   },
   {
-    title: "Pomoc ekspertów",
-    copy: "Wsparcie przy doborze sprzętu",
-    Icon: Headphones,
+    title: "Społeczność Growerów",
+    copy: "Wiedza, praktyka i doświadczenie społeczności",
+    Icon: Users,
   },
 ] as const;
 
@@ -78,17 +71,16 @@ export default async function HomePage({ params }: HomePageProps) {
   const currency = await resolveCurrency(country);
 
   return (
-    <div className="labuco-home" data-visual-baseline="designed">
-      <section className="labuco-hero" aria-labelledby="labuco-home-title">
+    <div className="labuco-home labuco-target-home" data-visual-baseline="designed">
+      <section className="labuco-hero labuco-target-hero" aria-labelledby="labuco-home-title">
         <div className="labuco-hero-visual" aria-hidden="true">
           <Image
-            src="/labuco/reference-guides.jpg"
+            src="/labuco/reference-hero.jpg"
             alt=""
             fill
             priority
-            sizes="(max-width: 767px) 62vw, 58vw"
+            sizes="(max-width: 767px) 58vw, 64vw"
             className="labuco-hero-image"
-            style={{ objectPosition: "18% 50%" }}
           />
         </div>
         <div className="labuco-shell">
@@ -102,30 +94,30 @@ export default async function HomePage({ params }: HomePageProps) {
             </h1>
             <p className="labuco-hero-copy">
               Profesjonalne produkty dla początkujących i doświadczonych
-              hodowców. Sprzęt, który da się dobrać bez zgadywania.
+              hodowców.
             </p>
             <div className="labuco-hero-benefits">
               <span>
-                <ShieldCheck aria-hidden="true" /> Dyskretna wysyłka
+                <ShieldCheck aria-hidden="true" />
+                <b>Dyskretna wysyłka</b>
+                <small>100% anonimowości</small>
               </span>
               <span>
-                <Truck aria-hidden="true" /> Szybka dostawa
+                <Sprout aria-hidden="true" />
+                <b>Szybka dostawa</b>
+                <small>1–2 dni robocze</small>
               </span>
               <span>
-                <CreditCard aria-hidden="true" /> Bezpieczne płatności
+                <ShieldCheck aria-hidden="true" />
+                <b>Bezpieczne płatności</b>
+                <small>SSL i zaufane metody</small>
               </span>
             </div>
             <div className="labuco-hero-actions">
-              <Link
-                className="labuco-primary-cta"
-                href={`${basePath}/products`}
-              >
+              <Link className="labuco-primary-cta" href={`${basePath}/products`}>
                 Zobacz produkty <ArrowRight aria-hidden="true" />
               </Link>
-              <Link
-                className="labuco-secondary-cta"
-                href={`${basePath}/poradniki`}
-              >
+              <Link className="labuco-secondary-cta" href={`${basePath}/poradniki`}>
                 Poradniki uprawy <ArrowRight aria-hidden="true" />
               </Link>
             </div>
@@ -133,7 +125,7 @@ export default async function HomePage({ params }: HomePageProps) {
         </div>
       </section>
 
-      <section className="labuco-section" aria-labelledby="popular-categories">
+      <section className="labuco-section labuco-target-categories" aria-labelledby="popular-categories">
         <div className="labuco-shell">
           <div className="labuco-section-heading">
             <h2 id="popular-categories">Popularne kategorie</h2>
@@ -142,40 +134,24 @@ export default async function HomePage({ params }: HomePageProps) {
             </Link>
           </div>
           <div className="labuco-category-grid">
-            {categories.map(({ label, query, Icon }) => (
+            {categories.map(({ label, query }, index) => (
               <Link
                 key={label}
                 className="labuco-category-card"
                 href={`${basePath}/products?q=${encodeURIComponent(query)}`}
               >
-                <Icon aria-hidden="true" />
-                <span>{label}</span>
+                <span
+                  className={`labuco-category-photo labuco-category-photo-${index + 1}`}
+                  aria-hidden="true"
+                />
+                <span className="labuco-category-label">{label}</span>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      <section
-        className="labuco-trust-strip"
-        aria-label="Standard obsługi Labuco"
-      >
-        <div className="labuco-shell labuco-trust-grid">
-          {trustItems.map(({ title, copy, Icon }) => (
-            <div className="labuco-trust-item" key={title}>
-              <span className="labuco-trust-icon">
-                <Icon aria-hidden="true" />
-              </span>
-              <span>
-                <strong>{title}</strong>
-                <small>{copy}</small>
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="labuco-section" aria-labelledby="bestsellers">
+      <section className="labuco-section labuco-target-bestsellers" aria-labelledby="bestsellers">
         <div className="labuco-shell">
           <div className="labuco-section-heading">
             <h2 id="bestsellers">Bestsellery</h2>
@@ -194,7 +170,23 @@ export default async function HomePage({ params }: HomePageProps) {
         </div>
       </section>
 
-      <section className="labuco-section" aria-labelledby="guides">
+      <section className="labuco-trust-strip labuco-target-trust" aria-label="Dlaczego Labuco">
+        <div className="labuco-shell labuco-trust-grid">
+          {trustItems.map(({ title, copy, Icon }) => (
+            <div className="labuco-trust-item" key={title}>
+              <span className="labuco-trust-icon">
+                <Icon aria-hidden="true" />
+              </span>
+              <span>
+                <strong>{title}</strong>
+                <small>{copy}</small>
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="labuco-section labuco-target-guides" aria-labelledby="guides">
         <div className="labuco-shell">
           <div className="labuco-section-heading">
             <h2 id="guides">Poradniki i wiedza</h2>
@@ -213,7 +205,7 @@ export default async function HomePage({ params }: HomePageProps) {
                   src="/labuco/reference-guides.jpg"
                   alt=""
                   fill
-                  sizes="(max-width: 767px) 50vw, 25vw"
+                  sizes="(max-width: 767px) 25vw, 25vw"
                   style={{ objectPosition: guidePositions[index] }}
                 />
                 <span className="labuco-guide-copy">
@@ -227,7 +219,7 @@ export default async function HomePage({ params }: HomePageProps) {
           <div className="labuco-newsletter">
             <div className="labuco-newsletter-copy">
               <h3>Bądź zawsze na bieżąco</h3>
-              <p>Zapisz się i otrzymuj promocje, porady oraz nowości Labuco.</p>
+              <p>Zapisz się i otrzymuj promocje, porady oraz nowości.</p>
               <NewsletterForm />
             </div>
             <div className="labuco-newsletter-image" aria-hidden="true">
