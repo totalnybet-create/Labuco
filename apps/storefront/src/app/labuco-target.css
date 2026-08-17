@@ -1,19 +1,19 @@
 :root {
   --labuco-target-lime: #9fc600;
-  --labuco-target-lime-soft: #b4d61b;
-  --labuco-target-ink: #020d09;
-  --labuco-target-panel: #081b14;
-  --labuco-target-line: rgba(172, 211, 94, 0.2);
+  --labuco-target-lime-soft: #b7d92a;
+  --labuco-target-bg: #02100b;
+  --labuco-target-panel: #081a14;
+  --labuco-target-line: rgba(166, 204, 72, 0.22);
 }
 
-/* Final reference pass. This file intentionally contains only selectors tied to
-   the supplied LABUCO visual target so the commerce layer remains untouched. */
 .labuco-target-home {
-  background: #020d09;
+  display: flex;
+  flex-direction: column;
+  background: var(--labuco-target-bg);
 }
 
 .labuco-target-home .labuco-shell {
-  width: min(1280px, calc(100% - 48px));
+  width: min(1290px, calc(100% - 44px));
 }
 
 .labuco-logo-link svg {
@@ -26,145 +26,157 @@
   letter-spacing: 0.055em !important;
 }
 
+/* Hero: use a clean crop from the supplied master reference. */
 .labuco-target-hero {
-  min-height: 438px;
+  order: 1;
+  min-height: 286px;
   background: #020b08;
 }
 
-.labuco-target-hero::after {
-  background:
-    linear-gradient(90deg, #020d09 0%, rgba(2, 13, 9, 0.97) 29%, rgba(2, 13, 9, 0.68) 48%, rgba(2, 13, 9, 0.17) 72%, rgba(2, 13, 9, 0.02) 100%),
-    linear-gradient(0deg, rgba(2, 10, 7, 0.46), transparent 48%);
-}
-
 .labuco-target-hero .labuco-hero-visual {
-  inset: 0 0 0 39%;
+  inset: 0 0 0 43%;
+  background-image: url('data:image/webp;base64,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');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .labuco-target-hero .labuco-hero-image {
-  object-fit: cover;
-  object-position: center 47%;
-  filter: saturate(0.92) contrast(1.08) brightness(0.76);
+  display: none !important;
+}
+
+.labuco-target-hero::after {
+  background: linear-gradient(90deg, #020d09 0%, rgba(2, 13, 9, 0.98) 31%, rgba(2, 13, 9, 0.78) 43%, rgba(2, 13, 9, 0.18) 69%, transparent 100%);
 }
 
 .labuco-target-hero .labuco-hero-content {
-  width: min(590px, 51%);
-  padding: 47px 0 42px;
+  width: 48%;
+  padding: 28px 0 24px;
 }
 
 .labuco-target-hero .labuco-hero-eyebrow {
-  margin-bottom: 10px;
-  font-size: 10px;
-  letter-spacing: 0.15em;
+  margin-bottom: 7px;
+  font-size: 8px;
+  letter-spacing: 0.14em;
 }
 
 .labuco-target-hero h1 {
-  max-width: 520px;
-  font-size: clamp(42px, 4.2vw, 61px);
-  line-height: 0.99;
+  max-width: 12ch;
+  font-size: clamp(32px, 3.2vw, 46px);
+  line-height: 1.01;
 }
 
 .labuco-target-hero .labuco-hero-copy {
-  max-width: 380px;
-  margin-top: 17px;
-  font-size: 15px;
-  line-height: 1.45;
+  max-width: 345px;
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .labuco-target-hero .labuco-hero-benefits {
-  width: min(720px, 150%);
-  margin-top: 20px;
+  width: min(650px, 145%);
+  margin-top: 12px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 12px;
 }
 
 .labuco-target-hero .labuco-hero-benefits > span {
   min-width: 0;
   display: grid;
-  grid-template-columns: 23px minmax(0, 1fr);
+  grid-template-columns: 20px minmax(0, 1fr);
   grid-template-rows: auto auto;
-  column-gap: 8px;
-  row-gap: 1px;
+  column-gap: 6px;
   align-items: center;
 }
 
 .labuco-target-hero .labuco-hero-benefits svg {
   grid-row: 1 / 3;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   color: var(--labuco-target-lime);
 }
 
 .labuco-target-hero .labuco-hero-benefits b,
 .labuco-target-hero .labuco-hero-benefits small {
-  min-width: 0;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .labuco-target-hero .labuco-hero-benefits b {
   color: #fff;
-  font-size: 10px;
+  font-size: 8px;
   line-height: 1.1;
 }
 
 .labuco-target-hero .labuco-hero-benefits small {
   color: #aab5ad;
-  font-size: 8px;
+  font-size: 7px;
   line-height: 1.1;
 }
 
 .labuco-target-hero .labuco-hero-actions {
-  margin-top: 23px;
+  margin-top: 13px;
+  gap: 8px;
 }
 
 .labuco-target-hero .labuco-primary-cta,
 .labuco-target-hero .labuco-secondary-cta {
-  min-height: 46px;
-  border-radius: 8px;
-  font-size: 12px;
+  min-height: 39px;
+  padding-inline: 18px;
+  border-radius: 7px;
+  font-size: 10px;
 }
 
 .labuco-target-hero .labuco-primary-cta {
-  background: linear-gradient(135deg, #9fc600, #81aa00);
-  color: #071006;
-}
-
-.labuco-target-categories,
-.labuco-target-bestsellers,
-.labuco-target-guides {
-  background: #03110c;
+  background: linear-gradient(135deg, #a9cf0c, #86ad00);
+  color: #061006;
 }
 
 .labuco-target-categories {
-  padding-top: 24px;
-  padding-bottom: 22px;
+  order: 2;
+  padding: 14px 0;
+  background: #03110c;
+}
+
+.labuco-target-home .labuco-section-heading {
+  margin-bottom: 9px;
+}
+
+.labuco-target-home .labuco-section-heading h2 {
+  font-size: 19px;
+}
+
+.labuco-target-home .labuco-section-heading a {
+  color: var(--labuco-target-lime-soft);
+  font-size: 9px;
 }
 
 .labuco-target-categories .labuco-category-grid {
   grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .labuco-target-categories .labuco-category-card {
-  min-height: 138px;
-  justify-content: flex-start;
-  gap: 7px;
-  padding: 7px 7px 11px;
+  min-height: 96px;
+  padding: 5px 5px 7px;
+  gap: 3px;
   border-color: var(--labuco-target-line);
+  border-radius: 8px;
   background: linear-gradient(155deg, #0c2119, #071811);
 }
 
 .labuco-category-photo {
   width: 100%;
-  height: 88px;
+  height: 66px;
   display: block;
   flex: none;
-  border-radius: 8px;
+  border-radius: 6px;
   background-image: url('/labuco/reference-categories.jpg');
   background-repeat: no-repeat;
-  background-size: 400% 200%;
-  background-color: #0b1c15;
+  background-size: 400% 255%;
+  background-color: #091913;
 }
 
 .labuco-category-photo-1 { background-position: 0% 0%; }
@@ -177,43 +189,67 @@
 .labuco-category-photo-8 { background-position: 100% 100%; }
 
 .labuco-target-categories .labuco-category-label {
-  min-height: 28px;
+  min-height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #f7faf7;
-  font-size: 11px;
-  line-height: 1.12;
+  color: #fff;
+  font-size: 9px;
+  line-height: 1.05;
   font-weight: 700;
 }
 
 .labuco-target-bestsellers {
-  padding-top: 19px;
-  padding-bottom: 18px;
+  order: 4;
+  padding: 11px 0 13px;
+  background: #03110c;
 }
 
 .labuco-target-bestsellers .product-carousel .group.relative {
   background: linear-gradient(160deg, #0b2118, #071710) !important;
   border-color: var(--labuco-target-line) !important;
+  border-radius: 8px !important;
 }
 
-.labuco-target-bestsellers .product-carousel .group.relative > div:first-child {
-  background: #eef0eb !important;
+.labuco-target-bestsellers .product-carousel .aspect-square {
+  aspect-ratio: 1.35 / 1 !important;
+}
+
+.labuco-target-bestsellers .product-carousel .group.relative > div:nth-child(2) {
+  padding: 8px !important;
+}
+
+.labuco-target-bestsellers .product-carousel h3 {
+  min-height: 28px !important;
+  font-size: 10px !important;
+  line-height: 1.15 !important;
+}
+
+.labuco-target-bestsellers .product-carousel h3 + div {
+  margin-top: 5px !important;
+}
+
+.labuco-target-bestsellers .product-carousel h3 + div span:first-child {
+  font-size: 14px !important;
 }
 
 .labuco-target-bestsellers .labuco-card-cart {
+  min-height: 31px !important;
+  margin-top: 6px !important;
   color: #071006;
   background: linear-gradient(180deg, #a9cf12, #88b000);
+  font-size: 9px !important;
 }
 
 .labuco-target-trust {
-  width: min(1280px, calc(100% - 48px));
+  order: 3;
+  width: min(1290px, calc(100% - 44px));
   margin: 4px auto 0;
-  padding: 14px 12px;
+  padding: 8px 10px;
   color: #edf4ee;
   background: linear-gradient(135deg, #071b13, #04110c);
   border: 1px solid var(--labuco-target-line);
-  border-radius: 12px;
+  border-radius: 9px;
 }
 
 .labuco-target-trust .labuco-shell {
@@ -226,12 +262,12 @@
 }
 
 .labuco-target-trust .labuco-trust-item {
-  min-height: 62px;
+  min-height: 42px;
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
+  grid-template-columns: 30px minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
-  padding: 3px 18px;
+  gap: 7px;
+  padding: 2px 12px;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -240,73 +276,120 @@
 }
 
 .labuco-target-trust .labuco-trust-icon {
-  width: 38px;
-  height: 38px;
+  width: 28px;
+  height: 28px;
   color: var(--labuco-target-lime);
   background: transparent;
 }
 
 .labuco-target-trust .labuco-trust-icon svg {
-  width: 30px;
-  height: 30px;
+  width: 23px;
+  height: 23px;
 }
 
 .labuco-target-trust .labuco-trust-item strong {
   color: #fff;
-  font-size: 11px;
-  line-height: 1.15;
+  font-size: 8px;
+  line-height: 1.1;
 }
 
 .labuco-target-trust .labuco-trust-item small {
-  margin-top: 3px;
-  color: #98a69c;
-  font-size: 9px;
-  line-height: 1.25;
+  margin-top: 2px;
+  color: #9eaaa1;
+  font-size: 6.5px;
+  line-height: 1.15;
 }
 
 .labuco-target-guides {
-  padding-top: 22px;
-  padding-bottom: 24px;
+  order: 5;
+  padding: 12px 0 14px;
+  background: #03110c;
 }
 
 .labuco-target-guides .labuco-guide-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .labuco-target-guides .labuco-guide-card {
-  min-height: 145px;
+  min-height: 96px;
+  padding: 8px;
   border-color: var(--labuco-target-line);
+  border-radius: 7px;
 }
 
 .labuco-target-guides .labuco-guide-copy span {
   color: var(--labuco-target-lime-soft);
+  font-size: 6px;
+}
+
+.labuco-target-guides .labuco-guide-copy strong {
+  font-size: 9px;
+  line-height: 1.08;
 }
 
 .labuco-target-guides .labuco-newsletter {
-  min-height: 150px;
-  margin-top: 17px;
-  grid-template-columns: 1fr 36%;
+  min-height: 100px;
+  margin-top: 10px;
+  grid-template-columns: 1fr 35%;
   border-color: rgba(159, 198, 0, 0.3);
+  border-radius: 8px;
 }
 
 .labuco-target-guides .labuco-newsletter-copy {
-  padding: 20px 24px;
+  padding: 13px 18px;
 }
 
 .labuco-target-guides .labuco-newsletter h3 {
-  font-size: 22px;
+  font-size: 18px;
+  line-height: 1.05;
+}
+
+.labuco-target-guides .labuco-newsletter p {
+  margin: 4px 0 7px;
+  font-size: 8px;
+}
+
+.labuco-target-guides .labuco-newsletter-form {
+  min-height: 31px;
 }
 
 .labuco-target-guides .labuco-newsletter-image,
 .labuco-target-guides .labuco-newsletter-image img {
-  min-height: 150px;
+  min-height: 100px;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .labuco-target-bestsellers .product-carousel .swiper-slide {
     width: calc((100% - 55px) / 6) !important;
     margin-right: 11px !important;
+  }
+
+  footer > .container {
+    padding-top: 20px !important;
+    padding-bottom: 14px !important;
+  }
+
+  footer .grid {
+    gap: 18px !important;
+  }
+
+  footer p,
+  footer li,
+  footer a,
+  footer h3 {
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+  }
+
+  footer ul {
+    margin-top: 8px !important;
+    gap: 5px !important;
+  }
+
+  footer .mt-8 {
+    margin-top: 14px !important;
+    padding-top: 10px !important;
   }
 }
 
@@ -317,20 +400,20 @@
   }
 
   .labuco-service-bar {
-    min-height: 29px;
+    min-height: 27px;
     padding-inline: 8px;
-    font-size: 8px;
+    font-size: 7px;
     background: #020a07;
   }
 
   .labuco-service-bar svg {
-    width: 12px;
-    height: 12px;
+    width: 11px;
+    height: 11px;
   }
 
   .labuco-header-main {
-    padding: 9px 10px 11px;
-    gap: 7px 8px;
+    padding: 8px 10px 9px;
+    gap: 6px 8px;
   }
 
   .labuco-header-center {
@@ -347,233 +430,223 @@
   }
 
   .labuco-header-center .labuco-logo-link > span > span:last-child {
-    font-size: 19px !important;
+    font-size: 18px !important;
   }
 
   .labuco-header-right {
-    gap: 1px;
+    gap: 0;
   }
 
   .labuco-header-action,
   .labuco-cart-action {
-    min-width: 38px;
-    font-size: 8px;
+    min-width: 36px;
+    font-size: 7px;
   }
 
   .labuco-header-action svg,
   .labuco-cart-action svg {
-    width: 21px;
-    height: 21px;
+    width: 20px;
+    height: 20px;
   }
 
   .labuco-header-search form,
   .labuco-header-search [data-slot="input-group"] {
-    min-height: 46px;
-    height: 46px;
+    min-height: 44px;
+    height: 44px;
   }
 
   .labuco-header-search input {
-    min-height: 44px;
-    font-size: 12px;
+    min-height: 42px;
+    font-size: 11px;
   }
 
   .labuco-header-search button[type="submit"],
   .labuco-header-search [data-slot="input-group-addon"] {
-    min-width: 48px;
-    width: 48px;
-    min-height: 44px;
+    width: 47px;
+    min-width: 47px;
+    min-height: 42px;
     background: linear-gradient(180deg, #a8cf0c, #88b100) !important;
   }
 
   .labuco-target-home .labuco-shell {
-    width: calc(100% - 22px);
+    width: calc(100% - 20px);
   }
 
   .labuco-target-hero {
-    min-height: 405px;
-  }
-
-  .labuco-target-hero::after {
-    background:
-      linear-gradient(90deg, #020d09 0%, rgba(2, 13, 9, 0.98) 39%, rgba(2, 13, 9, 0.65) 58%, rgba(2, 13, 9, 0.13) 88%),
-      linear-gradient(0deg, rgba(2, 10, 7, 0.54), transparent 50%);
+    min-height: 292px;
   }
 
   .labuco-target-hero .labuco-hero-visual {
-    inset: 0 -11% 0 42%;
+    inset: 0 -20% 0 43%;
+    background-position: 43% center;
   }
 
-  .labuco-target-hero .labuco-hero-image {
-    object-position: 52% center;
-    filter: saturate(0.9) contrast(1.08) brightness(0.71);
+  .labuco-target-hero::after {
+    background: linear-gradient(90deg, #020d09 0%, rgba(2, 13, 9, 0.99) 39%, rgba(2, 13, 9, 0.76) 55%, rgba(2, 13, 9, 0.13) 90%);
   }
 
   .labuco-target-hero .labuco-hero-content {
-    width: 57%;
-    padding: 24px 0 19px;
+    width: 54%;
+    padding: 18px 0 14px;
   }
 
   .labuco-target-hero .labuco-hero-eyebrow {
-    margin-bottom: 7px;
-    font-size: 7px;
-    gap: 5px;
+    margin-bottom: 5px;
+    font-size: 6px;
+    gap: 4px;
   }
 
   .labuco-target-hero .labuco-hero-eyebrow svg {
-    width: 15px;
-    height: 15px;
+    width: 13px;
+    height: 13px;
   }
 
   .labuco-target-hero h1 {
-    max-width: 8.8ch;
-    font-size: clamp(27px, 7.7vw, 32px);
-    line-height: 1.01;
+    max-width: 13ch;
+    font-size: 24px;
+    line-height: 1.02;
   }
 
   .labuco-target-hero h1 span {
-    margin-top: 4px;
+    margin-top: 2px;
   }
 
   .labuco-target-hero .labuco-hero-copy {
-    width: 96%;
-    margin-top: 12px;
-    font-size: 10px;
-    line-height: 1.45;
+    width: 95%;
+    margin-top: 8px;
+    font-size: 8px;
+    line-height: 1.35;
   }
 
   .labuco-target-hero .labuco-hero-benefits {
-    width: min(348px, 174%);
-    margin-top: 14px;
-    gap: 8px;
+    width: min(350px, 180%);
+    margin-top: 9px;
+    gap: 7px;
   }
 
   .labuco-target-hero .labuco-hero-benefits > span {
-    grid-template-columns: 16px minmax(0, 1fr);
-    column-gap: 5px;
+    grid-template-columns: 14px minmax(0, 1fr);
+    column-gap: 4px;
   }
 
   .labuco-target-hero .labuco-hero-benefits svg {
-    width: 15px;
-    height: 15px;
+    width: 13px;
+    height: 13px;
   }
 
   .labuco-target-hero .labuco-hero-benefits b {
-    font-size: 7px;
+    font-size: 6.4px;
   }
 
   .labuco-target-hero .labuco-hero-benefits small {
-    font-size: 5.8px;
+    font-size: 5.3px;
   }
 
   .labuco-target-hero .labuco-hero-actions {
-    width: min(348px, 174%);
-    margin-top: 15px;
-    gap: 8px;
+    width: min(345px, 179%);
+    margin-top: 10px;
+    gap: 7px;
     flex-wrap: nowrap;
   }
 
   .labuco-target-hero .labuco-primary-cta,
   .labuco-target-hero .labuco-secondary-cta {
-    min-height: 42px;
-    padding-inline: 11px;
-    font-size: 9px;
-    gap: 5px;
-  }
-
-  .labuco-target-hero .labuco-primary-cta svg,
-  .labuco-target-hero .labuco-secondary-cta svg {
-    width: 14px;
-    height: 14px;
-  }
-
-  .labuco-target-categories,
-  .labuco-target-bestsellers,
-  .labuco-target-guides {
-    padding: 18px 0;
-  }
-
-  .labuco-target-home .labuco-section-heading {
-    margin-bottom: 10px;
-  }
-
-  .labuco-target-home .labuco-section-heading h2 {
-    font-size: 17px;
-  }
-
-  .labuco-target-home .labuco-section-heading a {
+    min-height: 35px;
+    padding-inline: 10px;
     font-size: 8px;
     gap: 4px;
   }
 
-  .labuco-target-home .labuco-section-heading a svg {
+  .labuco-target-hero .labuco-primary-cta svg,
+  .labuco-target-hero .labuco-secondary-cta svg {
     width: 12px;
     height: 12px;
   }
 
+  .labuco-target-home .labuco-section-heading {
+    margin-bottom: 8px;
+  }
+
+  .labuco-target-home .labuco-section-heading h2 {
+    font-size: 16px;
+  }
+
+  .labuco-target-home .labuco-section-heading a {
+    font-size: 7px;
+    gap: 3px;
+  }
+
+  .labuco-target-categories {
+    padding: 13px 0;
+  }
+
   .labuco-target-categories .labuco-category-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 7px;
+    gap: 6px;
   }
 
   .labuco-target-categories .labuco-category-card {
-    min-height: 108px;
-    padding: 5px 5px 8px;
-    gap: 5px;
-    border-radius: 8px;
+    min-height: 86px;
+    padding: 4px 4px 6px;
+    gap: 2px;
   }
 
   .labuco-category-photo {
-    height: 70px;
-    border-radius: 6px;
+    height: 58px;
   }
 
   .labuco-target-categories .labuco-category-label {
-    min-height: 24px;
-    font-size: 8px;
-    line-height: 1.08;
+    min-height: 18px;
+    font-size: 7.5px;
   }
 
-  .labuco-target-bestsellers .product-carousel .swiper-slide {
-    width: calc((100% - 9px) / 2) !important;
-    margin-right: 9px !important;
-  }
-
-  .labuco-target-bestsellers .product-carousel .group.relative {
-    border-radius: 9px !important;
-  }
-
-  .labuco-target-bestsellers .product-carousel h3,
-  .labuco-target-bestsellers .product-carousel h3 a {
-    font-size: 10px !important;
-    line-height: 1.18 !important;
-  }
-
-  .labuco-target-bestsellers .labuco-card-cart {
-    min-height: 34px;
-    font-size: 9px;
+  .labuco-target-bestsellers {
+    order: 3;
+    padding: 11px 0 12px;
   }
 
   .labuco-target-trust {
-    width: calc(100% - 22px);
-    margin-top: 1px;
-    padding: 10px 7px;
-    border-radius: 9px;
+    order: 4;
+    width: calc(100% - 20px);
+    margin-top: 0;
+    padding: 7px 5px;
+  }
+
+  .labuco-target-bestsellers .product-carousel .swiper-slide {
+    width: calc((100% - 8px) / 2) !important;
+    margin-right: 8px !important;
+  }
+
+  .labuco-target-bestsellers .product-carousel .aspect-square {
+    aspect-ratio: 1.22 / 1 !important;
+  }
+
+  .labuco-target-bestsellers .product-carousel .group.relative > div:nth-child(2) {
+    padding: 8px !important;
+  }
+
+  .labuco-target-bestsellers .product-carousel h3 {
+    min-height: 27px !important;
+    font-size: 9px !important;
+  }
+
+  .labuco-target-bestsellers .product-carousel h3 + div span:first-child {
+    font-size: 13px !important;
   }
 
   .labuco-target-trust .labuco-trust-grid {
-    width: 100%;
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .labuco-target-trust .labuco-trust-item,
   .labuco-target-trust .labuco-trust-item:first-child,
   .labuco-target-trust .labuco-trust-item:last-child {
-    min-height: 74px;
+    min-height: 62px;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    gap: 4px;
-    padding: 4px 5px;
+    gap: 3px;
+    padding: 3px 4px;
     border-right: 1px solid rgba(255, 255, 255, 0.07);
     text-align: center;
   }
@@ -583,83 +656,84 @@
   }
 
   .labuco-target-trust .labuco-trust-icon {
-    width: 27px;
-    height: 27px;
+    width: 24px;
+    height: 24px;
   }
 
   .labuco-target-trust .labuco-trust-icon svg {
-    width: 23px;
-    height: 23px;
+    width: 20px;
+    height: 20px;
   }
 
   .labuco-target-trust .labuco-trust-item strong {
-    font-size: 7px;
-    line-height: 1.08;
+    font-size: 6.3px;
+    line-height: 1.04;
   }
 
   .labuco-target-trust .labuco-trust-item small {
     margin-top: 1px;
-    font-size: 5.7px;
-    line-height: 1.15;
+    font-size: 5px;
+    line-height: 1.08;
+  }
+
+  .labuco-target-guides {
+    padding: 12px 0 13px;
   }
 
   .labuco-target-guides .labuco-guide-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
+    gap: 5px;
   }
 
   .labuco-target-guides .labuco-guide-card {
-    min-height: 94px;
-    padding: 7px;
-    border-radius: 7px;
+    min-height: 78px;
+    padding: 6px;
   }
 
   .labuco-target-guides .labuco-guide-copy span {
-    margin-bottom: 3px;
-    font-size: 5.5px;
+    margin-bottom: 2px;
+    font-size: 4.8px;
   }
 
   .labuco-target-guides .labuco-guide-copy strong {
-    font-size: 7px;
-    line-height: 1.1;
+    font-size: 6.5px;
+    line-height: 1.05;
   }
 
   .labuco-target-guides .labuco-newsletter {
-    min-height: 116px;
-    margin-top: 12px;
-    grid-template-columns: 1fr 38%;
-    border-radius: 8px;
+    min-height: 92px;
+    margin-top: 9px;
+    grid-template-columns: 1fr 37%;
   }
 
   .labuco-target-guides .labuco-newsletter-copy {
-    padding: 12px 13px;
+    padding: 10px 12px;
   }
 
   .labuco-target-guides .labuco-newsletter h3 {
-    max-width: 12ch;
-    font-size: 15px;
-    line-height: 1.08;
+    max-width: 13ch;
+    font-size: 14px;
   }
 
   .labuco-target-guides .labuco-newsletter p {
-    margin: 4px 0 8px;
-    font-size: 7px;
+    margin: 3px 0 6px;
+    font-size: 6px;
   }
 
   .labuco-target-guides .labuco-newsletter-form {
-    width: min(210px, 100%);
-    min-height: 31px;
-    grid-template-columns: 28px 1fr 34px;
+    width: min(205px, 100%);
+    min-height: 27px;
+    grid-template-columns: 24px 1fr 31px;
   }
 
   .labuco-target-guides .labuco-newsletter-form input {
-    height: 29px;
-    font-size: 8px;
+    height: 26px;
+    font-size: 7px;
   }
 
   .labuco-target-guides .labuco-newsletter-image,
   .labuco-target-guides .labuco-newsletter-image img {
-    min-height: 116px;
+    min-height: 92px;
   }
 
   footer {
@@ -667,20 +741,20 @@
   }
 
   .labuco-bottom-nav {
-    min-height: 60px;
-    padding: 5px 5px calc(5px + env(safe-area-inset-bottom));
-    background: rgba(1, 11, 7, 0.985);
+    min-height: 58px;
+    padding: 4px 5px calc(4px + env(safe-area-inset-bottom));
+    background: rgba(1, 11, 7, 0.99);
     border-top-color: rgba(159, 198, 0, 0.28);
   }
 
   .labuco-bottom-nav a,
   .labuco-bottom-nav button {
     gap: 2px;
-    font-size: 8px;
+    font-size: 7px;
   }
 
   .labuco-bottom-nav svg {
-    width: 20px;
-    height: 20px;
+    width: 19px;
+    height: 19px;
   }
 }
