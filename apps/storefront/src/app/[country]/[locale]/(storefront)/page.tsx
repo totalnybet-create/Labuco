@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   Award,
+  Flame,
   ShieldCheck,
   Sprout,
   Users,
@@ -117,6 +118,11 @@ export default async function HomePage({ params }: HomePageProps) {
                 <b>Bezpieczne płatności</b>
                 <small>SSL i zaufane metody</small>
               </span>
+              <span className="labuco-hero-support">
+                <Users aria-hidden="true" />
+                <b>Wsparcie ekspertów</b>
+                <small>Na każdym etapie</small>
+              </span>
             </div>
             <div className="labuco-hero-actions">
               <Link className="labuco-primary-cta" href={`${basePath}/products`}>
@@ -156,6 +162,14 @@ export default async function HomePage({ params }: HomePageProps) {
                 <span className="labuco-category-label">{label}</span>
               </Link>
             ))}
+            <Link className="labuco-category-deals" href={`${basePath}/products`}>
+              <Flame aria-hidden="true" />
+              <span>
+                <strong>Strefa okazji</strong>
+                <small>Sprawdź najlepsze deale i promocje</small>
+              </span>
+              <ArrowRight aria-hidden="true" />
+            </Link>
           </div>
         </div>
       </section>
@@ -203,41 +217,43 @@ export default async function HomePage({ params }: HomePageProps) {
               Zobacz wszystkie <ArrowRight aria-hidden="true" />
             </Link>
           </div>
-          <div className="labuco-guide-grid">
-            {GUIDE_ARTICLES.slice(0, 4).map((guide, index) => (
-              <Link
-                key={guide.slug}
-                className="labuco-guide-card"
-                href={`${basePath}/poradniki/${guide.slug}`}
-              >
+          <div className="labuco-guide-news-row">
+            <div className="labuco-guide-grid">
+              {GUIDE_ARTICLES.slice(0, 4).map((guide, index) => (
+                <Link
+                  key={guide.slug}
+                  className="labuco-guide-card"
+                  href={`${basePath}/poradniki/${guide.slug}`}
+                >
+                  <Image
+                    src="/labuco/reference-guides.jpg"
+                    alt=""
+                    fill
+                    sizes="(max-width: 767px) 25vw, 18vw"
+                    style={{ objectPosition: guidePositions[index] }}
+                  />
+                  <span className="labuco-guide-copy">
+                    <span>{guide.kicker}</span>
+                    <strong>{guide.title}</strong>
+                  </span>
+                </Link>
+              ))}
+            </div>
+
+            <div className="labuco-newsletter">
+              <div className="labuco-newsletter-copy">
+                <h3>Bądź zawsze na bieżąco</h3>
+                <p>Zapisz się i otrzymuj promocje, porady oraz nowości.</p>
+                <NewsletterForm />
+              </div>
+              <div className="labuco-newsletter-image" aria-hidden="true">
                 <Image
-                  src="/labuco/reference-guides.jpg"
+                  src="/labuco/reference-newsletter.jpg"
                   alt=""
                   fill
-                  sizes="(max-width: 767px) 25vw, 25vw"
-                  style={{ objectPosition: guidePositions[index] }}
+                  sizes="(max-width: 767px) 34vw, 18vw"
                 />
-                <span className="labuco-guide-copy">
-                  <span>{guide.kicker}</span>
-                  <strong>{guide.title}</strong>
-                </span>
-              </Link>
-            ))}
-          </div>
-
-          <div className="labuco-newsletter">
-            <div className="labuco-newsletter-copy">
-              <h3>Bądź zawsze na bieżąco</h3>
-              <p>Zapisz się i otrzymuj promocje, porady oraz nowości.</p>
-              <NewsletterForm />
-            </div>
-            <div className="labuco-newsletter-image" aria-hidden="true">
-              <Image
-                src="/labuco/reference-newsletter.jpg"
-                alt=""
-                fill
-                sizes="(max-width: 767px) 34vw, 38vw"
-              />
+              </div>
             </div>
           </div>
         </div>
