@@ -26,7 +26,7 @@ const desktopLinks = [
   ["Promocje", "/products"],
   ["Poradniki", "/poradniki"],
   ["Marki", "/products"],
-  ["Kontakt", "/contact"],
+  ["Kontakt", ""],
 ] as const;
 
 export function SearchToggle({
