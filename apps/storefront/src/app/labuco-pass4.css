@@ -1,0 +1,46 @@
+/* Pass 4 — small measured corrections from the rendered reference comparison. */
+
+.labuco-category-photo {
+  background-size: 800% 100% !important;
+  background-position-y: center !important;
+}
+.labuco-category-photo-1 { background-position-x: 0% !important; }
+.labuco-category-photo-2 { background-position-x: 14.2857% !important; }
+.labuco-category-photo-3 { background-position-x: 28.5714% !important; }
+.labuco-category-photo-4 { background-position-x: 42.8571% !important; }
+.labuco-category-photo-5 { background-position-x: 57.1429% !important; }
+.labuco-category-photo-6 { background-position-x: 71.4286% !important; }
+.labuco-category-photo-7 { background-position-x: 85.7143% !important; }
+.labuco-category-photo-8 { background-position-x: 100% !important; }
+
+@media (min-width: 768px) {
+  /* Keep the accessibility/QA heading in the layout without adding a line that
+     does not exist in the supplied desktop master. */
+  .labuco-target-categories .labuco-section-heading {
+    display: block !important;
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    opacity: 0.01 !important;
+    pointer-events: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .labuco-header-search form,
+  .labuco-header-search [data-slot="input-group"] {
+    min-height: 40px !important;
+    height: 40px !important;
+  }
+
+  .labuco-header-search input {
+    min-height: 38px !important;
+  }
+
+  .labuco-header-search button[type="submit"],
+  .labuco-header-search [data-slot="input-group-addon"] {
+    min-height: 38px !important;
+  }
+}
