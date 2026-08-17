@@ -1,6 +1,13 @@
 "use client";
 
-import { CreditCard, Flame, Grid2X2, ShieldCheck, Truck } from "lucide-react";
+import {
+  CircleHelp,
+  CreditCard,
+  Flame,
+  Grid2X2,
+  ShieldCheck,
+  Truck,
+} from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SearchBar } from "@/components/search/SearchBar";
@@ -14,7 +21,7 @@ interface SearchToggleProps {
 }
 
 const desktopLinks = [
-  ["Sklep", "/products"],
+  ["Produkty", "/products"],
   ["Nowości", "/products"],
   ["Promocje", "/products"],
   ["Poradniki", "/poradniki"],
@@ -39,6 +46,9 @@ export function SearchToggle({
         </span>
         <span>
           <Truck aria-hidden="true" /> Szybka dostawa
+        </span>
+        <span className="labuco-service-support">
+          <CircleHelp aria-hidden="true" /> Wsparcie i porady
         </span>
       </div>
 
