@@ -1,7 +1,7 @@
 import type { Category } from "@spree/sdk";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { isTransactionalCommerceEnabled } from "@/lib/commerce/config";
 import { POLICY_LINKS } from "@/lib/constants/policies";
 import { getStoreDescription, getStoreName } from "@/lib/store";
@@ -10,6 +10,11 @@ import { CurrentYear } from "./CurrentYear";
 
 const storeName = getStoreName();
 const storeDescription = getStoreDescription();
+const desktopFooterGrid: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "1.4fr repeat(5, minmax(0, .75fr))",
+  gap: "18px",
+};
 
 interface FooterProps {
   basePath: string;
@@ -46,7 +51,7 @@ export async function Footer({ basePath, locale, categoryLinks }: FooterProps) {
   return (
     <footer className="bg-primary pb-[calc(68px+env(safe-area-inset-bottom))] text-gray-300 md:pb-0">
       <div className="container mx-auto px-4 py-8 sm:px-6 md:py-12 lg:px-8">
-        <div className="labuco-footer-grid grid grid-cols-1 gap-8 md:grid-cols-6">
+        <div className="labuco-footer-grid" style={desktopFooterGrid}>
           <div className="labuco-footer-brand">
             <BrandLogo name={storeName} inverted />
             <p className="mt-4 max-w-md text-neutral-400">
