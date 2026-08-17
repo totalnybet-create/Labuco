@@ -38,6 +38,8 @@ class LabucoSpreeImportTests(unittest.TestCase):
         self.assertEqual(payload["description"], "Krótki opis.\n\nPełny opis produktu.")
         self.assertEqual(payload["category_ids"], ["category-1"])
         self.assertEqual(payload["status"], "draft")
+        self.assertEqual(payload["sku"], "LAB-TEST-001")
+        self.assertEqual(payload["price"], 120.9)
         self.assertEqual(
             payload["variants"],
             [
@@ -45,8 +47,9 @@ class LabucoSpreeImportTests(unittest.TestCase):
                     "sku": "LAB-TEST-001",
                     "cost_price": "100.00",
                     "cost_currency": "PLN",
+                    "track_inventory": False,
                     "options": [],
-                    "prices": [{"amount": "120.90", "currency": "PLN"}],
+                    "prices": [{"amount": 120.9, "currency": "PLN"}],
                 }
             ],
         )
