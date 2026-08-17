@@ -71,6 +71,8 @@ export function ProductCarousel({
         768: { slidesPerView: 3, spaceBetween: 24 },
         1024: { slidesPerView: 4, spaceBetween: 24 },
       };
+  const prevEdgeClass = appearance === "labuco" ? "left-0 sm:-left-5" : "-left-5";
+  const nextEdgeClass = appearance === "labuco" ? "right-0 sm:-right-5" : "-right-5";
 
   return (
     <div className="relative">
@@ -79,7 +81,7 @@ export function ProductCarousel({
         type="button"
         aria-label={t("carouselPrev")}
         disabled={isBeginning}
-        className={`${NAV_BUTTON_BASE} -left-5 ${isBeginning ? "opacity-0" : ""}`}
+        className={`${NAV_BUTTON_BASE} ${prevEdgeClass} ${isBeginning ? "opacity-0" : ""}`}
       >
         <ChevronLeft className="w-5 h-5" />
       </button>
@@ -88,7 +90,7 @@ export function ProductCarousel({
         type="button"
         aria-label={t("carouselNext")}
         disabled={isEnd}
-        className={`${NAV_BUTTON_BASE} -right-5 ${isEnd ? "opacity-0" : ""}`}
+        className={`${NAV_BUTTON_BASE} ${nextEdgeClass} ${isEnd ? "opacity-0" : ""}`}
       >
         <ChevronRight className="w-5 h-5" />
       </button>
