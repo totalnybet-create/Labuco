@@ -71,8 +71,10 @@ export function ProductCarousel({
         768: { slidesPerView: 3, spaceBetween: 24 },
         1024: { slidesPerView: 4, spaceBetween: 24 },
       };
-  const prevEdgeClass = appearance === "labuco" ? "left-0 sm:-left-5" : "-left-5";
-  const nextEdgeClass = appearance === "labuco" ? "right-0 sm:-right-5" : "-right-5";
+  const prevEdgeClass =
+    appearance === "labuco" ? "left-0 sm:-left-5" : "-left-5";
+  const nextEdgeClass =
+    appearance === "labuco" ? "right-0 sm:-right-5" : "-right-5";
 
   return (
     <div className="relative">
