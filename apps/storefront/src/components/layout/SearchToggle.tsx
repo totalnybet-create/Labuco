@@ -1,20 +1,16 @@
 "use client";
 
-import { CreditCard, ShieldCheck, Truck } from "lucide-react";
-import dynamic from "next/dynamic";
+import {
+  CircleHelp,
+  CreditCard,
+  Flame,
+  Grid2X2,
+  ShieldCheck,
+  Truck,
+} from "lucide-react";
+import Link from "next/link";
 import type { ReactNode } from "react";
-
-const SearchBar = dynamic(
-  () =>
-    import("@/components/search/SearchBar").then((mod) => ({
-      default: mod.SearchBar,
-    })),
-  {
-    loading: () => (
-      <div className="labuco-search-skeleton" aria-hidden="true" />
-    ),
-  },
-);
+import { SearchBar } from "@/components/search/SearchBar";
 
 interface SearchToggleProps {
   basePath: string;
@@ -23,6 +19,15 @@ interface SearchToggleProps {
   rightStart: ReactNode;
   rightEnd: ReactNode;
 }
+
+const desktopLinks = [
+  ["Produkty", "/products"],
+  ["Nowości", "/products"],
+  ["Promocje", "/products"],
+  ["Poradniki", "/poradniki"],
+  ["Marki", "/products"],
+  ["Kontakt", ""],
+] as const;
 
 export function SearchToggle({
   basePath,
@@ -43,20 +48,40 @@ export function SearchToggle({
         <span>
           <Truck aria-hidden="true" /> Szybka dostawa
         </span>
+        <span className="labuco-service-support">
+          <CircleHelp aria-hidden="true" /> Wsparcie i porady
+        </span>
       </div>
 
       <div className="labuco-header-main">
         <div className="labuco-header-left">{left}</div>
         <div className="labuco-header-center">{center}</div>
+        <div className="labuco-header-search">
+          <SearchBar basePath={basePath} />
+        </div>
         <div className="labuco-header-right">
           {rightStart}
           {rightEnd}
         </div>
       </div>
 
-      <div className="labuco-header-search">
-        <SearchBar basePath={basePath} />
-      </div>
+      <nav className="labuco-desktop-nav" aria-label="Główna nawigacja">
+        <div className="labuco-desktop-nav-inner">
+          <Link className="labuco-nav-categories" href={`${basePath}/products`}>
+            <Grid2X2 aria-hidden="true" />
+            Wszystkie kategorie
+          </Link>
+          {desktopLinks.map(([label, href]) => (
+            <Link key={label} href={`${basePath}${href}`}>
+              {label}
+            </Link>
+          ))}
+          <Link className="labuco-nav-deals" href={`${basePath}/products`}>
+            <Flame aria-hidden="true" />
+            Strefa Okazji
+          </Link>
+        </div>
+      </nav>
     </header>
   );
 }

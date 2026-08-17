@@ -12,6 +12,10 @@ Spree Admin API v3 keeps purchasable fields on variants. For a simple product,
 an inline variant with an empty ``options`` array addresses the auto-created
 master variant. The importer uses that documented shape and performs a
 follow-up PATCH after creation so SKU, price and cost are enforced reliably.
+
+Until supplier inventory synchronization is wired into the import contract,
+imported variants explicitly disable inventory tracking. This keeps active
+catalog items purchasable instead of creating zero-stock products by accident.
 """
 
 from __future__ import annotations
@@ -71,15 +75,22 @@ def build_description(record: dict[str, Any]) -> str:
     return full
 
 
+def numeric_amount(value: Any) -> float:
+    """Return a JSON numeric major-unit amount accepted by Spree Admin API v3."""
+    normalized = str(value).strip().replace(" ", "").replace(",", ".")
+    return round(float(normalized), 2)
+
+
 def commercial_variant(record: dict[str, Any]) -> dict[str, Any]:
     return {
         "sku": str(record["labuco_sku"]),
         "cost_price": str(record["wholesale_cost_pln"]),
         "cost_currency": "PLN",
+        "track_inventory": False,
         "options": [],
         "prices": [
             {
-                "amount": str(record["labuco_price_pln"]),
+                "amount": numeric_amount(record["labuco_price_pln"]),
                 "currency": "PLN",
             }
         ],
@@ -104,6 +115,8 @@ def build_payload(record: dict[str, Any], category_map: dict[str, str], active: 
         "name": record["title"],
         "description": build_description(record),
         "status": "active" if active else "draft",
+        "sku": str(record["labuco_sku"]),
+        "price": numeric_amount(record["labuco_price_pln"]),
         "tags": tags,
         "variants": [commercial_variant(record)],
     }
@@ -125,7 +138,7 @@ def request_json(
     headers = {
         "Accept": "application/json",
         "x-spree-api-key": api_key,
-        "User-Agent": "LabucoCatalogImporter/1.2",
+        "User-Agent": "LabucoCatalogImporter/1.3",
     }
     if payload is not None:
         headers["Content-Type"] = "application/json"

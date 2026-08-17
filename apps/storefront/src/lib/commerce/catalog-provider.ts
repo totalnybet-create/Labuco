@@ -169,6 +169,25 @@ export function mapCatalogRecordToProduct(record: CatalogRecord): Product {
       ]
     : [];
 
+  const customFields = [
+    record.brand?.trim()
+      ? {
+          id: `catalog-brand-${record.labuco_sku}`,
+          label: "Marka",
+          field_type: "short_text",
+          value: record.brand.trim(),
+        }
+      : null,
+    record.source_id?.trim()
+      ? {
+          id: `catalog-source-${record.labuco_sku}`,
+          label: "ID źródłowe",
+          field_type: "short_text",
+          value: record.source_id.trim(),
+        }
+      : null,
+  ].filter(Boolean);
+
   return {
     id: record.labuco_sku,
     name: record.title,
@@ -188,10 +207,7 @@ export function mapCatalogRecordToProduct(record: CatalogRecord): Product {
     price,
     original_price: null,
     categories: category ? [category] : [],
-    custom_fields: {
-      brand: record.brand || "",
-      source_id: record.source_id || "",
-    },
+    custom_fields: customFields,
   } as unknown as Product;
 }
 

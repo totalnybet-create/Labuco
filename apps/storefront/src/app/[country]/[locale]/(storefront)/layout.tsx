@@ -1,10 +1,11 @@
-import "@/app/labuco.css";
-import "@/app/labuco-products.css";
-import "@/app/labuco-hotfix.css";
 import type { Category } from "@spree/sdk";
 import Link from "next/link";
 import { connection } from "next/server";
 import { cache, Suspense } from "react";
+import "@/app/labuco-theme.css";
+import "@/app/labuco-target.css";
+import "@/app/labuco-match.css";
+import "@/app/labuco-pass4.css";
 import { Footer, FooterCategoryLinks } from "@/components/layout/Footer";
 import { Header, HeaderMobileMenu } from "@/components/layout/Header";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
@@ -120,7 +121,7 @@ export default async function StorefrontLayout({
   const basePath = `/${country}/${locale}`;
 
   return (
-    <>
+    <div className="labuco-storefront-frame flex min-h-screen flex-col bg-[#03110c] text-white">
       <Header
         basePath={basePath}
         locale={locale as Locale}
@@ -141,7 +142,7 @@ export default async function StorefrontLayout({
           locale={locale}
         />
       </Suspense>
-      <main className="flex-1 labuco-storefront-main">{children}</main>
+      <main className="min-w-0 flex-1">{children}</main>
       <Footer
         basePath={basePath}
         locale={locale as Locale}
@@ -156,6 +157,6 @@ export default async function StorefrontLayout({
         }
       />
       <MobileBottomNav basePath={basePath} />
-    </>
+    </div>
   );
 }

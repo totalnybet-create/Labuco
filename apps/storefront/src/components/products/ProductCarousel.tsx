@@ -18,6 +18,8 @@ interface ProductCarouselProps {
   /** Optional currency used for analytics in each ProductCard. */
   currency?: string;
   showQuickAdd?: boolean;
+  compact?: boolean;
+  appearance?: "default" | "labuco";
 }
 
 const NAV_BUTTON_BASE =
@@ -28,6 +30,8 @@ export function ProductCarousel({
   basePath,
   currency,
   showQuickAdd = false,
+  compact = false,
+  appearance = "default",
 }: ProductCarouselProps): ReactElement {
   const t = useTranslations("products");
   const [isBeginning, setIsBeginning] = useState(true);
@@ -56,6 +60,22 @@ export function ProductCarousel({
     );
   }
 
+  const breakpoints = compact
+    ? {
+        640: { slidesPerView: 3, spaceBetween: 14 },
+        768: { slidesPerView: 4, spaceBetween: 16 },
+        1024: { slidesPerView: 5, spaceBetween: 18 },
+      }
+    : {
+        640: { slidesPerView: 2, spaceBetween: 24 },
+        768: { slidesPerView: 3, spaceBetween: 24 },
+        1024: { slidesPerView: 4, spaceBetween: 24 },
+      };
+  const prevEdgeClass =
+    appearance === "labuco" ? "left-0 sm:-left-5" : "-left-5";
+  const nextEdgeClass =
+    appearance === "labuco" ? "right-0 sm:-right-5" : "-right-5";
+
   return (
     <div className="relative">
       <button
@@ -63,7 +83,7 @@ export function ProductCarousel({
         type="button"
         aria-label={t("carouselPrev")}
         disabled={isBeginning}
-        className={`${NAV_BUTTON_BASE} -left-5 ${isBeginning ? "opacity-0" : ""}`}
+        className={`${NAV_BUTTON_BASE} ${prevEdgeClass} ${isBeginning ? "opacity-0" : ""}`}
       >
         <ChevronLeft className="w-5 h-5" />
       </button>
@@ -72,14 +92,14 @@ export function ProductCarousel({
         type="button"
         aria-label={t("carouselNext")}
         disabled={isEnd}
-        className={`${NAV_BUTTON_BASE} -right-5 ${isEnd ? "opacity-0" : ""}`}
+        className={`${NAV_BUTTON_BASE} ${nextEdgeClass} ${isEnd ? "opacity-0" : ""}`}
       >
         <ChevronRight className="w-5 h-5" />
       </button>
       <SwiperComponent
         modules={[Navigation]}
-        spaceBetween={24}
-        slidesPerView={1}
+        spaceBetween={compact ? 10 : 24}
+        slidesPerView={compact ? 2 : 1}
         navigation={{
           prevEl: prevRef.current,
           nextEl: nextRef.current,
@@ -89,11 +109,7 @@ export function ProductCarousel({
         onReachBeginning={updateNavState}
         onReachEnd={updateNavState}
         onAfterInit={updateNavState}
-        breakpoints={{
-          640: { slidesPerView: 2, spaceBetween: 24 },
-          768: { slidesPerView: 3, spaceBetween: 24 },
-          1024: { slidesPerView: 4, spaceBetween: 24 },
-        }}
+        breakpoints={breakpoints}
         className="product-carousel"
       >
         {products.map((product, index) => (
@@ -107,6 +123,7 @@ export function ProductCarousel({
               currency={currency}
               fetchPriority={index === 0 ? "high" : undefined}
               showQuickAdd={showQuickAdd}
+              appearance={appearance}
             />
           </SwiperSlide>
         ))}

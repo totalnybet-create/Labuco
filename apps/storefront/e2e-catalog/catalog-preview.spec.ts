@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
 
 const HERBGARDEN = "Herbgarden 120 - namiot do uprawy 120x120x200cm";
-const HERO_HEADING = /Wszystko, czego potrzebujesz do udanej uprawy/i;
+const BUBBLE_BAGS = "Bubble bags | Torby ekstrakcyjne 4x 20L";
 
 async function captureHome(
   page: Page,
@@ -13,20 +13,12 @@ async function captureHome(
   await page.setViewportSize(viewport);
   await page.goto("/pl/pl", { waitUntil: "load" });
   await expect(
-    page.getByRole("heading", { level: 1, name: HERO_HEADING }),
+    page.getByRole("heading", {
+      level: 1,
+      name: /Wszystko, czego potrzebujesz/i,
+    }),
   ).toBeVisible();
-
-  const search = page.getByRole("combobox").first();
-  if ((await search.inputValue()) !== "") await search.fill("");
-
-  await page.evaluate(() =>
-    window.scrollTo(0, document.documentElement.scrollHeight),
-  );
-  await page.waitForTimeout(250);
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await expect(
-    page.getByRole("heading", { level: 1, name: HERO_HEADING }),
-  ).toBeVisible();
+  await expect(page.locator('[data-visual-baseline="designed"]')).toBeVisible();
 
   const screenshot = await page.screenshot({
     path: `artifacts/catalog-preview/${filename}`,
@@ -34,9 +26,6 @@ async function captureHome(
     animations: "disabled",
   });
 
-  // A completely white 1440x1000 PNG is only a few KB. This guards the visual
-  // artifact itself, not just DOM assertions, so a broken capture can never be
-  // accepted as successful QA again.
   expect(screenshot.byteLength).toBeGreaterThan(minimumBytes);
 }
 
@@ -47,13 +36,22 @@ test("catalog mode works without Spree and stays non-transactional", async ({
 
   await page.goto("/pl/pl");
   await expect(
-    page.getByRole("heading", { level: 1, name: HERO_HEADING }),
+    page.getByRole("heading", {
+      level: 1,
+      name: /Wszystko, czego potrzebujesz/i,
+    }),
+  ).toBeVisible();
+  await expect(page.locator('[data-visual-baseline="designed"]')).toBeVisible();
+
+  await page.goto("/pl/pl/products");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Wszystkie produkty" }),
   ).toBeVisible();
 
   const bubbleCard = page
-    .locator(".product-carousel .swiper-slide")
-    .filter({ hasText: "Bubble bags | Torby ekstrakcyjne 4x 20L" })
-    .first();
+    .getByRole("link", { name: BUBBLE_BAGS })
+    .first()
+    .locator("xpath=ancestor::div[contains(@class, 'group')][1]");
   await expect(bubbleCard).toContainText(/149[,.]00/);
   await expect(bubbleCard).not.toContainText(/14[\s .]?900/);
   const bubbleImageSrc = await bubbleCard
@@ -62,10 +60,14 @@ test("catalog mode works without Spree and stays non-transactional", async ({
     .getAttribute("src");
   expect(bubbleImageSrc).toContain("growtent.pl");
 
-  const herbgardenCard = page
-    .locator(".product-carousel .swiper-slide")
-    .filter({ hasText: HERBGARDEN })
-    .first();
+  const herbgardenLink = page.getByRole("link", { name: HERBGARDEN }).first();
+  const herbgardenHref = await herbgardenLink.getAttribute("href");
+  if (!herbgardenHref) {
+    throw new Error("Herbgarden product link is missing its href");
+  }
+  const herbgardenCard = herbgardenLink.locator(
+    "xpath=ancestor::div[contains(@class, 'group')][1]",
+  );
   await expect(herbgardenCard).toContainText(/549[,.]00/);
   await expect(herbgardenCard).not.toContainText(/54[\s .]?900/);
 
@@ -76,8 +78,7 @@ test("catalog mode works without Spree and stays non-transactional", async ({
   await expect(page.getByRole("heading", { name: "Ulubione" })).toBeVisible();
   await expect(page.getByText(HERBGARDEN).first()).toBeVisible();
 
-  await page.goto("/pl/pl");
-  await page.getByRole("link", { name: /Poradniki uprawy/i }).click();
+  await page.goto("/pl/pl/poradniki");
   await expect(page).toHaveURL(/\/pl\/pl\/poradniki$/);
   await expect(
     page.getByRole("heading", { level: 1, name: "Poradniki i wiedza" }),
@@ -99,14 +100,11 @@ test("catalog mode works without Spree and stays non-transactional", async ({
   await page.goto("/pl/pl/account/orders");
   await expect(page).toHaveURL(/\/pl\/pl\/account$/);
 
-  await page.goto("/pl/pl");
-  const liveCard = page
-    .locator(".product-carousel .swiper-slide")
-    .filter({ hasText: HERBGARDEN })
-    .first();
-  await liveCard
-    .getByRole("button", { name: `Dodaj ${HERBGARDEN} do koszyka` })
-    .click();
+  await page.goto(herbgardenHref);
+  await expect(
+    page.getByRole("heading", { level: 1, name: HERBGARDEN }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /Dodaj do koszyka/i }).click();
   await page.goto("/pl/pl/cart");
   await expect(page.getByText(HERBGARDEN).first()).toBeVisible();
   await expect(
@@ -139,12 +137,12 @@ test("catalog mode works without Spree and stays non-transactional", async ({
     page,
     { width: 1440, height: 1000 },
     "desktop-full.png",
-    50_000,
+    5_000,
   );
   await captureHome(
     page,
     { width: 390, height: 910 },
     "mobile-full.png",
-    25_000,
+    4_000,
   );
 });

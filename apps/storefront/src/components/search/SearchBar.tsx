@@ -98,9 +98,9 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
     onNavigate?.();
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    navigateToResults(inputRef.current?.value);
+  const handleSubmit = () => {
+    setIsOpen(false);
+    onNavigate?.();
   };
 
   const handleSuggestionClick = (product: Product, index: number) => {
@@ -108,6 +108,7 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
     router.push(`${basePath}/products/${product.slug}`);
     setIsOpen(false);
     setQuery("");
+    if (inputRef.current) inputRef.current.value = "";
     onNavigate?.();
   };
 
@@ -124,12 +125,6 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter" && selectedIndex < 0) {
-      event.preventDefault();
-      navigateToResults(event.currentTarget.value);
-      return;
-    }
-
     if (!isOpen || suggestions.length === 0) return;
 
     switch (event.key) {
@@ -160,12 +155,16 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
 
   return (
     <div className="relative">
-      <form onSubmit={handleSubmit}>
+      <form
+        action={`${basePath}/products`}
+        method="get"
+        onSubmit={handleSubmit}
+      >
         <InputGroup>
           <InputGroupInput
             ref={inputRef}
+            name="q"
             type="search"
-            value={query}
             onChange={(event) => handleQueryChange(event.target.value)}
             onFocus={() => setIsOpen(true)}
             onBlur={handleBlur}
@@ -183,8 +182,7 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
           />
           <InputGroupAddon align="inline-end">
             <InputGroupButton
-              type="button"
-              onClick={() => navigateToResults(inputRef.current?.value)}
+              type="submit"
               size="icon-sm"
               variant="ghost"
               aria-label={t("search")}
