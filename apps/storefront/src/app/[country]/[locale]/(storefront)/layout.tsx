@@ -3,6 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { cache, Suspense } from "react";
 import "@/app/labuco-theme.css";
+import "@/app/labuco-target.css";
 import { Footer, FooterCategoryLinks } from "@/components/layout/Footer";
 import { Header, HeaderMobileMenu } from "@/components/layout/Header";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
