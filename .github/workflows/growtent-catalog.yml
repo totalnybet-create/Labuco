@@ -44,12 +44,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: "pip"
@@ -117,7 +117,7 @@ jobs:
 
       - name: Upload catalog metadata
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: growtent-catalog-metadata
           path: |
@@ -133,7 +133,7 @@ jobs:
 
       - name: Upload full catalog with images
         if: success() && env.DOWNLOAD_IMAGES == '1'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: growtent-catalog-full
           path: artifacts/growtent-catalog.zip
