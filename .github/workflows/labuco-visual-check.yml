@@ -32,19 +32,19 @@ jobs:
           --health-retries=10
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Checkout proven LABUCO backend
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ed09bb524f09eb7cd86c772f5792718e4f265947
           path: proven
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 10.33.4
 
@@ -164,7 +164,7 @@ jobs:
           file /tmp/labuco-visual/mobile-full.png /tmp/labuco-visual/mobile-viewport.png /tmp/labuco-visual/desktop-full.png /tmp/labuco-visual/desktop-viewport.png
 
       - name: Upload screenshots
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: labuco-reference-check
           path: |

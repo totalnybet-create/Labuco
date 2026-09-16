@@ -20,14 +20,14 @@ jobs:
       matrix:
         chunk: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Install image sourcing dependencies
         run: python -m pip install 'ddgs>=9,<10' requests pillow
       - name: Download organized product bundles
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: growtent-organized-*
           path: source
@@ -45,7 +45,7 @@ jobs:
         run: python tools/labuco_external_images.py
       - name: Upload image bundle
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: labuco-external-images-${{ matrix.chunk }}
           path: artifacts/chunk-${{ matrix.chunk }}
