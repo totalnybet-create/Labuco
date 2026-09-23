@@ -20,7 +20,7 @@
     "helper:stop": "docker compose -f operator/docker-compose.yml down"
   },
   "dependencies": {
-    "@spree/cli": "^2.4.4",
+    "@spree/cli": "^3.0.2",
     "@spree/docs": "latest"
   }
 }
